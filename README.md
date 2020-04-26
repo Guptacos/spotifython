@@ -79,6 +79,7 @@ Python library for interfacing with the Spotify REST api
 - The top level contructor will take in an optional timeout field, which will be
   passed into all object constructors. This will be used when making calls to
   the Spotify REST api.
+- REST APIs will use an optional timeout field, which are passed into the object constructor. The default will be propagated 
 - __Search result__ object contains getter methods for a result from searching.
 - __Artist__ object contains albums and playlists.
 - __Album__ object contains tracks.
@@ -91,7 +92,11 @@ Python library for interfacing with the Spotify REST api
     - External URL
     - id
     - image URL
-    - __Audio features__ should be a dictionary based off of API endpoint
-      reference for
-      [audio feature objects.](https://developer.spotify.com/documentation/web-api/reference/tracks/get-audio-features/)
-    - __Audio analysis__: worry about this object later! :D
+- __Audio features__ should be a dictionary based off of API endpoint reference for [audio feature objects.](https://developer.spotify.com/documentation/web-api/reference/tracks/get-audio-features/)
+- __Audio analysis__: worry about this object later! :D
+- Follow methods should be split between the playlist and the user objects.
+- Player methods should be given to the user
+- User library methods (top tracks, etc.)
+- set new token method should be provided in order to address session expiration
+- Failure can happen, return objects should contain status code for the user
+- Error handlin
