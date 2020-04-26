@@ -1,38 +1,44 @@
 # Spotifython
 Python library for interfacing with the Spotify REST api
 
-### Spotify REST api endpoints supported by this library
+### Spotify REST API endpoints supported by this library
+
+### Spotifython general object
 
 | Method | Endpoint                                        | Description                                                  | Return                |
 |--------|-------------------------------------------------|--------------------------------------------------------------|-----------------------|
 | `GET`  | `/v1/search`                                    | Search for an item                                           | array of objects      |
 | `GET`  | `/v1/albums/{id}`                               | Get an Album                                                 | album                 |
-| `GET`  | `/v1/albums/{id}/tracks`                        | Get an Album's Tracks                                        | tracks                |
 | `GET`  | `/v1/albums`                                    | Get several Albums                                           | albums                |
 | `GET`  | `/v1/artists/{id}`                              | Get an Artist                                                | artist                |
+| `GET`  | `/v1/artists`                                   | Get Several Artists                                          | artists               |
+| `GET`  | `/v1/playlists/{playlist_id}`                   | Get a Playlist                                               | playlist              |
+| `GET`  | `/v1/me`                                        | Get Current User's Profile                                   | user                  |
+| `GET`  | `/v1/users/{user_id}`                           | Get a User's Profile                                         | user                  |
+| `GET`  | `/v1/tracks/{id}`                               | Get a Track                                                  | track                 |
+| `GET`  | `/v1/tracks`                                    | Get Several Tracks                                           | tracks                |
+
+### Artist
+
+| Method | Endpoint                                        | Description                                                  | Return                |
+|--------|-------------------------------------------------|--------------------------------------------------------------|-----------------------|
 | `GET`  | `/v1/artists/{id}/albums`                       | Get an Artist's Albums                                       | albums                |
 | `GET`  | `/v1/artists/{id}/top-tracks`                   | Get an Artist's Top Tracks                                   | tracks                |
 | `GET`  | `/v1/artists/{id}/related-artists`              | Get an Artist's Related Artists                              | artists               |
-| `GET`  | `/v1/artists`                                   | Get Several Artists                                          | artists               |
-| `GET`  | `/v1/me`                                        | Get Current User's Profile                                   | user                  |
-| `GET`  | `/v1/users/{user_id}`                           | Get a User's Profile                                         | user                  |
-| `POST` | `/v1/playlists/{playlist_id}/tracks`            | Add Items to a Playlist                                      | -                     |
-| `PUT`  | `/v1/playlists/{playlist_id}`                   | Change a Playlist's Details                                  | -                     |
+
+### Album
+
+| Method | Endpoint                                        | Description                                                  | Return                |
+|--------|-------------------------------------------------|--------------------------------------------------------------|-----------------------|
+| `GET`  | `/v1/albums/{id}/tracks`                        | Get an Album's Tracks                                        | tracks                |
+
+### User
+
+| Method | Endpoint                                        | Description                                                  | Return                |
+|--------|-------------------------------------------------|--------------------------------------------------------------|-----------------------|
 | `POST` | `/v1/users/{user_id}/playlists`                 | Create a Playlist                                            | -                     |
 | `GET`  | `/v1/me/playlists`                              | Get a List of Current User's Playlists                       | playlists             |
 | `GET`  | `/v1/users/{user_id}/playlists`                 | Get a List of a User's Playlists                             | playlists             |
-| `GET`  | `/v1/playlists/{playlist_id}/images`            | Get a Playlist Cover Image                                   | list of image objects |
-| `GET`  | `/v1/playlists/{playlist_id}`                   | Get a Playlist                                               | playlist              |
-| `GET`  | `/v1/playlists/{playlist_id}/tracks`            | Get a Playlist's Items                                       | tracks                |
-|`DELETE`| `/v1/playlists/{playlist_id}/tracks`            | Remove Items from a Playlist                                 | -                     |
-| `PUT`  | `/v1/playlists/{playlist_id}/tracks`            | Reorder a Playlist's Items                                   | -                     |
-| `PUT`  | `/v1/playlists/{playlist_id}/tracks`            | Replace a Playlist's Items                                   | -                     |
-| `PUT`  | `/v1/playlists/{playlist_id}/images`            | Upload a Custom Playlist Cover Image                         | -                     |
-| `GET`  | `/v1/audio-analysis/{id}`                       | Get Audio Analysis for a Track                               | audio analysis object |
-| `GET`  | `/v1/audio-features/{id}`                       | Get Audio Features for a Track                               | audio features        |
-| `GET`  | `/v1/audio-features`                            | Get Audio Features for Several Tracks                        | audio features        |
-| `GET`  | `/v1/tracks`                                    | Get Several Tracks                                           | tracks                |
-| `GET`  | `/v1/tracks/{id}`                               | Get a Track                                                  | track                 |
 |`DELETE`| `/v1/me/following`                              | Unfollow Artists or Users                                    |                       |
 |`DELETE`| `/v1/playlists/{playlist_id}/followers`         | Unfollow a Playlist                                          |                       |
 | `GET`  | `/v1/me/following/contains`                     | Check if Current User Follows Artists or Users               |                       |
@@ -41,13 +47,10 @@ Python library for interfacing with the Spotify REST api
 | `PUT`  | `/v1/me/following`                              | Follow Artists or Users                                      |                       |
 | `PUT`  | `/v1/playlists/{playlist_id}/followers`         | Follow a Playlist                                            |                       |
 |`DELETE`| `/v1/me/albums`                                 | Remove Albums for Current User                               |                       |
-|`DELETE`| `/v1/me/shows`                                  | Remove User's Saved Shows                                    |                       |
 |`DELETE`| `/v1/me/tracks`                                 | Remove Tracks for Current User                               |                       |
 | `GET`  | `/v1/me/albums/contains`                        | Check Current User's Saved Albums                            |                       |
-| `GET`  | `/v1/me/shows/contains`                         | Check User's Saved Shows                                     |                       |
 | `GET`  | `/v1/me/tracks/contains`                        | Check Current User's Saved Tracks                            |                       |
 | `GET`  | `/v1/me/albums`                                 | Get Current User's Saved Albums                              |                       |
-| `GET`  | `/v1/me/shows`                                  | Get User's Saved Shows                                       |                       |
 | `GET`  | `/v1/me/tracks`                                 | Get Current User's Saved Tracks                              |                       |
 | `PUT`  | `/v1/me/albums`                                 | Save Albums for Current User                                 |                       |
 | `PUT`  | `/v1/me/shows`                                  | Save Shows for Current User                                  |                       |
@@ -68,6 +71,26 @@ Python library for interfacing with the Spotify REST api
 | `PUT`  | `/v1/me/player/volume`                          | Set Volume For User's Playback                               |                       |
 | `GET`  | `/v1/me/top/{type}`                             | Get User's Top Artists and Tracks                            |                       |
 
+### Playlist
+
+| Method | Endpoint                                        | Description                                                  | Return                |
+|--------|-------------------------------------------------|--------------------------------------------------------------|-----------------------|
+| `POST` | `/v1/playlists/{playlist_id}/tracks`            | Add Items to a Playlist                                      | -                     |
+| `PUT`  | `/v1/playlists/{playlist_id}`                   | Change a Playlist's Details                                  | -                     |
+| `GET`  | `/v1/playlists/{playlist_id}/images`            | Get a Playlist Cover Image                                   | list of image objects |
+| `GET`  | `/v1/playlists/{playlist_id}/tracks`            | Get a Playlist's Items                                       | tracks                |
+|`DELETE`| `/v1/playlists/{playlist_id}/tracks`            | Remove Items from a Playlist                                 | -                     |
+| `PUT`  | `/v1/playlists/{playlist_id}/tracks`            | Reorder a Playlist's Items                                   | -                     |
+| `PUT`  | `/v1/playlists/{playlist_id}/tracks`            | Replace a Playlist's Items                                   | -                     |
+| `PUT`  | `/v1/playlists/{playlist_id}/images`            | Upload a Custom Playlist Cover Image                         | -                     |
+
+### Track
+
+| Method | Endpoint                                        | Description                                                  | Return                |
+|--------|-------------------------------------------------|--------------------------------------------------------------|-----------------------|
+| `GET`  | `/v1/audio-analysis/{id}`                       | Get Audio Analysis for a Track                               | audio analysis object |
+| `GET`  | `/v1/audio-features/{id}`                       | Get Audio Features for a Track                               | audio features        |
+| `GET`  | `/v1/audio-features`                            | Get Audio Features for Several Tracks                        | audio features        |
 
 ### Spotify REST api endpoints __not__ supported by this library
 - Browse
