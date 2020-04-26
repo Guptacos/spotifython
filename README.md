@@ -53,9 +53,14 @@ Python library for interfacing with the Spotify REST api
 | `GET`  | `/v1/me/albums`                                 | Get Current User's Saved Albums                              |                       |
 | `GET`  | `/v1/me/tracks`                                 | Get Current User's Saved Tracks                              |                       |
 | `PUT`  | `/v1/me/albums`                                 | Save Albums for Current User                                 |                       |
-| `PUT`  | `/v1/me/shows`                                  | Save Shows for Current User                                  |                       |
 | `PUT`  | `/v1/me/tracks`                                 | Save Tracks for Current User                                 |                       |
 | `GET`  | `/v1/me/player/recently-played`                 | Get the Current User's Recently Played Tracks                |                       |
+| `GET`  | `/v1/me/top/{type}`                             | Get User's Top Artists and Tracks                            |                       |
+
+#### Player (belongs only to `me` user)
+
+| Method | Endpoint                                        | Description                                                  | Return                |
+|--------|-------------------------------------------------|--------------------------------------------------------------|-----------------------|
 | `GET`  | `/v1/me/player`                                 | Get Information About The User's Current Playback            |                       |
 | `GET`  | `/v1/me/player/devices`                         | Get a User's Available Devices                               |                       |
 | `GET`  | `/v1/me/player/currently-playing`               | Get the User's Currently Playing Track                       |                       |
@@ -69,7 +74,6 @@ Python library for interfacing with the Spotify REST api
 | `PUT`  | `/v1/me/player/shuffle`                         | Toggle Shuffle For User's Playback                           |                       |
 | `PUT`  | `/v1/me/player`                                 | Transfer a User's Playback                                   |                       |
 | `PUT`  | `/v1/me/player/volume`                          | Set Volume For User's Playback                               |                       |
-| `GET`  | `/v1/me/top/{type}`                             | Get User's Top Artists and Tracks                            |                       |
 
 ### Playlist
 
