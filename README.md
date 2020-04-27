@@ -124,6 +124,6 @@ Python library for interfacing with the Spotify REST api
 - Follow methods should be split between the playlist and the user objects.
 - Player methods should be given to the user
 - User library methods (top tracks, etc.)
-- set new token method should be provided in order to address session expiration
+- Set new token method should be provided in order to address session expiration
 - Failure can happen, return objects should contain status code for the user
-- Error handlin
+- Error handling: All methods may potentially make backend API calls and possibly throw errors, so this object should be returned on all container method calls. These methods should return an object containing a .contents() method that allows the client to just get the result (list, Album, Track, etc.). However, we should provide an error checking method, .status() to allow the user to perform error handling if they would like. 
