@@ -37,7 +37,6 @@ Python library for interfacing with the Spotify REST api
 | Method | Endpoint                                        | Description                                                  | Return                |
 |--------|-------------------------------------------------|--------------------------------------------------------------|-----------------------|
 | `POST` | `/v1/users/{user_id}/playlists`                 | Create a Playlist                                            | -                     |
-| `GET`  | `/v1/me/playlists`                              | Get a List of Current User's Playlists                       | playlists             |
 | `GET`  | `/v1/users/{user_id}/playlists`                 | Get a List of a User's Playlists                             | playlists             |
 |`DELETE`| `/v1/me/following`                              | Unfollow Artists or Users                                    |                       |
 |`DELETE`| `/v1/playlists/{playlist_id}/followers`         | Unfollow a Playlist                                          |                       |
@@ -96,6 +95,12 @@ Python library for interfacing with the Spotify REST api
 | `GET`  | `/v1/audio-features/{id}`                       | Get Audio Features for a Track                               | audio features        |
 | `GET`  | `/v1/audio-features`                            | Get Audio Features for Several Tracks                        | audio features        |
 
+### Unused
+
+| Method | Endpoint                                        | Description                                                  | Return                |
+|--------|-------------------------------------------------|--------------------------------------------------------------|
+| `GET`  | `/v1/me/playlists`                              | Get a List of Current User's Playlists                       | playlists   
+          |
 ### Spotify REST api endpoints __not__ supported by this library
 - Browse
 - Episodes
