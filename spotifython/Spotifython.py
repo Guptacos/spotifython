@@ -1,3 +1,5 @@
+from response import *
+
 # This object should be constructed by the user to instantiate the 
 # session of Spotify Web API usage.
 class Spotifython:
