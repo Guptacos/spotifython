@@ -61,24 +61,24 @@ class Spotifython:
         return SearchResult(dict())
 
     def get_albums(self, 
-        id: Union[str, List[str]], # If list, is comma separated
+        album_id: Union[str, List[str]], # If list, is comma separated
         market: str = None
-    ) -> List[Album]:
+    ) -> Union[Album, List[Album]]:
         return None
     
     def get_artists(self, 
-        id: Union[str, List[str]] # If list, is comma separated
-    ) -> List[Artist]:
+        artist_id: Union[str, List[str]] # If list, is comma separated
+    ) -> Union[Artist, List[Artist]]:
         return None
 
     def get_tracks(self, 
-        id: Union[str, List[str]], # If list, is comma separated
+        track_id: Union[str, List[str]], # If list, is comma separated
         market: str = None
-    ) -> List[Track]:
+    ) -> Union[Track, List[Track]]:
         return None
     
     def get_user(self, 
-        id: str
+        user_id: str
     ) -> User:
         return None
     
