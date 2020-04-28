@@ -11,12 +11,13 @@ class Track:
     # have access to the track_info structure prior to creating a track. This
     # assumption lets us modify the track_info object willy-nilly.
     def __init__(self, track_info: dict):
+        self._raw = deepcopy(track_info)
+
         self._album = Album(track_info.get('album', None))
         self._artists = list()
         for artist in track_info.get('artists', None):
             self._artists.append(Artist(artist))
 
-        self._raw = track_info
 
     def __str__(self):
         return '%s by %s' % (self._raw['name'], self._artists[0].name())
@@ -47,7 +48,8 @@ class Track:
     def track_number(self):
         return self._raw['track_number']
 
-    def asdict(self):
+    # TODO: for debugging implementation purposes only, user should not call.
+    def _asdict(self):
         return deepcopy(self._raw)
 
     # These are the API wrapper calls that track objects should be concerned
