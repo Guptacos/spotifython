@@ -1,8 +1,7 @@
 from user import User
 from track import Track
+from copy import deepcopy
 
-# TODO should _raw contain all unmodified json or the modified version with the
-# TODO discuss how the status object works
 # TODO should we clarify that indices need to be less than len
 # TODO convenience methods like str and len?
 # objects created in this constructor
@@ -19,10 +18,11 @@ class Playlist:
         """
         Playlist constructor that should never be called directly.
         """
+        self._raw = deepcopy(playlist_info)
         playlist_info['owner'] = User(playlist_info['owner'])
         for item in playlist_info['tracks']['items']:
             item['track'] = Track(item['track'])
-        self._raw = playlist_info
+        
 
     # POST https://api.spotify.com/v1/playlists/{playlist_id}/tracks
     def add_tracks(self, track, position=None):
@@ -69,6 +69,7 @@ class Playlist:
         pass
 
     # PUT https://api.spotify.com/v1/playlists/{playlist_id}
+    # TODO enum: private+collaborative, private+not collaborative, public
     def update_visibility(self, public, collaborative=False):
         """
         Update the playlist public/private visibility and collaborative access.
@@ -79,7 +80,7 @@ class Playlist:
 
         Optional Parameters:
         collaborative: A boolean value marking the playlist as collaborative.
-                       A playlist can be collaborative only if it is public.
+                       A playlist can be collaborative only if it is not public.
 
         Returns:
         A Status object.
@@ -97,7 +98,8 @@ class Playlist:
         pass
 
     # GET https://api.spotify.com/v1/playlists/{playlist_id}/tracks
-    def tracks(self, position=0, limit=-1):
+    # TODO num_tracks should be None - implying there is no limit
+    def tracks(self, start=0, num_tracks=-1):
         """
         Return one or more tracks in the playlist.
 
@@ -106,12 +108,12 @@ class Playlist:
         parameters.
 
         Optional Parameters:
-        position: An integer specifying the 0-indexed position of the first
+        start: An integer specifying the 0-indexed position of the first
                   track to return. Position can be omitted to return tracks
                   starting with the first song in the playlist.
-        limit:    An integer specifying the number of tracks to return. Limit
+        num_tracks:    An integer specifying the number of tracks to return. Limit
                   can be omitted to return as many tracks as are present at
-                  position.
+                  the start position.
 
         Returns:
         A Status object containing a list of Track objects.
@@ -121,6 +123,7 @@ class Playlist:
     # TODO api requires track position and track but shouldnt need both
     # TODO should parameter information repeat general function information
     # DELETE https://api.spotify.com/v1/playlists/{playlist_id}/tracks
+    # TODO test this in practice, what does it actually mean? Nobody knows.
     def remove_tracks(self, tracks=None, positions=None):
         """
         Remove one or more tracks from the playlist.
@@ -145,21 +148,21 @@ class Playlist:
     # TODO parameter naming
     # TODO how to describe negative integer behavior
     # PUT https://api.spotify.com/v1/playlists/{playlist_id}/tracks
-    def reorder_tracks(self, source, destination, number=1):
+    def reorder_tracks(self, src_index, dest_index, number=1):
         """
         Move one or more tracks to another position in the playlist.
 
-        Moves the specified number of tracks starting at source to before the
+        Moves the specified number of tracks starting at src_index to before the
         track currently at destination. If number is unspecified, only one
         track is moved.
 
         Parameters:
-        source:      An integer specifying the 0-indexed position of the first
+        src_index:   An integer specifying the 0-indexed position of the first
                      track to be moved. A negative integer will be evaluated 
                      from the end of the playlist as negative indices behave in
                      lists. This must be a valid index into a list of length
                      len(playlist).
-        destination: An integer specifying the 0-indexed position of the track
+        dest_index:  An integer specifying the 0-indexed position of the track
                      before which the other tracks will be moved. A negative
                      integer will be evaluated from the end of the playlist as
                      negative indices behave in lists. This must be a valid
