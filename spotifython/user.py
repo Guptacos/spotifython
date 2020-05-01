@@ -60,6 +60,17 @@ class User():
         # GET /v1/me/top/{type}
         pass
 
+    def recently_played(self, limit=50):
+        ''' Get the user's recently played tracks
+
+        Keyword arguments:
+            limit: max number of items to return. Can't be more than 50.
+
+        note: the 'before' and 'after' functionalities are not supported.
+        '''
+        # GET /v1/me/player/recently-played
+        pass
+
     def get_playlists(self):
         ''' Get all playlists that this user has in their library
 
