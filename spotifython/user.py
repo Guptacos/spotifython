@@ -22,9 +22,6 @@ class User():
 
     # TODO: param names
     def __init__(self, sp_obj, user_id, known_vals=None):
-        self._sp_obj = sp_obj
-        self._user_id = user_id
-        self._update_internal(known_vals)
         #TODO: self.player init?
         pass
         
