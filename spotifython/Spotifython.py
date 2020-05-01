@@ -1,4 +1,5 @@
 from response import *
+from endpoint import Endpoint
 
 # This object should be constructed by the user to instantiate the 
 # session of Spotify Web API usage.
@@ -12,10 +13,13 @@ class Spotifython:
     TRACK = 'track'
     SHOW = 'show'
     EPISODE = 'episode'
+    REQUEST_GET = "GET"
+    REQUEST_PUT = "PUT"
+    REQUEST_DELETE = "DELETE"
+    REQUEST_POST = "POST"
     
-    def __init__(self, token, timeout=None):
-        self.token = token
-        self.timeout = timeout
+    def __init__(self, token):
+        self._token = token
     
     def reauthenticate(self, token: str):
         '''
@@ -27,7 +31,22 @@ class Spotifython:
         Exceptions:
             TypeError for invalid types in any argument.
         '''
-        self.token = token
+        self._token = token
+    
+    ##################################
+    # HTTP REQUEST 
+    ##################################
+    # https://stackoverflow.com/questions/23267409/how-to-implement-retry-mechanism-into-python-requests-library
+    
+    # request_type: REQUEST_GET, REQUEST_POST, REQUEST_PUT, REQUEST_DELETE
+    def _request(request_type: str, endpoint: str, body: dict=None, uri_params: dict=None):
+        '''
+            Does request with retry. This method should return a tuple (response_json, status_code).
+
+            Usage:
+                response, err = _request.()
+        '''
+        pass
 
     # User should never call this constructor. As a result, they should never
     # have access to the search_info structure prior to creating an SearchResult.
