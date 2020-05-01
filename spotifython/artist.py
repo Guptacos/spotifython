@@ -6,7 +6,8 @@ from response import *
 class Artist:
     # User should never call this constructor. As a result, they should never
     # have access to the artist_info structure prior to creating an Artist.
-    def __init__(self, artist_info: dict):
+    def __init__(self, artist_info: dict, top: Spotifython):
+        self._top = top
         self._raw = artist_info
         self.albums = None # Lazily load
         self.top_tracks = None # Lazily load
