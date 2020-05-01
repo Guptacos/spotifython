@@ -13,6 +13,13 @@ class Artist:
         self.related_artists = None # Lazily load
 
     ##################################
+    # Overloads
+    ##################################
+
+    def __str__(self):
+        return self.name().contents()
+
+    ##################################
     # Field accessors
     ##################################
 
