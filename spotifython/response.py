@@ -11,6 +11,9 @@ class Response:
 
     def contents(self):
         return self._contents
+    
+    def __str__(self):
+        return f"[Response: {self.status}]"
 
 
 # user code
