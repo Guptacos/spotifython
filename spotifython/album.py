@@ -1,31 +1,71 @@
 from track import Track
-from copy import deepcopy
+from artist import Artist
 
-
-TRACKS = 'GET https://api.spotify.com/v1/albums/%s/tracks'
 
 class Album:
     def __init__(self, album_info):
-        self.album_type = album_info.get('album_type', '')
-        self.artists = list()
+        self._album_type = album_info.get('album_type', '')
+        self._artists = list()
         for artist in album_info.get('artists', []):
-            self.artists.append(Artist(artist))
+            self._artists.append(Artist(artist))
 
-        self._raw = album_info
+        tracks_wrapper = album_info.get('tracks', None)
+        if tracks_wrapper != None:
+            self._tracks = list()
+            for track in tracks_wrapper.get('items', []):
+                self._tracks.append(Track(track))
 
-    def __str__(self):
-        return '%s by %s' % (self._raw['name'], self._artists[0].name())
+        self._available_markets = album_info.get('available_markets', [])
+        self._album_id = album_info.get('id', '')
+        self._images = album_info.get('images', {})
+        self._name = album_info.get('name', '')
+        self._popularity = album_info.get('popularity', -1)
+        self._release_date = album_info.get('release_date', '')
 
-    def __eq__(self, other):
-        return (isinstance(other, Album) and self._raw == other._raw)
+        self._iter = 0
 
-    # TODO: these will be getter methods to fetch things from _raw. Boilerplate,
-    # so I will address in a wee bit.
+    # iter and next let you loop through the tracks in the album. len gives you
+    # the number of tracks in the album.
+    def __iter__(self):
+        self._iter = 0
+        return self
+
+    def __next__(self):
+        if self._iter < len(self._tracks):
+            track = self._tracks[self._iter]
+            self._iter += 1
+            return track
+        else:
+            raise StopIteration
+
+    def __len__(self):
+        return len(self._tracks)
+
+    def artists(self):
+        return self._artists
 
     def tracks(self):
-        if 'id' not in self._raw:
-            return None
-        album_id = self._raw.get['id']
-        request = TRACKS % (album_id)
-        # TODO: send the actual request
-        return
+        return self._tracks
+
+    def album_type(self):
+        return self._album_type
+
+    def available_markets(self):
+        return self._available_markets
+
+    def album_id(self):
+        return self._album_id
+
+    # TODO: usually has three sizes, maybe take in an optional arg for size,
+    # otherwise return the first one (largest).
+    def image(self, size=None):
+        return self._images[0] if size == None else self._images[0]
+
+    def name(self):
+        return self._name
+
+    def popularity(self):
+        return self._popularity
+
+    def release_date(self):
+        return self._release_date
