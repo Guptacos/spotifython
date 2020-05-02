@@ -23,7 +23,7 @@ class Track:
         return '%s by %s' % (self._raw['name'], self._artists[0].name())
 
     def __eq__(self, other):
-        return (isinstance(other, Track) and self._raw == other._raw)
+        return isinstance(other, Track) and self._id == other._id
 
     # the following are getter methods to fetch relevant information.
     def album(self):

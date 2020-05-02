@@ -16,13 +16,16 @@ class Album:
                 self._tracks.append(Track(track))
 
         self._available_markets = album_info.get('available_markets', [])
-        self._album_id = album_info.get('id', '')
+        self._id = album_info.get('id', '')
         self._images = album_info.get('images', {})
         self._name = album_info.get('name', '')
         self._popularity = album_info.get('popularity', -1)
         self._release_date = album_info.get('release_date', '')
 
         self._iter = 0
+
+    def __eq__(self, other):
+        return isinstance(other, Album) and self._id == other._id
 
     # iter and next let you loop through the tracks in the album. len gives you
     # the number of tracks in the album.
@@ -53,8 +56,8 @@ class Album:
     def available_markets(self):
         return self._available_markets
 
-    def album_id(self):
-        return self._album_id
+    def id(self):
+        return self._id
 
     # TODO: usually has three sizes, maybe take in an optional arg for size,
     # otherwise return the first one (largest).
