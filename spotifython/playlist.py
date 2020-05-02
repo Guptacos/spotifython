@@ -1,6 +1,7 @@
 from user import User
 from track import Track
 from copy import deepcopy
+from typing import Union, List
 
 # objects created in this constructor
 class Playlist:
@@ -12,23 +13,26 @@ class Playlist:
     """
 
     # GET https://api.spotify.com/v1/playlists/{playlist_id}
-    def __init__(self, playlist_info):
+    def __init__(self, playlist_info: dict):
         """
         Playlist constructor that should never be called directly.
         """
         self._raw = deepcopy(playlist_info)
-        playlist_info['owner'] = User(playlist_info['owner'])
-        for item in playlist_info['tracks']['items']:
-            item['track'] = Track(item['track'])
+        self._owner = User(playlist_info.get('owner', {}))
+        self._tracks = []
+        tracks = playlist_info.get('tracks', {})
+        if tracks:
+            for item in tracks.get('items', []):
+                self._tracks.append(Track(item.get('track', {})))
         
 
     # POST https://api.spotify.com/v1/playlists/{playlist_id}/tracks
-    def add_tracks(self, track, position=None):
+    def add_tracks(self, track: Union[Track, List[Track]], position: int=None):
         """
         Add one or more tracks to the playlist.
 
         Parameters:
-        tracks:   A list of Track objects to be added.
+        tracks:   A Track object or list of Track objects to be added.
 
         Optional Parameters:
         position: An integer specifying the 0-indexed position in the playlist
@@ -41,7 +45,7 @@ class Playlist:
         pass
 
     # PUT https://api.spotify.com/v1/playlists/{playlist_id}
-    def update_name(self, name):
+    def update_name(self, name: str):
         """
         Update the playlist name.
 
@@ -54,7 +58,7 @@ class Playlist:
         pass
 
     # PUT https://api.spotify.com/v1/playlists/{playlist_id}
-    def update_description(self, description):
+    def update_description(self, description: str):
         """
         Update the playlist description.
 
@@ -67,7 +71,7 @@ class Playlist:
         pass
 
     # PUT https://api.spotify.com/v1/playlists/{playlist_id}
-    def update_visibility(self, visibility):
+    def update_visibility(self, visibility: str):
         """
         Update the playlist public/private visibility and collaborative access.
 
@@ -80,6 +84,7 @@ class Playlist:
         """
         pass
 
+    # TODO test the response from this endpoint and clarify usage
     # GET https://api.spotify.com/v1/playlists/{playlist_id}/images
     def image(self):
         """
@@ -91,7 +96,7 @@ class Playlist:
         pass
 
     # GET https://api.spotify.com/v1/playlists/{playlist_id}/tracks
-    def tracks(self, start=0, num_tracks=None):
+    def tracks(self, start: int=0, num_tracks: int=None):
         """
         Return one or more tracks in the playlist.
 
@@ -115,7 +120,8 @@ class Playlist:
 
     # TODO test this in practice, what does it actually mean? Nobody knows.
     # DELETE https://api.spotify.com/v1/playlists/{playlist_id}/tracks
-    def remove_tracks(self, tracks=None, positions=None):
+    def remove_tracks(self, tracks: Union[Track, List[Track]]=None, positions:
+                      Union[int, List[int]]=None):
         """
         Remove one or more tracks from the playlist.
 
@@ -130,7 +136,7 @@ class Playlist:
                    occurrences of these tracks will be removed.
 
         positions: A list of integers specifying the 0-indexed positions of
-                   tracks to be remoed from the playlist. Only tracks in these
+                   tracks to be removed from the playlist. Only tracks in these
                    positions will be removed.
 
         Returns:
