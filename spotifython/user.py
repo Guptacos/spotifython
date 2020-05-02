@@ -6,7 +6,7 @@ from spotifython import Spotifython
 from track import Track
 
 from response import Response
-from typing import Union, List
+from typing import Union, List, Dict
 
 # TODO: exceptions for each param
 # TODO: auth required for each param
@@ -17,7 +17,7 @@ class User():
     def __init__(self,
                  sp_obj: Spotifython,
                  user_id: str,
-                 known_vals: dict=None
+                 known_vals: Dict=None
         ) -> User:
         # note to self: init self.player
         pass
@@ -29,7 +29,7 @@ class User():
 
 
     def _update_internal(self,
-                         known_vals: dict
+                         known_vals: Dict
         ) -> None:
         ''' Used internally to keep cached data up to date
 
@@ -61,21 +61,22 @@ class User():
             top_type: str,
             time_range: str=sp.MEDIUM,
             limit: int=50
-        ) -> Response:
+        ) -> Response: # Union[List[Artist], List[Track]]
         ''' Get the top artists or tracks for the user over a time range.
 
         Keyword arguments:
             top_type: only get items of this type. One of:
                 sp.ARTIST
                 sp.TRACK
-            time_range: only get top items for this time range. One of:
+            time_range: (optional) only get items for this time range. One of:
                 sp.LONG (several years)
                 sp.MEDIUM (about 6 months)
                 sp.SHORT (about 4 weeks)
-            limit: max number of items to return.
+            limit: (optional) max number of items to return.
 
         response.contents():
-            Success: Union[List[Artist], List[Track]]
+            Success: list of artists or a list of tracks, depending on top_type.
+                Could be empty.
             Failure: None
 
         Note: Spotify defines "top items" using internal metrics.
@@ -86,14 +87,15 @@ class User():
 
     def recently_played(self,
                         limit: int=50
-        ) -> Response:
+        ) -> Response: # List[Track]
         ''' Get the user's recently played tracks
 
         Keyword arguments:
-            limit: max number of items to return. Can't be more than 50.
+            limit: (optional) max number of items to return. Can't be larger
+                than 50.
 
         response.contents():
-            Success: List[Track]
+            Success: a list of tracks. Could be empty.
             Failure: None
 
         Note: the 'before' and 'after' functionalities are not supported.
@@ -104,14 +106,15 @@ class User():
 
     def get_playlists(self,
                       limit: int=None
-        ) -> Response:
+        ) -> Response: # List[Playlist]
         ''' Get all playlists that this user has in their library
 
         Keyword arguments:
-            limit: the max number of items to return. If None, will return all.
+            limit: (optional) the max number of items to return. If None, will
+                return all.
 
         response.contents():
-            Success: List[Playlist]
+            Success: a list of playlists. Could be empty.
             Failure: None
 
         Note: this includes both playlists owned by this user and playlists
@@ -129,15 +132,15 @@ class User():
                         public: bool=True
                         collaborative: bool=False
                         description: str=""
-        ) -> Response:
+        ) -> Response: # None
         ''' Create a new playlist owned by the current user
 
         Keyword arguments:
             name: The name for the new playlist. Does not need to be unique;
                 a user may have several playlists with the same name.
-            public: whether the playlist should be publicly viewable.
-            collaborative: whether the playlist should be collaborative.
-            description: viewable description of the playlist.
+            public: (optional) if the playlist should be publicly viewable.
+            collaborative: (optional) if the playlist should be collaborative.
+            description: (optional) viewable description of the playlist.
 
         response.contents():
             None
@@ -151,8 +154,8 @@ class User():
 
     def is_following(self,
                      other: Union[Artist, User, Playlist,
-                                  list[Union[Artist, User, Playlist]]]
-        ) -> Response:
+                                  List[Union[Artist, User, Playlist]]]
+        ) -> Response: # List[Tuple[Union[Artist, User, Playlist], bool]]
         ''' Check if the current user is following something
 
         Keyword arguments:
@@ -176,12 +179,13 @@ class User():
     def get_following(self,
                       follow_type: str,
                       limit: int=None
-        ) -> Response:
+        ) -> Response: # Union[List[Artist], List[Playlist]]
         ''' Get all follow_type objects the current user is following
 
         Keyword arguments:
             follow_type: one of sp.ARTIST or sp.PLAYLIST
-            limit: the max number of items to return. If None, will return all.
+            limit: (optional) the max number of items to return. If None, will
+                return all.
 
         response.contents():
             Success: List of follow_type objects. Could be empty.
@@ -200,8 +204,8 @@ class User():
     # TODO: what if already following? Should it return success or error?
     def follow(self,
                other: Union[Artist, User, Playlist,
-                            list[Union[Artist, User, Playlist]]]
-        ) -> Response:
+                            List[Union[Artist, User, Playlist]]]
+        ) -> Response: # None
         ''' Follow one or more things
 
         Keyword arguments:
@@ -222,8 +226,8 @@ class User():
     # TODO: what if already not following? Should it return success or error?
     def unfollow(self,
                  other: Union[Artist, User, Playlist,
-                              list[Union[Artist, User, Playlist]]]
-        ) -> Response:
+                              List[Union[Artist, User, Playlist]]]
+        ) -> Response: # None
         ''' Unfollow one or more things
 
         Keyword arguments:
@@ -243,8 +247,8 @@ class User():
 
     def has_saved(self,
                   other: Union[Track, Album,
-                               list[Union[Track, Album]]]
-        ) -> Response:
+                               List[Union[Track, Album]]]
+        ) -> Response: # List[Tuple[Union[Track, Album], bool]]
         ''' Check if the user has one or more things saved to their library
 
         Keyword arguments:
@@ -267,12 +271,13 @@ class User():
     def get_saved(self,
                   saved_type: str,
                   limit: int=None
-        ) -> Response:
+        ) -> Response: # Union[List[Album], List[Track]]
         ''' Get all saved_type objects the user has saved to their library
 
         Keyword arguments:
             saved_type: one of sp.ALBUM or sp.TRACK
-            limit: the max number of items to return. If None, will return all.
+            limit: (optional) the max number of items to return. If None, will
+                return all.
 
         response.contents():
             Success: List of saved_type objects. Could be empty.
@@ -286,8 +291,8 @@ class User():
     # TODO: what if already saved? Should it return success or error?
     def save(self,
              other: Union[Track, Album,
-                          list[Union[Track, Album]]]
-        ) -> Response:
+                          List[Union[Track, Album]]]
+        ) -> Response: # None
         ''' Save one or more things to the user's library
 
         Keyword arguments:
@@ -308,8 +313,8 @@ class User():
     # TODO: what if already removed? Should it return success or error?
     def remove(self,
                other: Union[Track, Album,
-                            list[Union[Track, Album]]]
-        ) -> Response:
+                            List[Union[Track, Album]]]
+        ) -> Response: # None
         ''' Remove one or more things from the user's library
 
         Keyword arguments:
