@@ -26,6 +26,9 @@ class Spotifython:
     OFF = 'off'
     KEEP_PLAY_STATE = 'keep_play_state'
     FORCE_PLAY = 'force_play'
+    PUBLIC = 'public'
+    PRIVATE = 'private'
+    PRIVATE_COLLAB = 'private_collab'
     
     def __init__(self, token):
         self._token = token
