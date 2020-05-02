@@ -1,14 +1,11 @@
-# TODO: many of the modify / read methods can error out if no active device
-# TODO: which methods need a device_id param or other extra params?
-# TODO: need to define error handling for when there is no active device
-# TODO: Remove Spotify defaults everywhere
-# TODO: mention that all time is in ms
-# TODO: return values
-# TODO: type hints
-# TODO: due to async nature, may need to check getters for true success
-# TODO: when None is returned, check status code for success / failure. Could be
-#       due to no active device
-# TODO: is device_id really needed?
+from user import User
+from track import Track
+from playlist import Playlist
+from artist import Artist
+from spotifython import Spotifython
+from response import Response
+from typing import Union
+
 class Player():
     ''' Interact with a user's playback, such as pausing / playing the current
         song, modifying the queue, etc.
@@ -22,49 +19,71 @@ class Player():
 
             Defaults to using the currently active device, which is what you
             will want most of the time.
+
+        position: always an integer that represents milliseconds.
+
+    Errors:
+        Many of these methods will do nothing if there is no active or available
+        device. You should check response.status() to see if that was the case.
+
+    Note:
+        Due to the asynchronous nature of many Player commands, you should use
+        the Player's getter methods to check that your issued command was
+        handled correctly by the player.
     '''
 
     
-    def __init__(self, user):
+    def __init__(self,
+                 user: User
+        ) -> Player:
         ''' Should only be called from within the User class
         
         Keyword arguments:
             user: the User object that created the Player. For example, User can
                 say self._player = Player(self)
+
+        Return:
+            A Player object
         '''
         pass
 
 
     # Format should be 'Player for user <%s>' with user_id
-    def __str__(self):
+    def __str__(self) -> str:
         return ''
 
     
-    def next(self, device_id=None):
+    def next(self,
+             device_id: str=None
+        ) -> Response:
         ''' Skip the current song in the playback
 
-        Return:
+        response.contents():
             None
         '''
         # POST /v1/me/player/next
         pass
 
 
-    def previous(self, device_id=None):
+    def previous(self,
+                 device_id: str=None
+        ) -> Response:
         ''' Skip to the previous song in the playback, regardless of where in
             the current song playback is.
 
-        Return:
+        response.contents():
             None
         '''
         # POST /v1/me/player/previous
 
 
     # Note for me: if nothing playing and pause, raises 403 restriction violated
-    def pause(self, device_id=None):
+    def pause(self,
+              device_id: str=None
+        ) -> Response:
         ''' Pause the current playback
 
-        Return:
+        response.contents():
             None
         '''
         # PUT /v1/me/player/pause
@@ -72,35 +91,51 @@ class Player():
 
 
     # Note for me: if playing and resume, raises 403 restriction violated
-    def resume(self, device_id=None):
+    def resume(self,
+               device_id: str=None
+        ) -> Response:
         ''' Resume the current playback
 
-        Return:
-            None '''
-        # PUT /v1/me/player/play
-        pass
-
-
-    # TODO: context, more complicated
-    # TODO: device id?
-    def play(self, item, context):
-        ''' Change the current track and context for the player
-
-        Uses the currently active device, if one exists.
-
-        Return:
+        response.contents():
             None
         '''
         # PUT /v1/me/player/play
         pass
 
 
-    def is_paused(self):
+    # Future support: inputing a context object
+    # Future support: offsetting into context
+    # Future support: position in track
+    def play(self,
+             item: Union[Track, Album, Playlist, Artist],
+             device_id: str=None
+        ) -> Response:
+        ''' Change the current track and context for the player
+
+        Uses the currently active device, if one exists.
+
+        Keyword arguments:
+            item: an instance of sp.Track, sp.Album, sp.Playlist, or sp.Artist.
+                to begin playing.
+
+        Note: Does not currently support playing a specific context, or an
+            offset into a playlist, album, or artist. Also does not support
+            starting playback at a position in the track, playback will start at
+            the beginning of the track.
+
+        response.contents():
+            None
+        '''
+        # PUT /v1/me/player/play
+        pass
+
+
+    def is_paused(self) -> Response:
         ''' Check if the current playback is paused
 
         Uses the currently active device, if one exists.
 
-        Return:
+        response.contents():
             Success: True if paused, else False
             Failure: None
         '''
@@ -108,12 +143,12 @@ class Player():
         pass
 
 
-    def is_playing(self):
+    def is_playing(self) -> Response:
         ''' Check if the current playback is playing (not paused)
 
         Uses the currently active device, if one exists.
 
-        Return:
+        response.contents():
             Success: True if playing, else False
             Failure: None
         '''
@@ -126,8 +161,10 @@ class Player():
     # now_playing
     # get_active_audio
     # Note for me: in the future, add 'additional_types' to support episodes.
-    # TODO: context
-    def get_currently_playing(self, market='from_token'):
+    # Note for me: in the future support returning a context object
+    def get_currently_playing(self,
+                              market: str='from_token'
+        ) -> Response:
         ''' Get the currently playing track in the playback
 
         Uses the currently active device, if one exists.
@@ -141,7 +178,7 @@ class Player():
                 if 'from_token' (default) is given, will use appropriate country
                 code for user based on their auth token and location.
 
-        Return:
+        response.contents():
             Success: a Track object
             Failure: None
         '''
@@ -150,10 +187,10 @@ class Player():
 
 
     # Note for me: in the future add a separate device abstraction
-    def available_devices(self):
+    def available_devices(self) -> Response:
         ''' Get all devices currently available
 
-        Return:
+        response.contents():
             Success: A list of strings, where each is a device id.
             Failure: None
         '''
@@ -161,10 +198,10 @@ class Player():
         pass
 
 
-    def get_active_device(self):
+    def get_active_device(self) -> Response:
         ''' Get the currently active device
 
-        Return:
+        response.contents():
             Success: The device id of the active device, if a device is active.
             Failure: None
         '''
@@ -172,27 +209,30 @@ class Player():
         pass
 
 
-    # TODO: random boolean flag?
-    def set_active_device(self, device_id, force_play=False):
+    # TODO: random boolean flag? set_active_device(id, True) isn't clear
+    def set_active_device(self,
+                          device_id: str,
+                          force_play: bool=False
+        ) -> Response:
         ''' Transfer playback to a different available device
 
         Keword arguments:
             force_play: True: resume playback after transfering to new device
                         False: keep the current playback state.
 
-        Return:
+        response.contents():
             None
         '''
         # PUT /v1/me/player
         pass
 
 
-    def get_shuffle(self):
+    def get_shuffle(self) -> Response:
         ''' Get the current shuffle state of the playback
 
         Uses the currently active device, if one exists.
 
-        Return:
+        response.contents():
             Success: True if shuffle is enabled else False
             Failure: None
         '''
@@ -200,26 +240,29 @@ class Player():
         pass
 
 
-    def set_shuffle(self, shuffle_state, device_id=None):
+    def set_shuffle(self,
+                    shuffle_state: bool,
+                    device_id: str=None
+        ) -> Response:
         ''' Set the shuffle state of the active device
 
         Keyword arguments:
             shuffle_state: True to set shuffle to on, False to set it to off.
 
-        Return:
+        response.contents():
             None
         '''
         # PUT /v1/me/player/shuffle
         pass
 
 
-    # TODO: naming
-    def get_seek(self):
+    # TODO: naming. what is a seek?
+    def get_seek(self) -> Response:
         ''' Get the current position in the currently playing track in ms
 
         Uses the currently active device, if one exists.
 
-        Return:
+        response.contents():
             Success: the position (in ms) as an int
             Failure: None
         '''
@@ -227,27 +270,30 @@ class Player():
         pass
 
 
-    # TODO: naming
-    def set_seek(self, position, device_id=None):
+    # TODO: naming. what is a seek?
+    def set_seek(self,
+                 position: int,
+                 device_id: str=None
+        ) -> Response:
         ''' Set the current position in the currently playing track in ms
 
         Keyword arguments:
             position: the position (in ms) as an int. Must be non-negative.
                 If greater than the len of the track, will play the next song.
 
-        Return:
+        response.contents():
             None
         '''
         # PUT /v1/me/player/seek
         pass
 
 
-    def get_volume(self):
+    def get_volume(self) -> Response:
         ''' Get the current volume for the playback
 
         Uses the currently active device, if one exists.
 
-        Return:
+        response.contents():
             Success: the volume (in percent) as an int from 0 to 100 inclusive
             Failure: None
         '''
@@ -255,25 +301,28 @@ class Player():
         pass
 
 
-    def set_volume(self, volume, device_id=None):
+    def set_volume(self,
+                   volume: int,
+                   device_id: str=None
+        ) -> Response:
         ''' Set the current volume for the playback
 
         Keyword arguments:
             volume: the volume (in percent) as an int from 0 to 100 inclusive
 
-        Return:
+        response.contents():
             None
         '''
         # PUT /v1/me/player/volume
         pass
 
 
-    def get_repeat(self):
+    def get_repeat(self) -> Response:
         ''' Get the repeat state for the current playback
 
         Uses the currently active device, if one exists.
 
-        Return:
+        response.contents():
             Success: one of sp.TRACK, sp.CONTEXT, sp.OFF
             Failure: None
         '''
@@ -281,7 +330,10 @@ class Player():
         pass
 
 
-    def set_repeat(self, mode, device_id=None):
+    def set_repeat(self,
+                   mode: str,
+                   device_id: str=None
+        ) -> Response:
         ''' Set the repeat state for the current playback
 
         Keyword arguments:
@@ -290,7 +342,7 @@ class Player():
                 sp.CONTEXT: repeat the current context (playlist, album, etc.)
                 sp.OFF: turn repeat off
 
-        Return:
+        response.contents():
             None
         '''
         # PUT /v1/me/player/repeat
@@ -298,7 +350,10 @@ class Player():
 
 
     # Note for me: add episodes at some point
-    def enqueue(self, item, device_id=None):
+    def enqueue(self,
+                item: Union[Album, Track],
+                device_id: str=None
+        ) -> Response:
         ''' Add an item to the end of the queue
         
         Keyword arguments:
@@ -306,7 +361,7 @@ class Player():
                 or sp.Track. Adding playlists to the queue is not currently
                 supported.
 
-        Return:
+        response.contents():
             None
         '''
         # POST /v1/me/player/queue
