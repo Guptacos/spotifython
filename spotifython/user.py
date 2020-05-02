@@ -151,14 +151,14 @@ class User():
 
     def is_following(self,
                      other: Union[Artist, User, Playlist,
-                                  Iterable[Union[Artist, User, Playlist]]]
+                                  list[Union[Artist, User, Playlist]]]
         ) -> Response:
         ''' Check if the current user is following something
 
         Keyword arguments:
             other: check if current user is following 'other'. Other must be
-                either a single object or a collection of objects.
-                If other is a collection, it can conatin multiple types.
+                either a single object or a list of objects.
+                If other is a list, it can conatin multiple types.
 
                 Can only check for Artist, User, and Playlist.
 
@@ -200,14 +200,14 @@ class User():
     # TODO: what if already following? Should it return success or error?
     def follow(self,
                other: Union[Artist, User, Playlist,
-                            Iterable[Union[Artist, User, Playlist]]]
+                            list[Union[Artist, User, Playlist]]]
         ) -> Response:
         ''' Follow one or more things
 
         Keyword arguments:
             other: the object(s) to follow. Other must be either a single object
-                or a collection of objects.
-                If other is a collection, it can conatin multiple types.
+                or a list of objects.
+                If other is a list, it can conatin multiple types.
 
                 Can only follow Artist, User, and Playlist.
 
@@ -222,14 +222,14 @@ class User():
     # TODO: what if already not following? Should it return success or error?
     def unfollow(self,
                  other: Union[Artist, User, Playlist,
-                              Iterable[Union[Artist, User, Playlist]]]
+                              list[Union[Artist, User, Playlist]]]
         ) -> Response:
         ''' Unfollow one or more things
 
         Keyword arguments:
             other: the object(s) to unfollow. Other must be either a single
-                object or a collection of objects.
-                If other is a collection, it can conatin multiple types.
+                object or a list of objects.
+                If other is a list, it can conatin multiple types.
 
                 Can only unfollow Artist, User, and Playlist.
 
@@ -243,14 +243,14 @@ class User():
 
     def has_saved(self,
                   other: Union[Track, Album,
-                               Iterable[Union[Track, Album]]]
+                               list[Union[Track, Album]]]
         ) -> Response:
         ''' Check if the user has one or more things saved to their library
 
         Keyword arguments:
             other: check if current user has 'other' saved to the library.
-                Other must be either a single object or a collection of objects.
-                If other is a collection, it can conatin multiple types.
+                Other must be either a single object or a list of objects.
+                If other is a list, it can conatin multiple types.
 
                 Can only check for Track and Album.
 
@@ -286,14 +286,14 @@ class User():
     # TODO: what if already saved? Should it return success or error?
     def save(self,
              other: Union[Track, Album,
-                          Iterable[Union[Track, Album]]]
+                          list[Union[Track, Album]]]
         ) -> Response:
         ''' Save one or more things to the user's library
 
         Keyword arguments:
             other: the object(s) to save. Other must be either a single object
-                or a collection of objects.
-                If other is a collection, it can conatin multiple types.
+                or a list of objects.
+                If other is a list, it can conatin multiple types.
 
                 Can only save Track or Album.
 
@@ -308,14 +308,14 @@ class User():
     # TODO: what if already removed? Should it return success or error?
     def remove(self,
                other: Union[Track, Album,
-                            Iterable[Union[Track, Album]]]
+                            list[Union[Track, Album]]]
         ) -> Response:
         ''' Remove one or more things from the user's library
 
         Keyword arguments:
             other: the object(s) to remove. Other must be either a single object
-                or a collection of objects.
-                If other is a collection, it can conatin multiple types.
+                or a list of objects.
+                If other is a list, it can conatin multiple types.
 
                 Can only remove Track or Album.
 
