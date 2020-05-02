@@ -2,6 +2,7 @@ from album import Album
 from track import Track
 from copy import deepcopy
 from response import Response
+import spotifython as sp
 
 class Artist:
     # User should never call this constructor. As a result, they should never
@@ -56,7 +57,7 @@ class Artist:
     def albums(self, 
         search_limit: int = None,
         include_groups: str = None,
-        country: str = None, # By default, returns for all countries
+        country: str = sp.TOKEN_REGION,
     ) -> Response: # List[Album]
         '''
         Gets the albums associated with the current Spotify artist.
@@ -67,9 +68,9 @@ class Artist:
                 that will be used to filter the response. If not supplied, 
                 all album types will be returned. 
                 Valid values are: 'album', 'single', 'appears_on', 'compilation' 
-            country: (Optional) An ISO 3166-1 alpha-2 country code or the string sp.FROM_TOKEN.
+            country: (Optional) An ISO 3166-1 alpha-2 country code or the string sp.TOKEN_REGION.
                 Supply this parameter to limit the response to one particular geographical 
-                market. If not given, results will be returned for all countries and you 
+                market. If this value is None, results will be returned for all countries and you 
                 are likely to get duplicate results per album, one for each country in 
                 which the album is available!
 
@@ -90,14 +91,14 @@ class Artist:
     
     
     def top_tracks(self,
-        country: str,
+        country: str = sp.TOKEN_REGION,
         search_limit: int = 10,
     ) -> Response: # List[Track]
         '''
         Gets the top tracks associated with the current Spotify artist.
         
         Args:
-            country: An ISO 3166-1 alpha-2 country code or the string sp.FROM_TOKEN.
+            country: An ISO 3166-1 alpha-2 country code or the string sp.TOKEN_REGION.
             search_limit: (Optional) the maximum number of results to return.
 
         Returns: 
@@ -105,7 +106,7 @@ class Artist:
 
         Exceptions:
             TypeError for invalid types in any argument.
-            ValueError for invalid country.
+            ValueError for invalid country, or if country is None.
             ValueError if search_limit is > 10: this is the Spotify API's search limit.
         
         Calls endpoints:

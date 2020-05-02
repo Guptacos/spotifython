@@ -7,7 +7,7 @@ from endpoint import Endpoint
 class Spotifython:
 
     # Constants
-    FROM_TOKEN = 'from_token'
+    TOKEN_REGION = 'from_token'
     ALBUM = 'album'
     ARTIST = 'artist'
     PLAYLIST = 'playlist'
@@ -24,6 +24,8 @@ class Spotifython:
     SHORT = 'short'
     CONTEXT = 'context'
     OFF = 'off'
+    KEEP_PLAY_STATE = 'keep_play_state'
+    FORCE_PLAY = 'force_play'
     
     def __init__(self, token):
         self._token = token
@@ -104,7 +106,7 @@ class Spotifython:
         query: str, 
         type: Union[str, List[str]],
         search_limit: int,
-        market: str = None,
+        market: str = self.TOKEN_REGION,
         include_external_audio: bool = False
     ) -> Response: # SearchResult
         '''
@@ -117,13 +119,15 @@ class Spotifython:
                 Note: shows and episodes are not supported in this version.
             search_limit: the maximum number of results to return.
             market: (Optional) An ISO 3166-1 alpha-2 country code or the string 
-                sp.FROM_TOKEN. If a country code is specified, only artists, albums,
+                sp.TOKEN_REGION. If a country code is specified, only artists, albums,
                 and tracks with content that is playable in that market is returned.
                 Note:
                 - Playlist results are not affected by the market parameter.
-                - If market is set to sp.FROM_TOKEN, and a valid access token is 
+                - If market is set to sp.TOKEN_REGION, and a valid access token is 
                 specified in the request header, only content playable
                 in the country associated with the user account, is returned.
+                - If market is set to None, no market is passed to Spotify's Web API, 
+                and its default behavior is invoked.
             include_external_audio: (Optional) If true,
                 the response will include any relevant audio content that is 
                 hosted externally. By default external content is filtered out 
@@ -160,15 +164,17 @@ class Spotifython:
 
     def get_albums(self, 
         album_ids: Union[str, List[str]],
-        market: str = None
+        market: str = self.TOKEN_REGION
     ) -> Response: # Union[Album, List[Album]]
         '''
         Gets the albums with the given Spotify album ids.
 
         Args:
             album_ids: a string or list of strings of the Spotify album ids to search for.
-            market: (Optional) An ISO 3166-1 alpha-2 country code or the string sp.FROM_TOKEN. 
+            market: (Optional) An ISO 3166-1 alpha-2 country code or the string sp.TOKEN_REGION. 
                 Provide this parameter if you want to apply Track Relinking.
+                If market is set to None, no market is passed to Spotify's Web API, and its default
+                behavior is invoked.
 
         Returns:
             A response object containing an Album or List[Album] if the request succeeded.
@@ -210,15 +216,17 @@ class Spotifython:
 
     def get_tracks(self, 
         track_ids: Union[str, List[str]], 
-        market: str = None
+        market: str = self.TOKEN_REGION
     ) -> Response: # Union[Track, List[Track]]
         '''
         Gets the tracks with the given Spotify track ids.
 
         Args:
             track_ids: a string or list of strings of the Spotify track ids to search for.
-            market: (Optional) An ISO 3166-1 alpha-2 country code or the string sp.FROM_TOKEN. 
+            market: (Optional) An ISO 3166-1 alpha-2 country code or the string sp.TOKEN_REGION. 
                 Provide this parameter if you want to apply Track Relinking.
+                If market is set to None, no market is passed to Spotify's Web API, and its default
+                behavior is invoked.
 
         Returns:
             A response object containing a Track or List[Track] if the request succeeded.
@@ -276,7 +284,7 @@ class Spotifython:
     def get_playlists(self,
         playlist_ids: Union[str, List[str]],
         fields: str = None,
-        market: str = None
+        market: str = self.TOKEN_REGION
     ) -> Response: # Union[Playlist, List[Playlist]]
         '''
         Gets the tracks with the given Spotify playlist ids.
@@ -288,8 +296,9 @@ class Spotifython:
                 non-reoccurring fields, while parentheses can be used to specify reoccurring 
                 fields within objects. Use multiple parentheses to drill down into nested objects. 
                 Fields can be excluded by prefixing them with an exclamation mark.
-            market: (Optional) An ISO 3166-1 alpha-2 country code or the string sp.FROM_TOKEN. 
+            market: (Optional) An ISO 3166-1 alpha-2 country code or the string sp.TOKEN_REGION. 
                 Provide this parameter if you want to apply Track Relinking.
+                If market is set to None, no market is passed to Spotify's Web API.
 
         Returns:
             A response object containing a Playlist or List[Playlist] if the request succeeded.
