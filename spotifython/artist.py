@@ -1,7 +1,7 @@
 from album import Album
 from track import Track
 from copy import deepcopy
-from response import *
+from response import Response
 
 class Artist:
     # User should never call this constructor. As a result, they should never
@@ -18,7 +18,8 @@ class Artist:
     ##################################
 
     def __str__(self):
-        return self.name().contents()
+        c = self.name()
+        return c.contents() if c else 'ERROR'
 
     ##################################
     # Field accessors

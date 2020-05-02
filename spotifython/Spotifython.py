@@ -1,4 +1,5 @@
-from response import *
+from typing import Union
+from response import Response
 from endpoint import Endpoint
 
 # This object should be constructed by the user to instantiate the 
@@ -13,10 +14,16 @@ class Spotifython:
     TRACK = 'track'
     SHOW = 'show'
     EPISODE = 'episode'
-    REQUEST_GET = "GET"
-    REQUEST_PUT = "PUT"
-    REQUEST_DELETE = "DELETE"
-    REQUEST_POST = "POST"
+    REQUEST_GET = 'GET'
+    REQUEST_PUT = 'PUT'
+    REQUEST_DELETE = 'DELETE'
+    REQUEST_POST = 'POST'
+    USER = 'user'
+    LONG = 'long'
+    MEDIUM = 'medium'
+    SHORT = 'short'
+    CONTEXT = 'context'
+    OFF = 'off'
     
     def __init__(self, token):
         self._token = token
@@ -62,32 +69,32 @@ class Spotifython:
         class SearchPage:
             def __init__(self, paging_info: dict):
                 self._raw = paging_info
-                self.href = self._raw.get("href", None) # str
-                self.items = self._raw.get("items", list()) # List[]
-                self.limit = self._raw.get("limit", None) # int
-                self.next = self._raw.get("next", None) # str
-                self.offset = self._raw.get("offset", None) # int
-                self.previous = self._raw.get("previous", None) # str
-                self.total = self._raw.get("total", None) # int
+                self.href = self._raw.get('href', None) # str
+                self.items = self._raw.get('items', list()) # List[]
+                self.limit = self._raw.get('limit', None) # int
+                self.next = self._raw.get('next', None) # str
+                self.offset = self._raw.get('offset', None) # int
+                self.previous = self._raw.get('previous', None) # str
+                self.total = self._raw.get('total', None) # int
 
         def __init__(self, search_info: dict):
             self._raw = search_info
-            self._albums_paging = SearchPage(self._raw.get("albums", dict()))
-            self._artists_paging = SearchPage(self._raw.get("artists", dict()))
-            self._playlists_paging = SearchPage(self._raw.get("playlists", dict()))
-            self._tracks_paging = SearchPage(self._raw.get("tracks", dict()))
+            self._albums_paging = SearchPage(self._raw.get('albums', dict()))
+            self._artists_paging = SearchPage(self._raw.get('artists', dict()))
+            self._playlists_paging = SearchPage(self._raw.get('playlists', dict()))
+            self._tracks_paging = SearchPage(self._raw.get('tracks', dict()))
 
-        def albums(self) -> List[Album]:
-            return self._albums_paging.get("items", list())
+        def albums(self) -> Response: # List[Album]
+            return self._albums_paging.get('items', list())
 
-        def artists(self) -> List[Artist]:
-            return self._artists_paging.get("items", list())
+        def artists(self) -> Response: # List[Artist]
+            return self._artists_paging.get('items', list())
 
-        def playlists(self) -> List[Playlist]:
-            return self._playlists_paging.get("items", list())
+        def playlists(self) -> Response: # List[Playlist]
+            return self._playlists_paging.get('items', list())
         
-        def tracks(self) -> List[Track]:
-            return self._tracks_paging.get("items", list())
+        def tracks(self) -> Response: # List[Track]
+            return self._tracks_paging.get('items', list())
     
     ##################################
     # API Calls
@@ -98,14 +105,14 @@ class Spotifython:
         type: Union[str, List[str]],
         search_limit: int,
         market: str = None,
-        include_external: str = None # audio
+        include_external_audio: bool = False
     ) -> Response: # SearchResult
         '''
         Searches for content with the given query.
 
         Args:
             query: search query keywords and optional field filters and operators.
-            type: a comma-separated list of the types of results to search for.
+            type: singular type or a list of the types of results to search for.
                 Valid arguments are sp.ALBUM, sp.ARTIST, sp.PLAYLIST, and sp.TRACK.
                 Note: shows and episodes are not supported in this version.
             search_limit: the maximum number of results to return.
@@ -117,13 +124,15 @@ class Spotifython:
                 - If market is set to sp.FROM_TOKEN, and a valid access token is 
                 specified in the request header, only content playable
                 in the country associated with the user account, is returned.
-            include_external: (Optional) Valid argument is "audio": if specified,
+            include_external_audio: (Optional) If true,
                 the response will include any relevant audio content that is 
                 hosted externally. By default external content is filtered out 
                 from responses.
 
         Returns:
             A response object containing a SearchResult if the request succeeded.
+            On failure, returns a response object containing the raw Spotify Web API
+            JSON and a corresponding status code defined in the Response class.
 
         Exceptions:
             TypeError for invalid types in any argument.
@@ -135,7 +144,7 @@ class Spotifython:
         ''' 
 
         # Don't forget to encode the spaces in strings!
-        # See guidelines in Search -> "Writing a Query - Guidelines" 
+        # See guidelines in Search -> 'Writing a Query - Guidelines' 
         # for more specification details that need to be implemented.
         
         # Search limit is internally represented using API calls with params:
@@ -144,6 +153,8 @@ class Spotifython:
         # It is a required field due to the offset + limit being 2000, which would take
         # 40 backend API calls.
         # Throw an error if > 2000.
+
+        # Internally, include_external='audio' is the only valid argument.
         
         return Response(status=Response.OK, contents=SearchResult(dict()))
 
@@ -161,6 +172,8 @@ class Spotifython:
 
         Returns:
             A response object containing an Album or List[Album] if the request succeeded.
+            On failure, returns a response object containing the raw Spotify Web API
+            JSON and a corresponding status code defined in the Response class.
 
         Exceptions:
             TypeError for invalid types in any argument.
@@ -183,6 +196,8 @@ class Spotifython:
 
         Returns:
             A response object containing an Artist or List[Artists] if the request succeeded.
+            On failure, returns a response object containing the raw Spotify Web API
+            JSON and a corresponding status code defined in the Response class.
 
         Exceptions:
             TypeError for invalid types in any argument.
@@ -207,6 +222,8 @@ class Spotifython:
 
         Returns:
             A response object containing a Track or List[Track] if the request succeeded.
+            On failure, returns a response object containing the raw Spotify Web API
+            JSON and a corresponding status code defined in the Response class.
 
         Exceptions:
             TypeError for invalid types in any argument.
@@ -228,6 +245,8 @@ class Spotifython:
             user_ids: a string or list of strings of the Spotify user id to search for.
         
         Returns: A response object containing a User or List[User] if the request succeeded.
+            On failure, returns a response object containing the raw Spotify Web API
+            JSON and a corresponding status code defined in the Response class.
 
         Exceptions:
             TypeError for invalid types in any argument.
@@ -243,6 +262,8 @@ class Spotifython:
         
         Returns: 
             A response object containing a User if the request succeeded.
+            On failure, returns a response object containing the raw Spotify Web API
+            JSON and a corresponding status code defined in the Response class.
 
         Exceptions:
             ValueError if the Spotify API key is not valid. TODO: is this ok
@@ -272,6 +293,8 @@ class Spotifython:
 
         Returns:
             A response object containing a Playlist or List[Playlist] if the request succeeded.
+            On failure, returns a response object containing the raw Spotify Web API
+            JSON and a corresponding status code defined in the Response class.
 
         Exceptions:
             TypeError for invalid types in any argument.

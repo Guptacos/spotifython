@@ -9,11 +9,13 @@ TOKEN = 'woohoo'
 # tracks by the top related artists.
 def check_top_related_tracks(artist : str):
     session = sp.Spotifython(TOKEN)
-    results = session.search(artist, types=[sp.ARTISTS])
+    results = session.search(artist, types=[sp.ARTIST])
 
     # artists() method automatically sorts based off of top results according
     # to Spotify.
-    top_artist = results.artists()[0]
+    # TODO: see issue #21: How to deal with functions that can take 1 or more 
+    # of an obj as an arg?
+    top_artist = results.artists().contents()[0]
 
     top_related_tracks = []
     related_artists = top_artist.related_artists()
