@@ -1,238 +1,326 @@
-from typing import Union, List
-from response importt
-from response import *
-from player import Player
-from track import Track
 from album import Album
 from artist import Artist
+from player import Player
 from playlist import Playlist
+from spotifython import Spotifython
+from track import Track
+
+from response import Response
+from typing import Union, List
 
 # TODO: exceptions for each param
 # TODO: auth required for each param
-# Review return types and params, along with restrictions?
-# Standardize the get and set methods?
-# Add python : type syntax to inputs and outputs
-
-# TODO: one of these shouldn't be here
-# Note: should we have getFollowing for playlists, or just do getPlaylists?
+# TODO: what to do about partial success?
 class User():
 
-    # TODO: What things should pollute the global namespace?
-    # TODO: What state should be stored / cached? Definitely ID
 
-    # TODO: param names
-    def __init__(self, sp_obj, user_id, known_vals=None):
-        #TODO: self.player init?
+    def __init__(self,
+                 sp_obj: Spotifython,
+                 user_id: str,
+                 known_vals: dict=None
+        ) -> User:
+        # note to self: init self.player
         pass
+
         
-    # TODO: what should the string represent? <User __userName__, Id __userId__>
-    def __str__(self):
+    # Format should be 'User <%s>' % user_id
+    def __str__(self) -> str:
         pass
 
-    # TODO: how is this different than __str__?
-    def __repr__(self):
-        pass
 
-    #TODO: func name, param name
-    def _update_internal(self, known_vals):
-        pass
-
-    def player(self):
-        return self._player
-
-    # TODO: limit and offset?
-    def top(self
-            top_type,
-            time_range=sp.MEDIUM):
-        ''' Get the top artists or tracks for the user over a time range.
-            Note that Spotify defines "top" using internal metrics.
+    def _update_internal(self,
+                         known_vals: dict
+        ) -> None:
+        ''' Used internally to keep cached data up to date
 
         Keyword arguments:
-        top_type: one of sp.ARTIST or sp.TRACK.
-        time_range: one of:
-            sp.LONG (several years)
-            sp.MEDIUM (about 6 months)
-            sp.SHORT (about 4 weeks)
+            known_vals: a dictionary with fields that should be added to or
+                updated in the internal cache. Any values in the dictionary will
+                become the new value for that key.
+
+        Return:
+            None
+        '''
+        pass
+
+
+    def player(self) -> Player:
+        ''' Get the player object for this user
+
+        This is how client code should access a player. For example:
+            u = sp.get_user(user_id)
+            u.player().pause()
+
+        Return:
+            A Player object.
+        '''
+        pass
+
+
+    def top(self
+            top_type: str,
+            time_range: str=sp.MEDIUM,
+            limit: int=50
+        ) -> Response:
+        ''' Get the top artists or tracks for the user over a time range.
+
+        Keyword arguments:
+            top_type: only get items of this type. One of:
+                sp.ARTIST
+                sp.TRACK
+            time_range: only get top items for this time range. One of:
+                sp.LONG (several years)
+                sp.MEDIUM (about 6 months)
+                sp.SHORT (about 4 weeks)
+            limit: max number of items to return.
+
+        response.contents():
+            Success: Union[List[Artist], List[Track]]
+            Failure: None
+
+        Note: Spotify defines "top items" using internal metrics.
         '''
         # GET /v1/me/top/{type}
         pass
 
-    def recently_played(self, limit=50):
+
+    def recently_played(self,
+                        limit: int=50
+        ) -> Response:
         ''' Get the user's recently played tracks
 
         Keyword arguments:
             limit: max number of items to return. Can't be more than 50.
 
-        note: the 'before' and 'after' functionalities are not supported.
+        response.contents():
+            Success: List[Track]
+            Failure: None
+
+        Note: the 'before' and 'after' functionalities are not supported.
         '''
         # GET /v1/me/player/recently-played
         pass
 
-    def get_playlists(self):
+
+    def get_playlists(self,
+                      limit: int=None
+        ) -> Response:
         ''' Get all playlists that this user has in their library
 
-        Note that this includes both playlists owned by this user, and playlists
-        that this user follows but are owned by others.
+        Keyword arguments:
+            limit: the max number of items to return. If None, will return all.
+
+        response.contents():
+            Success: List[Playlist]
+            Failure: None
+
+        Note: this includes both playlists owned by this user and playlists
+            that this user follows but are owned by others.
 
         To get only playlists this user follows, use get_following(sp.PLAYLISTS)
         '''
         # GET /v1/users/{user_id}/playlists
         pass
 
-    # @return TODO:
-    # @exceptions TODO: should I throw exception for collab=public=True??
-    # TODO: should name be new_playlist?
+
+    # TODO: should this be an enum instead of 2 boolean flags?
     def create_playlist(self,
                         name: str
                         public: bool=True
                         collaborative: bool=False
-                        description: str=""):
+                        description: str=""
+        ) -> Response:
         ''' Create a new playlist owned by the current user
 
         Keyword arguments:
-        name: The name for the new playlist. Does not need to be unique;
-            a user may have several playlists with the same name.
-        public: whether the playlist should be publicly viewable.
-        collaborative: whether the playlist should be collaborative. Note
-            that if collaborative is True, public must be False.
-        description: viewable description of the playlist.
+            name: The name for the new playlist. Does not need to be unique;
+                a user may have several playlists with the same name.
+            public: whether the playlist should be publicly viewable.
+            collaborative: whether the playlist should be collaborative.
+            description: viewable description of the playlist.
 
-        Auth token requirements:
-        auth token used needs the following authorizations:
-            playlist-modify-private for public=False
-            playlist-modify-public for public=True
-            both of the above for collaborative=True
+        response.contents():
+            None
+
+        Exceptions:
+            ValueError: raised if both collaborative and public are True
         '''
         # POST /v1/users/{user_id}/playlists
         pass
 
-    # @return: TODO: if batch, then what? dict? list of tuples?
-    # TODO: What types are allowed for batches? Any iterable or just a list?
-    # TODO: Batch size limit?
-    # TODO: object type instead of 'object'
+
     def is_following(self,
-                     other: Union[object, List[object]]):
-        # GET /v1/me/following/contains
-        # GET /v1/playlists/{playlist_id}/followers/contains
+                     other: Union[Artist, User, Playlist,
+                                  Iterable[Union[Artist, User, Playlist]]]
+        ) -> Response:
         ''' Check if the current user is following something
 
         Keyword arguments:
-        other: check if current user is following 'other'. Object must be an
-            instance of sp.Artist, sp.User, or sp.Playlist. other must be either
-            a single instance of object, or a list of same-type objects.
+            other: check if current user is following 'other'. Other must be
+                either a single object or a collection of objects.
+                If other is a collection, it can conatin multiple types.
 
-        Return:
-            True if self follows other, else False
+                Can only check for Artist, User, and Playlist.
+
+        response.contents():
+            Success: List of tuples. Each tuple has an input object and whether
+                     the user follows the object.
+            Failure: None
         '''
+        # GET /v1/me/following/contains
+        # GET /v1/playlists/{playlist_id}/followers/contains
+        # Note for me: easier to use get_playlists and check in there
         pass
 
-    # TODO: Batch size limit?
-    # TODO: Pagination?
-    # TODO: fo follow_type type???
+
     def get_following(self,
-                      follow_type):
+                      follow_type: str,
+                      limit: int=None
+        ) -> Response:
         ''' Get all follow_type objects the current user is following
 
         Keyword arguments:
-        follow_type: one of sp.ARTIST or sp.PLAYLIST
+            follow_type: one of sp.ARTIST or sp.PLAYLIST
+            limit: the max number of items to return. If None, will return all.
 
-        return: list of follow_type objects.
+        response.contents():
+            Success: List of follow_type objects. Could be empty.
+            Failure: None
 
-        @note: if sp.USER is passed in, will throw an exception. This is because
-              the Spotify web api does not currently allow you to access this
-              information.
-              See https://github.com/spotify/web-api/issues/4
+        Exceptions:
+            ValueError: if sp.USER is passed in. The Spotify web api does not
+                currently allow you to access this information.
+                For more info: https://github.com/spotify/web-api/issues/4
         '''
         # GET /v1/me/following
         # get user playlists / parse for diff owner to get following playlists
         pass
 
-    # @return: TODO bool success? Return obj w/ success/fail stat? can it fail?
+
+    # TODO: what if already following? Should it return success or error?
     def follow(self,
-               other: Union[object, List[object]]):
+               other: Union[Artist, User, Playlist,
+                            Iterable[Union[Artist, User, Playlist]]]
+        ) -> Response:
         ''' Follow one or more things
 
         Keyword arguments:
-        other: the object(s) to follow
+            other: the object(s) to follow. Other must be either a single object
+                or a collection of objects.
+                If other is a collection, it can conatin multiple types.
+
+                Can only follow Artist, User, and Playlist.
+
+        response.contents():
+            None
         '''
         # PUT /v1/me/following
         # PUT /v1/playlists/{playlist_id}/followers
         pass
 
-    # @param unfollowType: the type of object you are trying to unfollow.
-    # @param unfollowId: the id to unfollow
-    # @return: TODO bool success? Return obj w/ success/fail stat? can it fail?
-    # TODO: what if already not following the thing?
+
+    # TODO: what if already not following? Should it return success or error?
     def unfollow(self,
-                 other: Union[object, List[object]]):
+                 other: Union[Artist, User, Playlist,
+                              Iterable[Union[Artist, User, Playlist]]]
+        ) -> Response:
         ''' Unfollow one or more things
 
         Keyword arguments:
-        other: the object(s) to unfollow
+            other: the object(s) to unfollow. Other must be either a single
+                object or a collection of objects.
+                If other is a collection, it can conatin multiple types.
+
+                Can only unfollow Artist, User, and Playlist.
+
+        response.contents():
+            None
         '''
         # DELETE /v1/me/following
         # DELETE /v1/playlists/{playlist_id}/followers
         pass
 
-    # @return: TODO: dict? list of tuples?
-    # TODO: What types are allowed for batches? Any iterable or just a list?
-    # TODO: Batch size limit?
+
     def has_saved(self,
-                  other: Union[object, List[object]])):
+                  other: Union[Track, Album,
+                               Iterable[Union[Track, Album]]]
+        ) -> Response:
         ''' Check if the user has one or more things saved to their library
 
         Keyword arguments:
-        other: check if the current user has 'other' saved to the library.
-            Object must be an instance of sp.Album or sp.Track.
-            other must be either a single instance of object, or a list of
-            same-type objects.
+            other: check if current user has 'other' saved to the library.
+                Other must be either a single object or a collection of objects.
+                If other is a collection, it can conatin multiple types.
+
+                Can only check for Track and Album.
+
+        response.contents():
+            Success: List of tuples. Each tuple has an input object and whether
+                     the user has that object saved.
+            Failure: None
         '''
         # GET /v1/me/albums/contains
         # GET /v1/me/tracks/contains
         pass
 
-    # @param savedType: get all savedType objects saved by the user. Must be
-    #       sp.ALBUM or sp.TRACK.
-    # @return: list of saveType objects
-    # TODO: Batch size limit?
-    # TODO: Pagination?
-    # TODO: can you use both save types?
+
     def get_saved(self,
-                  saved_type):
+                  saved_type: str,
+                  limit: int=None
+        ) -> Response:
         ''' Get all saved_type objects the user has saved to their library
 
         Keyword arguments:
-        saved_type: one of sp.ALBUM or sp.TRACK
+            saved_type: one of sp.ALBUM or sp.TRACK
+            limit: the max number of items to return. If None, will return all.
 
-        return: list of saved_type objects.
+        response.contents():
+            Success: List of saved_type objects. Could be empty.
+            Failure: None
         '''
         # GET /v1/me/albums
         # GET /v1/me/tracks
         pass
 
-    # @param saveType: the type of object you are trying to save.
-    # @param saveId: the id to save.
-    # @return: TODO bool success? Return obj w/ success/fail stat? can it fail?
+
+    # TODO: what if already saved? Should it return success or error?
     def save(self,
-             other: Union[object, List[object]]):
+             other: Union[Track, Album,
+                          Iterable[Union[Track, Album]]]
+        ) -> Response:
         ''' Save one or more things to the user's library
 
         Keyword arguments:
-        other: the object(s) to save.
+            other: the object(s) to save. Other must be either a single object
+                or a collection of objects.
+                If other is a collection, it can conatin multiple types.
+
+                Can only save Track or Album.
+
+        response.contents():
+            None
         '''
         # PUT /v1/me/albums
         # PUT /v1/me/tracks
         pass
 
-    # @param removeType: the type of object you are trying to remove.
-    # @param removeId: the id to remove.
-    # @return: TODO bool success? Return obj w/ success/fail stat? can it fail?
+
+    # TODO: what if already removed? Should it return success or error?
     def remove(self,
-               other: Union[object, List[object]]):
+               other: Union[Track, Album,
+                            Iterable[Union[Track, Album]]]
+        ) -> Response:
         ''' Remove one or more things from the user's library
 
         Keyword arguments:
-        other: the object(s) to remove.
+            other: the object(s) to remove. Other must be either a single object
+                or a collection of objects.
+                If other is a collection, it can conatin multiple types.
+
+                Can only remove Track or Album.
+
+        response.contents():
+            None
         '''
         # DELETE /v1/me/albums
         # DELETE /v1/me/tracks
