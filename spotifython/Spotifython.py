@@ -87,7 +87,7 @@ class Spotifython:
                 response, err = _request.(...)
         '''
         request_uri = Endpoint.BASE_URI + endpoint
-        headers = {'Authorization': self._token}
+        headers = {"Authorization: Bearer ": self._token}
 
         if (request_type is self.REQUEST_GET):
             r = requests.get(request_uri, params=uri_params, headers=headers, timeout=)
