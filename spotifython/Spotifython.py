@@ -1,6 +1,7 @@
 from typing import Union
 from response import Response
 from endpoint import Endpoint
+import requests
 
 # This object should be constructed by the user to instantiate the 
 # session of Spotify Web API usage.
@@ -29,6 +30,7 @@ class Spotifython:
     PUBLIC = 'public'
     PRIVATE = 'private'
     PRIVATE_COLLAB = 'private_collab'
+    REQUEST_TIMEOUT = 10 # timeout in seconds
     
     def __init__(self, token):
         self._token = token
@@ -53,12 +55,67 @@ class Spotifython:
     # request_type: REQUEST_GET, REQUEST_POST, REQUEST_PUT, REQUEST_DELETE
     def _request(request_type: str, endpoint: str, body: dict=None, uri_params: dict=None):
         '''
-            Does request with retry. This method should return a tuple (response_json, status_code).
+            Does request with retry. This method should return a tuple ((response_json, status_code), Exception) if
+            the request is executed, and (None, TypeError) if the request type is invalid.
+            
+            TODO: how to most effectively return informative information? There are several edge case scenarios:
+                1) 204 No content - leads to return with no content, but successful status and no exception.
+                2) An actual failure (HTTP 400+) - leads to return with potential content, failed status code, and 
+                an exception present.
+                3) Regardless of what the scenarios are, do we want to try avoiding the inclusion of the response obj?
+                Otherwise we can easily return the response object and a corresponding exception as the error.
 
+            The reasoning behind providing an Exception instead of the return status code is that the Requests module
+            provides an HTTPError object in the event of an unsuccessful web request.
+            
+            Args:
+                request_type: one of sp.REQUEST_GET, sp.REQUEST_POST, sp.REQUEST_PUT, sp.REQUEST_DELETE.
+                endpoint: an endpoint string defined in the Endpoint class.
+                body: (Optional) dictionary of values for the request body.
+                uri_params: (Optional) params to encode into the uri.
+
+            Returns:
+                On success, returns the request JSON and Exception=None.
+                On failure, returns
+                    (None, TypeError) if the request type is invalid.
+                    On request failure, returns the response contents as text and one of several exceptions:    
+                        requests.exceptions.HTTPError if there is an error with the HTTP request.
+                        ValueError if there is an error extracting valid JSON.
+                Note: response text is provided using the encoding provided by requests.Response.encoding.
+                    
             Usage:
-                response, err = _request.()
+                response, err = _request.(...)
         '''
-        pass
+        request_uri = Endpoint.BASE_URI + endpoint
+        headers = {'Authorization': self._token}
+
+        if (request_type is self.REQUEST_GET):
+            r = requests.get(request_uri, params=uri_params, headers=headers, timeout=)
+        else if (request_type is self.REQUEST_POST):
+            r = requests.post(request_uri, data=body, headers=headers)
+        else if (request_type is self.REQUEST_PUT):
+            r = requests.put(request_uri, data=body, headers=headers)
+        else if (request_type is self.REQUEST_DELETE):
+            r = requests.delete(request_uri, headers=headers)
+        else:
+            return None, TypeError(request_type)
+        
+        # Extract the information from response. No exception should be present in the event of a successful 
+        # response, but the response json may or may not be present.
+
+        try:
+            # r.raise_for_status() returns HTTPError if request unsuccessful - this is a real error
+            r.raise_for_status() 
+        except (requests.exceptions.HTTPError) as err:
+            error = err
+    
+        try:
+            # r.json() throws ValueError if no content - this is not an error and no exception should be returned
+            content = r.json()
+        except (ValueError):
+            content = r.content 
+
+        return (content, r.status_code), error
 
     # User should never call this constructor. As a result, they should never
     # have access to the search_info structure prior to creating an SearchResult.
