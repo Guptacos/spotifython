@@ -1,16 +1,31 @@
-from album import Album
-from artist import Artist
-from player import Player
-from playlist import Playlist
-from spotifython import Spotifython
-from track import Track
-
-from response import Response
+from __future__ import annotations # Allow type hinting a class within the class
 from typing import Union, List, Dict
+from typeguard import typechecked
+
+# TODO: remove these after integrating.
+#from album import Album
+#from artist import Artist
+#from player import Player
+#from playlist import Playlist
+#from track import Track
+class Album:
+    pass
+class Artist:
+    pass
+class Player:
+    def __init__(self, user):
+        return None
+class Playlist:
+    pass
+class Track:
+    pass
+
+from spotifython import Spotifython
+from spotifython import Spotifython as sp
 
 # TODO: auth required for each param
 # TODO: what to do about partial success?
-class User():
+class User:
     ''' Define behaviors related to a user, such as reading / modifying the
         library and following artists.
 
@@ -22,18 +37,19 @@ class User():
     '''
 
 
+    @typechecked
     def __init__(self,
                  sp_obj: Spotifython,
                  user_id: str,
                  known_vals: Dict=None
-    ) -> User:
-        # note to self: init self.player
-        pass
+    ):
+        self._user_id = user_id
+        self._player = Player(self)
+        self._raw = known_vals
 
-        
-    # Format should be 'User <%s>' % user_id
+
     def __str__(self) -> str:
-        pass
+        return 'User <%s>' % self._user_id
 
 
     def _update_internal(self,
@@ -49,6 +65,8 @@ class User():
         Return:
             None
         '''
+        # {**A, **B} returns (A - B) U B
+        self._raw = {**self._raw, **new_vals}
         pass
 
 
@@ -62,14 +80,15 @@ class User():
         Return:
             A Player object.
         '''
-        pass
+        return self._player
 
 
+    @typechecked
     def top(self,
             top_type: str,
             limit: int,
             time_range: str=sp.MEDIUM
-    ) -> Response: # Union[List[Artist], List[Track]]
+    ) -> Union[List[Artist], List[Track]]:
         ''' Get the top artists or tracks for the user over a time range.
 
         Keyword arguments:
@@ -93,9 +112,10 @@ class User():
         pass
 
 
+    @typechecked
     def recently_played(self,
                         limit: int=50
-    ) -> Response: # List[Track]
+    ) -> List[Track]:
         ''' Get the user's recently played tracks
 
         Keyword arguments:
@@ -115,9 +135,10 @@ class User():
         pass
 
 
+    @typechecked
     def get_playlists(self,
                       limit: int=None
-    ) -> Response: # List[Playlist]
+    ) -> List[Playlist]:
         ''' Get all playlists that this user has in their library
 
         Keyword arguments:
@@ -137,11 +158,12 @@ class User():
         pass
 
 
+    @typechecked
     def create_playlist(self,
                         name: str,
                         visibility: str=sp.PUBLIC,
                         description: str=""
-    ) -> Response: # None
+    ) -> None:
         ''' Create a new playlist owned by the current user
 
         Keyword arguments:
@@ -165,10 +187,11 @@ class User():
         pass
 
 
+    @typechecked
     def is_following(self,
                      other: Union[Artist, User, Playlist,
                                   List[Union[Artist, User, Playlist]]]
-    ) -> Response: # List[Tuple[Union[Artist, User, Playlist], bool]]
+    ) -> List[Tuple[Union[Artist, User, Playlist], bool]]:
         ''' Check if the current user is following something
 
         Keyword arguments:
@@ -192,10 +215,11 @@ class User():
         pass
 
 
+    @typechecked
     def get_following(self,
                       follow_type: str,
                       limit: int=None
-    ) -> Response: # Union[List[Artist], List[Playlist]]
+    ) -> Union[List[Artist], List[Playlist]]:
         ''' Get all follow_type objects the current user is following
 
         Keyword arguments:
@@ -217,10 +241,11 @@ class User():
         pass
 
 
+    @typechecked
     def follow(self,
                other: Union[Artist, User, Playlist,
                             List[Union[Artist, User, Playlist]]]
-    ) -> Response: # None
+    ) -> None:
         ''' Follow one or more things
 
         Keyword arguments:
@@ -244,10 +269,11 @@ class User():
         pass
 
 
+    @typechecked
     def unfollow(self,
                  other: Union[Artist, User, Playlist,
                               List[Union[Artist, User, Playlist]]]
-    ) -> Response: # None
+    ) -> None:
         ''' Unfollow one or more things
 
         Keyword arguments:
@@ -271,10 +297,11 @@ class User():
         pass
 
 
+    @typechecked
     def has_saved(self,
                   other: Union[Track, Album,
                                List[Union[Track, Album]]]
-    ) -> Response: # List[Tuple[Union[Track, Album], bool]]
+    ) -> List[Tuple[Union[Track, Album], bool]]:
         ''' Check if the user has one or more things saved to their library
 
         Keyword arguments:
@@ -297,10 +324,11 @@ class User():
         pass
 
 
+    @typechecked
     def get_saved(self,
                   saved_type: str,
                   limit: int=None
-    ) -> Response: # Union[List[Album], List[Track]]
+    ) -> Union[List[Album], List[Track]]:
         ''' Get all saved_type objects the user has saved to their library
 
         Keyword arguments:
@@ -317,10 +345,11 @@ class User():
         pass
 
 
+    @typechecked
     def save(self,
              other: Union[Track, Album,
                           List[Union[Track, Album]]]
-    ) -> Response: # None
+    ) -> None:
         ''' Save one or more things to the user's library
 
         Keyword arguments:
@@ -344,10 +373,11 @@ class User():
         pass
 
 
+    @typechecked
     def remove(self,
                other: Union[Track, Album,
                             List[Union[Track, Album]]]
-    ) -> Response: # None
+    ) -> None:
         ''' Remove one or more things from the user's library
 
         Keyword arguments:
