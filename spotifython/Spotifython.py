@@ -39,6 +39,10 @@ class Spotifython:
     PRIVATE = 'private'
     PRIVATE_COLLAB = 'private_collab'
     DEFAULT_REQUEST_TIMEOUT = 10 # in seconds
+    SEARCH_RESPONSE_TYPE_ALBUM = 'albums'
+    SEARCH_RESPONSE_TYPE_ARTIST = 'artists'
+    SEARCH_RESPONSE_TYPE_PLAYLIST = 'playlists'
+    SEARCH_RESPONSE_TYPE_TRACK = 'tracks'
     
     def __init__(self, token: str, timeout: int = DEFAULT_REQUEST_TIMEOUT):
         self._token = token
@@ -108,29 +112,27 @@ class Spotifython:
     # desired number of search results (up to search_limit).
     class SearchResult:
 
-        # Each category of search result from a query is kept within a paging object
-        # User should never call this constructor. As a result, they should never
-        # have access to the paging_info structure prior to creating an SearchPage.
-        # This class is for internal representation of sesarch results used to execute 
-        # API calls and aggregate data.
-        class SearchPage:
-            def __init__(self, paging_info: dict):
-                self._raw = paging_info
-                self.href = self._raw.get('href', None) # str
-                self.items = self._raw.get('items', list()) # List[]
-                self.limit = self._raw.get('limit', None) # int
-                self.next = self._raw.get('next', None) # str
-                self.offset = self._raw.get('offset', None) # int
-                self.previous = self._raw.get('previous', None) # str
-                self.total = self._raw.get('total', None) # int
-
-        def __init__(self, search_info: dict):
+        def __init__(self, search_info: dict = dict()):
             self._raw = search_info
-            self._albums_paging = SearchPage(self._raw.get('albums', dict()))
-            self._artists_paging = SearchPage(self._raw.get('artists', dict()))
-            self._playlists_paging = SearchPage(self._raw.get('playlists', dict()))
-            self._tracks_paging = SearchPage(self._raw.get('tracks', dict()))
+            self._albums_paging = self._raw.get('albums', dict()).get('items', list())
+            self._artists_paging = self._raw.get('artists', dict()).get('items', list())
+            self._playlists_paging = self._raw.get('playlists', dict()).get('items', list())
+            self._tracks_paging = self._raw.get('tracks', dict()).get('items', list())
 
+        # Internal: Update search results via paginated searches
+        def _add_albums(self, albums: List[Album]):
+            self._albums_paging += albums
+        
+        def _add_artists(self, artists: List[Artist]):
+            self._artists_paging += artists
+        
+        def _add_playlists(self, playlists: List[Playlist]):
+            self._playlists_paging += playlists
+        
+        def _add_tracks(self, tracks: List[Track]):
+            self._tracks_paging += tracks
+
+        # Field accessors
         def albums(self) -> Response: # List[Album]
             return self._albums_paging.get('items', list())
 
@@ -149,7 +151,7 @@ class Spotifython:
 
     def search(self, 
         query: str, 
-        type: Union[str, List[str]],
+        search_types: Union[str, List[str]],
         search_limit: int,
         market: str = self.TOKEN_REGION,
         include_external_audio: bool = False
@@ -159,7 +161,7 @@ class Spotifython:
 
         Args:
             query: search query keywords and optional field filters and operators.
-            type: singular type or a list of the types of results to search for.
+            search_types: singular search type or a list of the types of results to search for.
                 Valid arguments are sp.ALBUM, sp.ARTIST, sp.PLAYLIST, and sp.TRACK.
                 Note: shows and episodes are not supported in this version.
             search_limit: the maximum number of results to return.
@@ -186,16 +188,12 @@ class Spotifython:
 
         Exceptions:
             TypeError for invalid types in any argument.
-            ValueError if query type, market, or include_external is invalid.
+            ValueError if query type or market is invalid. TODO: how to validate?
             ValueError if search_limit is > 2000: this is the Spotify API's search limit.
 
         Calls endpoints: 
             GET   /v1/search
         ''' 
-
-        # Don't forget to encode the spaces in strings!
-        # See guidelines in Search -> 'Writing a Query - Guidelines' 
-        # for more specification details that need to be implemented.
         
         # Search limit is internally represented using API calls with params:
         #    limit: int = None,
@@ -205,10 +203,104 @@ class Spotifython:
         # Throw an error if > 2000.
 
         # Internally, include_external='audio' is the only valid argument.
-        
-        # TODO
 
-        return Response(status=Response.OK, contents=SearchResult(dict()))
+        # Type validation
+        if (not isinstance(query, str)):
+            raise TypeError(query)
+        if (not isinstance(search_types, str) and not isinstance(search_types, List[str])):
+            raise TypeError(search_types)
+        if (not isinstance(search_limit, int)):
+            raise TypeError(search_limit)
+        if (market is not None and not isinstance(market, str)):
+            raise TypeError(market)
+        if (not isinstance(include_external_audio, bool)):
+            raise TypeError(include_external_audio)
+
+        # Encode the spaces in strings! See 'Search -> Writing a Query - Guidelines'
+        # in the Spotify Web API reference for more details.
+        encoded_query = query.replace(' ', '+')
+
+        # Argument validation
+        search_types = search_types if isinstance(search_types, List[str]) else list(search_types)
+        valid_search_types = [self.ALBUM, self.ARTIST, self.PLAYLIST, self.TRACK]
+        for search_type_filter in search_types:
+            if (search_type_filter not in valid_search_types):
+                raise ValueError(search_types)
+        if (search_limit > 2000):
+            raise ValueError("Spotify only supports up to 2000 search results.")
+
+        # Construct params for API call
+        endpoint = Endpoint.SEARCH
+        uri_params = dict()
+        uri_params['q'] = encoded_query
+        if (market is not None):
+            uri_params['market'] = market
+        if (include_external_audio):
+            uri_params['include_external'] = 'audio'
+
+        # A maximum 50 search results per search type can be returned per API call
+        api_call_limit = 50
+        total_search_limit = 2000
+        num_requests = math.ceil(len(search_limit) / api_call_limit) if search_limit is not None else float('inf')
+        limit = min(total_search_limit, search_limit)
+        offset = 0
+        
+        # Initialize SearchResult object
+        result = self.SearchResult()
+        
+        # We want the plural search types, while our constants are singular search types.
+        remaining_search_types = [s + 's' for s in search_types]
+
+
+        while (num_requests > 0):
+            uri_params['type'] = ','.join(remaining_search_types)
+            uri_params['limit'] = limit
+            uri_params['offset'] = offset
+
+            # Execute requests
+            response_json, status_code = self._request(
+                request_type=Spotifython.REQUEST_GET, 
+                endpoint=endpoint, 
+                uri_params=uri_params
+            )
+
+            # Extract data per search type
+            for t in remaining_search_types:
+                items = response_json[t]['items']
+                acc = list()
+
+                # Add items to accumulator
+                for item in items:
+                    if (t is self.SEARCH_RESPONSE_TYPE_ALBUM):
+                        acc.append(Album(item))
+                    else if (t is self.SEARCH_RESPONSE_TYPE_ARTIST):
+                        acc.append(Artist(item))
+                    else if (t is self.SEARCH_RESPONSE_TYPE_PLAYLIST):
+                        acc.append(Playlist(item))
+                    else if (t is self.SEARCH_RESPONSE_TYPE_TRACK):
+                        acc.append(Track(item))
+
+                # Update accumulated results into search result
+                if (t is self.SEARCH_RESPONSE_TYPE_ALBUM):
+                    result._add_albums(acc)
+                else if (t is self.SEARCH_RESPONSE_TYPE_ARTIST):
+                    result._add_artists(acc)
+                else if (t is self.SEARCH_RESPONSE_TYPE_PLAYLIST):
+                    result._add_playlists(acc)
+                else if (t is self.SEARCH_RESPONSE_TYPE_TRACK):
+                    result._add_tracks(acc)
+
+            offset += api_call_limit
+            num_requests -= 1
+            
+            # Only make necessary search queries
+            new_remaining_search_types = list()
+            for t in remaining_search_types:
+                if (response_json[t]['next'] != 'null'):
+                    new_remaining_search_types.append(t)
+            remaining_search_types = new_remaining_search_types
+            
+    return result
 
     def get_albums(self, 
         album_ids: Union[str, List[str]],

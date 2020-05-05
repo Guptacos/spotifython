@@ -1,5 +1,6 @@
 class Endpoint:
     BASE_URI = 'https://api.spotify.com'
+    SEARCH = '/v1/search'
     SEARCH_GET_ALBUMS = '/v1/albums'
     SEARCH_GET_ARTISTS = '/v1/artists'
     SEARCH_GET_TRACKS = '/v1/tracks'
