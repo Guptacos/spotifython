@@ -2,6 +2,7 @@ from album import Album
 from track import Track
 from copy import deepcopy
 from response import Response
+from endpoint import Endpoint
 import spotifython as sp
 
 class Artist:
@@ -126,7 +127,7 @@ class Artist:
 
         # Construct params for API call
         _artist_id = self.artist_id().contents()
-        endpoint = f'/v1/artists/{artist_id}/albums'
+        endpoint = Endpoint.ARTIST_GET_ALBUMS.format(artist_id)
         uri_params = dict()
         if (include_groups is not None and len(include_groups) > 0):
             uri_params['include_groups'] = ",".join()
@@ -210,7 +211,7 @@ class Artist:
 
         # Construct params for API call
         _artist_id = self.artist_id().contents()
-        endpoint = f'/v1/artists/{_artist_id}/top-tracks'
+        endpoint = Endpoint.ARTIST_TOP_TRACKS.format(_artist_id)
         uri_params = dict()
         if (market is not None):
             uri_params['country'] = market
@@ -271,7 +272,7 @@ class Artist:
 
         # Construct params for API call
         _artist_id = self.artist_id().contents()
-        endpoint = f'/v1/artists/{_artist_id}/related-artists'
+        endpoint = Endpoint.ARTIST_RELATED_ARTISTS.format(_artist_id)
 
         # Initialize self.top_tracks if different query or never previously called
         self.related_artists = self.related_artists if self.related_artists is not None and \
