@@ -135,8 +135,9 @@ class Artist:
             uri_params['market'] = market
         
         # Each API call can take 1-50 requests as "limit", or no limit.
+        api_call_limit = 50
         offset = 0
-        num_requests = math.ceil(search_limit / 50) if search_limit else float("inf")
+        num_requests = math.ceil(search_limit / api_call_limit) if search_limit else float("inf")
 
         # Initialize self.albums if different query or never previously called
         self.albums = self.albums if self.albums is not None and \
@@ -145,6 +146,12 @@ class Artist:
         # Execute requests
         # TODO: how to handle partial failures?
         while (num_requests > 0):
+            if (search_limit is None):
+                search_limit = api_call_limit
+            else:
+                search_limit = min(search_limit, api_call_limit)
+            uri_params['limit'] = search_limit
+            uri_params['offset'] = offset
             response_json, status_code = self._top._request(
                 request_type=Spotifython.REQUEST_GET, 
                 endpoint=endpoint, 
@@ -160,6 +167,7 @@ class Artist:
                 break
 
             num_requests -= 1
+            offset += api_call_limit
 
         # Update stored params for lazy loading
         self._albums_query_params = search_query
