@@ -1,6 +1,8 @@
 from __future__ import annotations # Allow type hinting a class within the class
 from typing import Union, List, Dict
 from typeguard import typechecked
+from endpoint import Endpoint
+import math
 
 # TODO: remove these after integrating.
 #from album import Album
@@ -9,16 +11,25 @@ from typeguard import typechecked
 #from playlist import Playlist
 #from track import Track
 class Album:
-    pass
-class Artist:
-    pass
-class Player:
-    def __init__(self, user):
+    def __init__(self, sp_obj, album_info):
         return None
+
+class Artist:
+    def __init__(self, sp_obj, artist_info):
+        return None
+
+class Player:
+    def __init__(self, sp_obj, user):
+        return None
+
 class Playlist:
-    pass
+    def __init__(self, sp_obj, playlist_info):
+        return None
+
 class Track:
-    pass
+    def __init__(self, sp_obj, track_info):
+        return None
+
 
 from spotifython import Spotifython
 from spotifython import Spotifython as sp
@@ -40,17 +51,26 @@ class User:
     @typechecked
     def __init__(self,
                  sp_obj: Spotifython,
-                 user_id: str,
-                 known_vals: Dict=None
+                 user_info: Dict=None
     ):
-        self._user_id = user_id
-        self._player = Player(self)
-        self._raw = known_vals
+        self._sp_obj = sp_obj
+        self._raw = user_info
+        self._player = Player(self._sp_obj, self)
 
 
     def __str__(self) -> str:
-        return 'User <%s>' % self._user_id
+        uid = self._raw.get('id', None)
+        # TODO:
+        if uid is None:
+            return super().__str__()
+        return 'User <%s>' % uid
 
+
+    def _round(num, multiple):
+        ''' Helper to round num up to the next multiple of multiple
+        Used to fulfill large requests
+        '''
+        return math.ceil(num / multiple) * multiple
 
     def _update_internal(self,
                          new_vals: Dict
@@ -61,13 +81,23 @@ class User:
             new_vals: a dictionary with fields that should be added to or
                 updated in the internal cache. Any values in the dictionary will
                 become the new value for that key.
-
-        Return:
-            None
         '''
         # {**A, **B} returns (A - B) U B
         self._raw = {**self._raw, **new_vals}
         pass
+
+
+    def user_id(self) -> str:
+        ''' Get the id of this user
+
+        Return:
+            The same id that this user was created with
+        '''
+        result = self._raw.get('id', None)
+        if result is None:
+            raise Exception('Uh oh! TODO!')
+
+        return result
 
 
     def player(self) -> Player:
@@ -83,6 +113,7 @@ class User:
         return self._player
 
 
+    # TODO: can this return more than 50?
     @typechecked
     def top(self,
             top_type: str,
@@ -95,21 +126,75 @@ class User:
             top_type: only get items of this type. One of:
                 sp.ARTIST
                 sp.TRACK
-            limit: max number of items to return.
+            limit: max number of items to return. Must be non-negative.
             time_range: (optional) only get items for this time range. One of:
                 sp.LONG (several years)
                 sp.MEDIUM (about 6 months)
                 sp.SHORT (about 4 weeks)
 
-        response.contents():
-            Success: list of artists or a list of tracks, depending on top_type.
-                Could be empty.
-            Failure: None
+        Return:
+            A list of artists or a list of tracks, depending on top_type. Could
+            be empty.
+
+        Auth token requirements:
+            user-top-read
+
+        Calls endpoints:
+            GET     /v1/me/top/{type}
 
         Note: Spotify defines "top items" using internal metrics.
         '''
-        # GET /v1/me/top/{type}
-        pass
+        # Validate arguments
+        if top_type not in [sp.ARTIST, sp.TRACK]:
+            raise ValueError(top_type)
+        if time_range not in [sp.LONG, sp.MEDIUM, sp.SHORT]:
+            raise ValueError(time_range)
+        if limit < 0:
+            raise ValueError(limit)
+
+        # Parse arguments
+        time_ranges = {
+            sp.LONG: 'long_term',
+            sp.MEDIUM: 'medium_term',
+            sp.SHORT: 'short_term',
+        }
+        uri_params = {
+            'limit': sp.SPOTIFY_PAGE_SIZE,
+            'time_range': time_ranges[time_range]
+        }
+        endpoint_type = 'artists' if top_type == sp.ARTIST else 'tracks'
+        top_class = Artist if top_type == sp.ARTIST else Track
+
+        # Execute requests
+        endpoint = Endpoint.USER_TOP % endpoint_type
+        results = []
+        offset = 0
+
+        # Loop until we get 'limit' many items or run out
+        while offset < User._round(limit, sp.SPOTIFY_PAGE_SIZE):
+
+            uri_params['offset'] = offset
+
+            response_json, status_code = self._sp_obj._request(
+                request_type = sp.REQUEST_GET,
+                endpoint     = endpoint,
+                body         = None,
+                uri_params   = uri_params
+            )
+
+            if status_code != 200:
+                raise Exception('Oh no TODO!')
+
+            # No more results to grab from spotify
+            if len(response_json['items']) == 0:
+                break
+
+            for elem in response_json['items']:
+                results.append(top_class(self._sp_obj, elem))
+
+            offset += sp.SPOTIFY_PAGE_SIZE
+
+        return results[:limit]
 
 
     @typechecked
@@ -119,15 +204,12 @@ class User:
         ''' Get the user's recently played tracks
 
         Keyword arguments:
-            limit: (optional) max number of items to return. Can't be larger
-                than 50.
+            limit: (optional) max number of items to return. Must be between
+                0 and 50, inclusive.
 
-        response.contents():
+        Return:
             Success: a list of tracks. Could be empty.
             Failure: None
-
-        Exceptions:
-            ValueError: raised if limit > 50
 
         Note: the 'before' and 'after' functionalities are not supported.
         '''
@@ -143,9 +225,9 @@ class User:
 
         Keyword arguments:
             limit: (optional) the max number of items to return. If None, will
-                return all.
+                return all. Must be non-negative.
 
-        response.contents():
+        Return:
             Success: a list of playlists. Could be empty.
             Failure: None
 
@@ -176,7 +258,7 @@ class User:
                     sp.PRIVATE_COLLAB: not publicly viewable, collaborative
             description: (optional) viewable description of the playlist.
 
-        response.contents():
+        Return:
             None
 
         Exceptions:
@@ -204,7 +286,7 @@ class User:
         Exceptions:
             TypeError: raised if other is not one of the types described above.
 
-        response.contents():
+        Return:
             Success: List of tuples. Each tuple has an input object and whether
                      the user follows the object.
             Failure: None
@@ -225,9 +307,9 @@ class User:
         Keyword arguments:
             follow_type: one of sp.ARTIST or sp.PLAYLIST
             limit: (optional) the max number of items to return. If None, will
-                return all.
+                return all. Must be non-negative.
 
-        response.contents():
+        Return:
             Success: List of follow_type objects. Could be empty.
             Failure: None
 
@@ -261,7 +343,7 @@ class User:
         Note: if user is already following other, will do nothing and return
             a success code in response.status()
 
-        response.contents():
+        Return:
             None
         '''
         # PUT /v1/me/following
@@ -289,7 +371,7 @@ class User:
         Note: if user is already not following other, will do nothing and return
             a success code in response.status()
 
-        response.contents():
+        Return:
             None
         '''
         # DELETE /v1/me/following
@@ -314,7 +396,7 @@ class User:
         Exceptions:
             TypeError: raised if other is not one of the types described above.
 
-        response.contents():
+        Return:
             Success: List of tuples. Each tuple has an input object and whether
                      the user has that object saved.
             Failure: None
@@ -334,9 +416,9 @@ class User:
         Keyword arguments:
             saved_type: one of sp.ALBUM or sp.TRACK
             limit: (optional) the max number of items to return. If None, will
-                return all.
+                return all. Must be non-negative.
 
-        response.contents():
+        Return:
             Success: List of saved_type objects. Could be empty.
             Failure: None
         '''
@@ -365,7 +447,7 @@ class User:
         Note: if user already has other saved, will do nothing and return
             a success code in response.status()
 
-        response.contents():
+        Return:
             None
         '''
         # PUT /v1/me/albums
@@ -393,7 +475,7 @@ class User:
         Note: if user already does not have other saved, will do nothing and
             return a success code in response.status()
 
-        response.contents():
+        Return:
             None
         '''
         # DELETE /v1/me/albums
