@@ -197,8 +197,6 @@ class Spotifython:
 
         # Internally, include_external='audio' is the only valid argument.
         
-        # TODO
-
         return Response(status=Response.OK, contents=SearchResult(dict()))
 
     def get_albums(self, 
@@ -222,63 +220,12 @@ class Spotifython:
 
         Exceptions:
             TypeError for invalid types in any argument.
-            ValueError if market type is invalid. TODO: is this even necessary, will raise ex
+            ValueError if market type is invalid.
 
         Calls endpoints: 
             GET   /v1/albums/{id}
             GET   /v1/albums
         ''' 
-
-        # Type validation
-        if (include_groups is not None and not isinstance(include_groups, List[str])):
-            raise TypeError(include_groups)
-        if (market is not None and not isinstance(market, str)):
-            raise TypeError(market)
-
-        # Save params for lazy loading check
-        search_query = (search_limit, include_groups, market)
-
-        # Construct params for API call
-        _artist_id = self.artist_id().contents()
-        endpoint = f'/v1/artists/{artist_id}/albums'
-        uri_params = dict()
-        if (include_groups is not None and len(include_groups) > 0):
-            uri_params['include_groups'] = ",".join()
-        if (market is not None):
-            uri_params['market'] = market
-        
-        # Each API call can take 1-50 requests as "limit", or no limit.
-        offset = 0
-        num_requests = math.ceil(search_limit / 50) if search_limit else float("inf")
-
-        # Initialize self.albums if different query or never previously called
-        self.albums = self.albums if self.albums is not None and \
-            search_query == self._albums_query_params else list()
-
-        # Execute requests
-        # TODO: how to handle partial failures?
-        while (num_requests > 0):
-            response_json, status_code = self._top._request(
-                request_type=Spotifython.REQUEST_GET, 
-                endpoint=endpoint, 
-                uri_params=uri_params
-            )
-
-            items = response_json['items']
-            for item in items:
-                self.albums.append(Album(item))
-
-            # Last page reached
-            if (response_json['next'] == 'null'):
-                break
-
-            num_requests -= 1
-
-        # Update stored params for lazy loading
-        self._albums_query_params = search_query
-        
-        return self.albums
-
         return None
 
     def get_artists(self, 
