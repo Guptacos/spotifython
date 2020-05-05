@@ -107,6 +107,7 @@ class Artist:
 
         Exceptions:
             TypeError for invalid types in any argument.
+            ValueError for invalid market. TODO: is this even necessary, will raise ex
         
         Calls endpoints:
             GET	/v1/artists/{id}/albums
@@ -182,6 +183,7 @@ class Artist:
         Exceptions:
             TypeError for invalid types in any argument.
             ValueError if market is None.
+            ValueError for invalid market. TODO: is this even necessary, will raise ex
             ValueError if search_limit is > 10: this is the Spotify API's search limit.
         
         Calls endpoints:
