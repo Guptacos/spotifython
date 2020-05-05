@@ -1,7 +1,15 @@
 from typing import Union
+import requests
+import math
+
 from response import Response
 from endpoint import Endpoint
-import requests
+
+from album import Album
+from artist import Artist
+from playlist import Playlist
+from track import Track
+from user import User
 
 # This object should be constructed by the user to instantiate the 
 # session of Spotify Web API usage.
@@ -172,6 +180,7 @@ class Spotifython:
 
         Returns:
             A response object containing a SearchResult if the request succeeded.
+            TODO: update failure behavior including for partial failures
             On failure, returns a response object containing the raw Spotify Web API
             JSON and a corresponding status code defined in the Response class.
 
@@ -197,6 +206,8 @@ class Spotifython:
 
         # Internally, include_external='audio' is the only valid argument.
         
+        # TODO
+
         return Response(status=Response.OK, contents=SearchResult(dict()))
 
     def get_albums(self, 
@@ -215,18 +226,65 @@ class Spotifython:
 
         Returns:
             A response object containing an Album or List[Album] if the request succeeded.
+            TODO: update failure behavior including for partial failures
             On failure, returns a response object containing the raw Spotify Web API
             JSON and a corresponding status code defined in the Response class.
 
         Exceptions:
             TypeError for invalid types in any argument.
-            ValueError if market type is invalid.
+            ValueError if market type is invalid. TODO
 
         Calls endpoints: 
-            GET   /v1/albums/{id}
             GET   /v1/albums
+
+        Note: the following endpoint is not used.
+            GET   /v1/albums/{id} 
         ''' 
-        return None
+
+        # Type validation
+        if (not isinstance(album_ids, str) and not isinstance(album_ids, List[str])):
+            raise TypeError(album_ids)
+        if (market is not None and not isinstance(market, str)):
+            raise TypeError(market)
+
+        # Argument validation
+        if (market is None):
+            raise ValueError(market)
+        
+        album_ids = album_ids if isinstance(album_ids, List[str]) else list(album_ids)
+
+        # Construct params for API call
+        endpoint = Endpoint.SEARCH_GET_ALBUMS
+        uri_params = dict()
+        if (market is not None):
+            uri_params['market'] = market
+
+        # A maximum 20 albums can be returned per API call
+        api_call_limit = 20
+        num_requests = math.ceil(len(album_ids) / api_call_limit)
+        remaining_album_ids = album_ids
+        
+        result = list()
+
+        while (num_requests > 0):
+            uri_params['ids'] = ','.join(remaining_album_ids[:api_call_limit])
+
+            # Execute requests
+            response_json, status_code = self._request(
+                request_type=Spotifython.REQUEST_GET, 
+                endpoint=endpoint, 
+                uri_params=uri_params
+            )
+
+            items = response_json['albums']
+            
+            for item in items:
+                result.append(Album(item))
+            
+            num_requests -= 1
+            remaining_album_ids = remaining_album_ids[api_call_limit:]
+
+        return result if len(result) != 1 else result[0]
 
     def get_artists(self, 
         artist_ids: Union[str, List[str]]
@@ -239,6 +297,7 @@ class Spotifython:
 
         Returns:
             A response object containing an Artist or List[Artists] if the request succeeded.
+            TODO: update failure behavior including for partial failures
             On failure, returns a response object containing the raw Spotify Web API
             JSON and a corresponding status code defined in the Response class.
 
@@ -246,10 +305,48 @@ class Spotifython:
             TypeError for invalid types in any argument.
 
         Calls endpoints: 
-            GET   /v1/artists/{id}
             GET   /v1/artists
+
+        Note: the following endpoint is not used.
+            GET   /v1/artists/{id}
         ''' 
-        return None
+        
+        # Type validation
+        if (not isinstance(artist_ids, str) and not isinstance(artist_ids, List[str])):
+            raise TypeError(artist_ids)
+
+        artist_ids = artist_ids if isinstance(artist_ids, List[str]) else list(artist_ids)
+
+        # Construct params for API call
+        endpoint = Endpoint.SEARCH_GET_ALBUMS
+        uri_params = dict()
+
+        # A maximum of 50 artists can be returned per API call
+        api_call_limit = 50
+        num_requests = math.ceil(len(album_ids) / api_call_limit)
+        remaining_artist_ids = artist_ids
+        
+        result = list()
+        
+        while (num_requests > 0):
+            uri_params['ids'] = ','.join(remaining_artist_ids[:api_call_limit])
+
+            # Execute requests
+            response_json, status_code = self._request(
+                request_type=Spotifython.REQUEST_GET, 
+                endpoint=endpoint, 
+                uri_params=uri_params
+            )
+
+            items = response_json['artists']
+            
+            for item in items:
+                result.append(Artist(item))
+            
+            num_requests -= 1
+            remaining_artist_ids = remaining_artist_ids[api_call_limit:]
+
+        return result if len(result) != 1 else result[0]
 
     def get_tracks(self, 
         track_ids: Union[str, List[str]], 
@@ -267,18 +364,65 @@ class Spotifython:
 
         Returns:
             A response object containing a Track or List[Track] if the request succeeded.
+            TODO: update failure behavior including for partial failures
             On failure, returns a response object containing the raw Spotify Web API
             JSON and a corresponding status code defined in the Response class.
 
         Exceptions:
             TypeError for invalid types in any argument.
-            ValueError if market type is invalid.
+            ValueError if market type is invalid. TODO
 
         Calls endpoints: 
-            GET   /v1/tracks/{id}
             GET   /v1/tracks
+
+        Note: the following endpoint is not used.
+            GET   /v1/tracks/{id}
         ''' 
-        return None
+
+        # Type validation
+        if (not isinstance(track_ids, str) and not isinstance(track_ids, List[str])):
+            raise TypeError(track_ids)
+        if (market is not None and not isinstance(market, str)):
+            raise TypeError(market)
+
+        # Argument validation
+        if (market is None):
+            raise ValueError(market)
+
+        track_ids = track_ids if isinstance(track_ids, List[str]) else list(track_ids)
+
+        # Construct params for API call
+        endpoint = Endpoint.SEARCH_GET_TRACKS
+        uri_params = dict()
+        if (market is not None):
+            uri_params['market'] = market
+
+        # A maximum of 50 tracks can be returned per API call
+        api_call_limit = 50
+        num_requests = math.ceil(len(track_ids) / api_call_limit)
+        remaining_track_ids = track_ids
+        
+        result = list()
+
+        while (num_requests > 0):
+            uri_params['ids'] = ','.join(remaining_track_ids[:api_call_limit])
+
+            # Execute requests
+            response_json, status_code = self._request(
+                request_type=Spotifython.REQUEST_GET, 
+                endpoint=endpoint, 
+                uri_params=uri_params
+            )
+
+            items = response_json['tracks']
+
+            for item in items:
+                result.append(Track(item))
+
+            num_requests -= 1
+            remaining_track_ids = remaining_track_ids[api_call_limit:]
+
+        return result if len(result) != 1 else result[0]
     
     def get_users(self, 
         user_ids: Union[str, List[str]]
@@ -290,6 +434,8 @@ class Spotifython:
             user_ids: a string or list of strings of the Spotify user id to search for.
         
         Returns: A response object containing a User or List[User] if the request succeeded.
+            TODO: update failure behavior including for partial failures
+            TODO: document partial failure means corresponding object is None in the result
             On failure, returns a response object containing the raw Spotify Web API
             JSON and a corresponding status code defined in the Response class.
 
@@ -299,7 +445,38 @@ class Spotifython:
         Calls endpoints:
             GET	/v1/users/{user_id}
         '''
-        return None
+
+        # Type validation
+        if (not isinstance(user_ids, str) and not isinstance(user_ids, List[str])):
+            raise TypeError(user_ids)
+        
+        user_ids = user_ids if isinstance(user_ids, List[str]) else list(user_ids)
+
+        # Construct params for API call
+        endpoint = Endpoint.SEARCH_GET_USER
+        uri_params = dict()
+
+        # Each API call can return at most 1 user.
+        result = list()
+        for user_id in user_ids:
+            uri_params['ids'] = user_id
+
+            # Execute requests
+            # API behavior: if user with user_id does not exist, status_code is 404
+            try:
+                response_json, status_code = self._request(
+                    request_type=Spotifython.REQUEST_GET, 
+                    endpoint=endpoint, 
+                    uri_params=uri_params
+                )
+                result.append(User(response_json))
+            except requests.exceptions.HTTPError as e:
+                if (e.response.status_code is 404):
+                    result.append(None)
+                else:
+                    raise e
+
+        return result if len(result) != 1 else result[0]
     
     def get_current_user(self) -> Response: # User
         '''
@@ -307,16 +484,38 @@ class Spotifython:
         
         Returns: 
             A response object containing a User if the request succeeded.
+            TODO: update failure behavior
             On failure, returns a response object containing the raw Spotify Web API
             JSON and a corresponding status code defined in the Response class.
 
         Exceptions:
-            ValueError if the Spotify API key is not valid. TODO: is this ok
+            ValueError if the Spotify API key is not valid.
+            ValueError if the response is empty.
         
         Calls endpoints:
             GET	/v1/me
         '''
-        return None
+
+        # Construct params for API call
+        endpoint = Endpoint.SEARCH_GET_CURRENT_USER
+
+        # Execute requests
+        try:
+            response_json, status_code = self._request(
+                request_type=Spotifython.REQUEST_GET, 
+                endpoint=endpoint
+            )
+        except requests.exceptions.HTTPError as e:
+            if (e.request.status_code is 403):
+                raise ValueError("Spotify API key is not valid")
+            else:
+                raise e
+
+        # Impossible to initialize a user with no response_json
+        if (response_json is None):
+            raise ValueError(response_json)
+
+        return User(response_json)
     
     def get_playlists(self,
         playlist_ids: Union[str, List[str]],
@@ -339,12 +538,13 @@ class Spotifython:
 
         Returns:
             A response object containing a Playlist or List[Playlist] if the request succeeded.
+            TODO: update failure behavior
             On failure, returns a response object containing the raw Spotify Web API
             JSON and a corresponding status code defined in the Response class.
 
         Exceptions:
             TypeError for invalid types in any argument.
-            ValueError if market type is invalid.
+            ValueError if market type is invalid. TODO
 
         Calls endpoints:
             GET	/v1/playlists/{playlist_id}
@@ -353,4 +553,38 @@ class Spotifython:
         # Note: additional_types is also a valid request param - it 
         # has been deprecated and therefore is removed from the API wrapper.
 
-        return None
+        # Type validation
+        if (not isinstance(playlist_ids, str) and not isinstance(playlist_ids, List[str])):
+            raise TypeError(playlist_ids)
+        if (fields is not None and not isinstance(fields, str)):
+            raise TypeError(fields)
+        if (market is not None and not isinstance(market, str)):
+            raise TypeError(market)
+
+        # Argument validation
+        if (market is None):
+            raise ValueError(market)
+
+        playlist_ids = playlist_ids if isinstance(playlist_ids, List[str]) else list(playlist_ids)
+
+        # Construct params for API call
+        uri_params = dict()
+        if (market is not None):
+            uri_params['market'] = market
+        if (fields is not None):
+            uri_params['fields'] = fields
+
+        results = list()
+        for playlist_id in playlist_ids:
+            endpoint = Endpoint.SEARCH_GET_PLAYLIST.format(playlist_id)
+
+            # Execute requests
+            response_json, status_code = self._request(
+                request_type=Spotifython.REQUEST_GET, 
+                endpoint=endpoint, 
+                uri_params=uri_params
+            )
+
+            result.append(Playlist(item))
+
+        return result if len(result) != 1 else result[0]
