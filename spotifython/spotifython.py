@@ -31,6 +31,7 @@ class Spotifython:
     PRIVATE = 'private'
     PRIVATE_COLLAB = 'private_collab'
     DEFAULT_REQUEST_TIMEOUT = 10 # in seconds
+    SPOTIFY_PAGE_SIZE = 50
     
     def __init__(self, token: str, timeout: int = DEFAULT_REQUEST_TIMEOUT):
         self._token = token
@@ -94,14 +95,17 @@ class Spotifython:
                              headers=headers,
                              timeout=self._timeout)
         
-        # Extract the information from response. No exception should be present in the event of a successful 
-        # response, but the response json may or may not be present.
+        # Extract the information from response. No exception should be present
+        # in the event of a successful response, but the response json may or
+        # may not be present.
 
-        # r.raise_for_status() raises HTTPError if request unsuccessful - this is a real error
+        # r.raise_for_status() raises HTTPError if request unsuccessful - this
+        #is a real error
         r.raise_for_status() 
     
         try: # content = Union[json, bytes]
-            # r.json() raises ValueError if no content - this is not an error and no exception should be returned
+            # r.json() raises ValueError if no content - this is not an error
+            # and no exception should be returned
             content = r.json()
         except (ValueError):
             content = None # May be malformed or no 
