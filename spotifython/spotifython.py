@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, List
 from response import Response
 from endpoint import Endpoint
 import requests
@@ -54,7 +54,12 @@ class Spotifython:
     # https://stackoverflow.com/questions/23267409/how-to-implement-retry-mechanism-into-python-requests-library
     
     # request_type: REQUEST_GET, REQUEST_POST, REQUEST_PUT, REQUEST_DELETE
-    def _request(request_type: str, endpoint: str, body: dict=None, uri_params: dict=None):
+    def _request(self,
+                 request_type: str,
+                 endpoint: str,
+                 body: dict=None,
+                 uri_params: dict=None
+    ):
         '''
             Does request with retry. This method should return a tuple (response_json, status_code) if
             the request is executed, and raises an Exception if the request type is invalid.
@@ -143,7 +148,7 @@ class Spotifython:
         query: str, 
         type: Union[str, List[str]],
         search_limit: int,
-        market: str = self.TOKEN_REGION,
+        market: str = TOKEN_REGION,
         include_external_audio: bool = False
     ) -> Response: # SearchResult
         '''
@@ -201,7 +206,7 @@ class Spotifython:
 
     def get_albums(self, 
         album_ids: Union[str, List[str]],
-        market: str = self.TOKEN_REGION
+        market: str = TOKEN_REGION
     ) -> Response: # Union[Album, List[Album]]
         '''
         Gets the albums with the given Spotify album ids.
@@ -253,7 +258,7 @@ class Spotifython:
 
     def get_tracks(self, 
         track_ids: Union[str, List[str]], 
-        market: str = self.TOKEN_REGION
+        market: str = TOKEN_REGION
     ) -> Response: # Union[Track, List[Track]]
         '''
         Gets the tracks with the given Spotify track ids.
@@ -321,7 +326,7 @@ class Spotifython:
     def get_playlists(self,
         playlist_ids: Union[str, List[str]],
         fields: str = None,
-        market: str = self.TOKEN_REGION
+        market: str = TOKEN_REGION
     ) -> Response: # Union[Playlist, List[Playlist]]
         '''
         Gets the tracks with the given Spotify playlist ids.
