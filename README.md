@@ -17,3 +17,4 @@ currently supports a larger number of Spotify's endpoints than Spotifython does.
 
 ## Contributing
 TODO: Are others allowed to contribute?
+
