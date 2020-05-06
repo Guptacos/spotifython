@@ -133,16 +133,16 @@ class Spotifython:
             self._tracks_paging += tracks
 
         # Field accessors
-        def albums(self) -> Response: # List[Album]
+        def albums(self): # List[Album]
             return self._albums_paging.get('items', list())
 
-        def artists(self) -> Response: # List[Artist]
+        def artists(self): # List[Artist]
             return self._artists_paging.get('items', list())
 
-        def playlists(self) -> Response: # List[Playlist]
+        def playlists(self): # List[Playlist]
             return self._playlists_paging.get('items', list())
         
-        def tracks(self) -> Response: # List[Track]
+        def tracks(self): # List[Track]
             return self._tracks_paging.get('items', list())
     
     ##################################
