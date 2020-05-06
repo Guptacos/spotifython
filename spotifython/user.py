@@ -5,9 +5,10 @@ from endpoint import Endpoint
 import math
 
 # TODO: remove these after integrating.
-# TODO: consolidate the paging functionality
 # TODO: feels like TypeError and ValueError used interchangeably
 # TODO: have to implement equality methods
+# TODO: market as input?
+# TODO: what to do about partial success?
 #from album import Album
 #from artist import Artist
 #from player import Player
@@ -57,8 +58,6 @@ class Track:
 from spotifython import Spotifython
 from spotifython import Spotifython as sp
 
-# TODO: auth required for each param
-# TODO: what to do about partial success?
 class User:
     ''' Define behaviors related to a user, such as reading / modifying the
         library and following artists.
@@ -591,9 +590,19 @@ class User:
 
         Return:
             None
+
+        Auth token requirements:
+            user-follow-modify
+            playlist-modify-public
+            playlist-modify-private
+
+        Endpoints called:
+            PUT     /v1/me/following
+            PUT     /v1/playlists/{playlist_id}/followers
         '''
-        # PUT /v1/me/following
-        # PUT /v1/playlists/{playlist_id}/followers
+        # playlist 200 success
+        # user/artist 204 success
+        # note: calls are completely different :(
         pass
 
 
@@ -616,9 +625,19 @@ class User:
 
         Return:
             None
+
+        Auth token requirements:
+            user-follow-modify
+            playlist-modify-public
+            playlist-modify-private
+
+        Endpoints called:
+            DELETE  /v1/me/following
+            DELETE  /v1/playlists/{playlist_id}/followers
         '''
-        # DELETE /v1/me/following
-        # DELETE /v1/playlists/{playlist_id}/followers
+        # playlist 200 success
+        # user/artist 204 success
+        # note: calls are completely different :(
         pass
 
 
@@ -736,9 +755,16 @@ class User:
 
         Return:
             None
+
+        Auth token requirements:
+            user-library-modify
+
+        Endpoints called:
+            PUT     /v1/me/albums
+            PUT     /v1/me/tracks
         '''
-        # PUT /v1/me/albums
-        # PUT /v1/me/tracks
+        # Note: ids can go in body or uri
+        # 201 on success
         pass
 
 
@@ -761,7 +787,14 @@ class User:
 
         Return:
             None
+
+        Auth token requirements:
+            user-library-modify
+
+        Endpoints called:
+            DELETE  /v1/me/albums
+            DELETE  /v1/me/tracks
         '''
-        # DELETE /v1/me/albums
-        # DELETE /v1/me/tracks
+        # Note: ids can go in body or uri
+        # 200 on success
         pass
