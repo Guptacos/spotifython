@@ -11,6 +11,8 @@ class Endpoints:
     USER_CREATE_PLAYLIST = '/v1/users/%s/playlists'
     USER_GET_ARTISTS = '/v1/me/following'
     USER_FOLLOWING_CONTAINS = '/v1/me/following/contains'
+    # One of 'albums' or 'tracks'
+    USER_HAS_SAVED = '/v1/me/%s/contains'
 
     # Player
     PLAYER = '/v1/me/player'
