@@ -67,11 +67,61 @@ class User:
         return 'User <%s>' % uid
 
 
-    def _round(num, multiple):
-        ''' Helper to round num up to the next multiple of multiple
-        Used to fulfill large requests
+    def _paginate_get(self,
+                      limit: int,
+                      return_class: Any,
+                      endpoint: str,
+                      uri_params: Dict = None,
+                      body: Dict = None
+    ) -> List[Any]:
+        ''' Helper function to make many requests to Spotify
+
+        Keyword arguments:
+            limit: the maximum number of items to return
+            return_type: the class to construct for the list contents
+            endpoint: the endpoint to call.
+                Must accept 'limit' and 'offset' in uri_params
+                Return json must contain key 'items'
+            uri_params: the uri parameters for the request
+            body: the body of the call
+
+        Return:
+            a list of objects of type return_class
         '''
-        return math.ceil(num / multiple) * multiple
+        # Execute requests
+        results = []
+        offset = 0
+        uri_params['limit'] = sp.SPOTIFY_PAGE_SIZE
+
+        # Loop until we get 'limit' many items or run out
+        round = lambda num, multiple: math.ceil(num / multiple) * multiple
+
+        num_to_request = round(limit, sp.SPOTIFY_PAGE_SIZE)
+        while offset < num_to_request:
+
+            uri_params['offset'] = offset
+
+            response_json, status_code = self._sp_obj._request(
+                request_type = sp.REQUEST_GET,
+                endpoint     = endpoint,
+                body         = body,
+                uri_params   = uri_params
+            )
+
+            if status_code != 200:
+                raise Exception('Oh no TODO!')
+
+            # No more results to grab from spotify
+            if len(response_json['items']) == 0:
+                break
+
+            for elem in response_json['items']:
+                results.append(return_class(self._sp_obj, elem))
+
+            offset += sp.SPOTIFY_PAGE_SIZE
+
+        return results[:limit]
+
 
     def _update_internal(self,
                          new_vals: Dict
@@ -159,43 +209,20 @@ class User:
             sp.MEDIUM: 'medium_term',
             sp.SHORT: 'short_term',
         }
-        uri_params = {
-            'limit': sp.SPOTIFY_PAGE_SIZE,
-            'time_range': time_ranges[time_range]
-        }
+
+        uri_params = {'time_range': time_ranges[time_range]}
         endpoint_type = 'artists' if top_type == sp.ARTIST else 'tracks'
         top_class = Artist if top_type == sp.ARTIST else Track
 
         # Execute requests
-        endpoint = Endpoint.USER_TOP % endpoint_type
-        results = []
-        offset = 0
+        results = self._paginate_get(
+                        limit = limit,
+                        return_class = top_class,
+                        endpoint = Endpoint.USER_TOP % endpoint_type,
+                        uri_params = uri_params,
+                        body = None)
 
-        # Loop until we get 'limit' many items or run out
-        while offset < User._round(limit, sp.SPOTIFY_PAGE_SIZE):
-
-            uri_params['offset'] = offset
-
-            response_json, status_code = self._sp_obj._request(
-                request_type = sp.REQUEST_GET,
-                endpoint     = endpoint,
-                body         = None,
-                uri_params   = uri_params
-            )
-
-            if status_code != 200:
-                raise Exception('Oh no TODO!')
-
-            # No more results to grab from spotify
-            if len(response_json['items']) == 0:
-                break
-
-            for elem in response_json['items']:
-                results.append(top_class(self._sp_obj, elem))
-
-            offset += sp.SPOTIFY_PAGE_SIZE
-
-        return results[:limit]
+        return results
 
 
     @typechecked
@@ -279,35 +306,14 @@ class User:
         if limit <= 0 or limit > spotify_max_playlists:
             raise ValueError(limit)
 
-        # Execute requests
-        uri_params = {'limit': sp.SPOTIFY_PAGE_SIZE}
-        results = []
-        offset = 0
+        results = self._paginate_get(
+                        limit = limit,
+                        return_class = Playlist,
+                        endpoint = Endpoint.USER_GET_PLAYLISTS % self.user_id(),
+                        uri_params = {},
+                        body = None)
 
-        # Loop until we get 'limit' many items or run out
-        while offset < User._round(limit, sp.SPOTIFY_PAGE_SIZE):
-            uri_params['offset'] = offset
-
-            response_json, status_code = self._sp_obj._request(
-                request_type = sp.REQUEST_GET,
-                endpoint     = Endpoint.USER_GET_PLAYLISTS % self.user_id(),
-                body         = None,
-                uri_params   = uri_params
-            )
-
-            if status_code != 200:
-                raise Exception('Oh no TODO!')
-
-            # No more results to grab from spotify
-            if len(response_json['items']) == 0:
-                break
-
-            for elem in response_json['items']:
-                results.append(Playlist(self._sp_obj, elem))
-
-            offset += sp.SPOTIFY_PAGE_SIZE
-
-        return results[:limit]
+        return results
 
 
     @typechecked
