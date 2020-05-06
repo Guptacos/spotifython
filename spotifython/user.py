@@ -1,11 +1,13 @@
 from __future__ import annotations # Allow type hinting a class within the class
-from typing import Union, List, Dict
+from typing import Union, List, Dict, Tuple
 from typeguard import typechecked
 from endpoint import Endpoint
 import math
 
 # TODO: remove these after integrating.
 # TODO: consolidate the paging functionality
+# TODO: feels like TypeError and ValueError used interchangeably
+# TODO: have to implement equality methods
 #from album import Album
 #from artist import Artist
 #from player import Player
@@ -20,6 +22,8 @@ class Artist:
     def __init__(self, sp_obj, artist_info):
         self._raw = artist_info
         return None
+    def artist_id(self):
+        return self._raw['id']
 
 class Player:
     def __init__(self, sp_obj, user):
@@ -35,6 +39,11 @@ class Playlist:
 
     def __repr__(self):
         return ('%s owned by %s' %(self._raw['name'], self._raw['owner']['id']))
+
+    def __eq__(self, other):
+        if not isinstance(other, Playlist):
+            return False
+        return self._raw['id'] == other._raw['id']
 
 class Track:
     def __init__(self, sp_obj, track_info):
@@ -131,6 +140,23 @@ class User:
             offset += sp.SPOTIFY_PAGE_SIZE
 
         return results[:limit]
+
+
+    def _batch(elems, chunk_size = sp.SPOTIFY_PAGE_SIZE):
+        ''' Helper function to break elems into batches
+        E.g.
+            elems = [1, 2, 3, 4, 5, 6, 7]
+            _batch(elems, 2)
+            >>> [[1,2], [3,4], [5,6], [7]]
+        '''
+        results = []
+        for i in range(0, len(elems), chunk_size):
+            if i >= len(elems):
+                results += [elems[i:]]
+            else:
+                results += [elems[i:i + chunk_size]]
+
+        return results
 
 
     def _update_internal(self,
@@ -393,17 +419,70 @@ class User:
         Auth token requirements:
             user-follow-read
             playlist-read-private
+            playlist-read-collaborative
 
         Calls endpoints:
             GET     /v1/me/following/contains
-            GET     /v1/playlists/{playlist_id}/followers/contains
+            GET     /v1/users/{user_id}/playlists
 
         Return:
             List of tuples. Each tuple has an input object and whether the user
             follows the object.
         '''
-        # Note for me: easier to use get_playlists and check in there
-        pass
+        # Validate and sort input
+        if not isinstance(other, List):
+            other = [other]
+
+        artists = []
+        users = []
+        playlists = []
+        for elem in other:
+            if isinstance(elem, Artist):
+                artists.append(elem)
+
+            elif isinstance(elem, User):
+                users.append(elem)
+
+            elif isinstance(elem, Playlist):
+                playlists.append(elem)
+
+            else:
+                raise TypeError(elem)
+
+        # Break into manageable batches for Spotify
+        artists = User._batch(artists, sp.SPOTIFY_PAGE_SIZE)
+        users = User._batch(users, sp.SPOTIFY_PAGE_SIZE)
+
+        # TODO: partial failure?
+        def check_batches(batches, request_type):
+            results = []
+            for batch in batches:
+                if request_type == 'artist':
+                    ids = [artist.artist_id() for artist in batch]
+                else:
+                    ids = [user.user_id() for user in batch]
+
+                response_json, status_code = self._sp_obj._request(
+                    request_type = sp.REQUEST_GET,
+                    endpoint     = Endpoint.USER_FOLLOWING_CONTAINS,
+                    body         = None,
+                    uri_params   = {'type': request_type, 'ids': ids}
+                )
+
+                if status_code != 200:
+                    raise Exception('Oh no TODO!')
+
+                results += list(zip(batch, response_json))
+
+            return results
+
+        results = check_batches(artists, 'artist')
+        results += check_batches(users, 'user')
+
+        followed_playlists = self.get_following(sp.PLAYLIST)
+        results += list(map(lambda p: (p, p in followed_playlists), playlists))
+
+        return results
 
 
     @typechecked
@@ -436,10 +515,9 @@ class User:
                 currently allow you to access this information.
                 For more info: https://github.com/spotify/web-api/issues/4
         '''
-
         # Validate inputs
         if follow_type not in [sp.ARTIST, sp.PLAYLIST]:
-            raise ValueError(follow_type)
+            raise TypeError(follow_type)
         if limit is None:
             limit = sp.SPOTIFY_MAX_PLAYLISTS
         if limit <= 0 or limit > sp.SPOTIFY_MAX_PLAYLISTS:
