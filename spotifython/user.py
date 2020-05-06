@@ -289,17 +289,15 @@ class User:
 
         uri_params = {'time_range': time_ranges[time_range]}
         endpoint_type = 'artists' if top_type == sp.ARTIST else 'tracks'
-        top_class = Artist if top_type == sp.ARTIST else Track
+        return_class = Artist if top_type == sp.ARTIST else Track
 
         # Execute requests
-        results = self._paginate_get(
+        return self._paginate_get(
                         limit = limit,
-                        return_class = top_class,
+                        return_class = return_class,
                         endpoint = Endpoint.USER_TOP % endpoint_type,
                         uri_params = uri_params,
                         body = None)
-
-        return results
 
 
     @typechecked
@@ -382,15 +380,13 @@ class User:
         if limit <= 0 or limit > sp.SPOTIFY_MAX_PLAYLISTS:
             raise ValueError(limit)
 
-        results = self._paginate_get(
+        return self._paginate_get(
                         limit = limit,
                         return_class = Playlist,
                         endpoint = Endpoint.USER_GET_PLAYLISTS
                                    % self.spotify_id(),
                         uri_params = {},
                         body = None)
-
-        return results
 
 
     @typechecked
@@ -525,8 +521,8 @@ class User:
         if follow_type not in [sp.ARTIST, sp.PLAYLIST]:
             raise TypeError(follow_type)
         if limit is None:
-            limit = sp.SPOTIFY_MAX_PLAYLISTS
-        if limit <= 0 or limit > sp.SPOTIFY_MAX_PLAYLISTS:
+            limit = sp.SPOTIFY_MAX_LIB_SIZE
+        if limit <= 0 or limit > sp.SPOTIFY_MAX_LIB_SIZE:
             raise ValueError(limit)
 
         if follow_type == sp.PLAYLIST:
@@ -648,7 +644,7 @@ class User:
         Auth token requirements:
             user-library-read
 
-        Calls endpoints
+        Calls endpoints:
             GET     /v1/me/albums/contains
             GET     /v1/me/tracks/contains
         '''
@@ -666,10 +662,12 @@ class User:
         return results
 
 
+    #TODO: input arg order / labeling of required vs. optional?
     @typechecked
     def get_saved(self,
                   saved_type: str,
-                  limit: int=None
+                  limit: int=None,
+                  market: str=sp.TOKEN_REGION
     ) -> Union[List[Album], List[Track]]:
         ''' Get all saved_type objects the user has saved to their library
 
@@ -677,14 +675,46 @@ class User:
             saved_type: one of sp.ALBUM or sp.TRACK
             limit: (optional) the max number of items to return. If None, will
                 return all. Must be positive.
+            market: (required) a 2 letter country code as defined here:
+                https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
+                Used for track relinking:
+                https://developer.spotify.com/documentation/general/guides/track-relinking-guide/
+
+                if sp.TOKEN_REGION (default) is given, will use appropriate
+                country code for user based on their auth token and location.
 
         Return:
-            Success: List of saved_type objects. Could be empty.
-            Failure: None
+            List of saved_type objects. Could be empty.
+
+        Auth token requirements:
+            user-library-read
+
+        Calls endpoints:
+            GET     /v1/me/albums
+            GET     /v1/me/tracks
+
+    ) -> List[Any]:
         '''
-        # GET /v1/me/albums
-        # GET /v1/me/tracks
-        pass
+        # Validate inputs
+        if saved_type not in [sp.ALBUM, sp.TRACK]:
+            raise TypeError(saved_type)
+        if limit is None:
+            limit = sp.SPOTIFY_MAX_LIB_SIZE
+        if limit <= 0 or limit > sp.SPOTIFY_MAX_LIB_SIZE:
+            raise ValueError(limit)
+
+        # TODO: should I validate the market?
+
+        endpoint_type = 'albums' if saved_type == sp.ALBUM else 'tracks'
+        return_class = Album if saved_type == sp.ALBUM else Track
+        uri_params = {'market': market}
+
+        return self._paginate_get(
+                        limit = limit,
+                        return_class = return_class,
+                        endpoint = Endpoint.USER_GET_SAVED % endpoint_type,
+                        uri_params = uri_params,
+                        body = None)
 
 
     @typechecked
