@@ -11,7 +11,7 @@ def main():
 
     for test in test_files:
         test.main()
-        print('\n')
+        print('') # One new line
 
     print('-----------------------')
     print('|   Tests finished.   |')
