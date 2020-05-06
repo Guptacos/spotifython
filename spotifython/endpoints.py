@@ -10,6 +10,7 @@ class Endpoints:
     USER_GET_PLAYLISTS = '/v1/users/%s/playlists'
     USER_CREATE_PLAYLIST = '/v1/users/%s/playlists'
     USER_GET_ARTISTS = '/v1/me/following'
+    USER_FOLLOWING_CONTAINS = '/v1/me/following/contains'
 
     # Player
     PLAYER = '/v1/me/player'
