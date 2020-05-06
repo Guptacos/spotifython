@@ -6,6 +6,7 @@ class Endpoints:
 
     # User
     USER_TOP = '/v1/me/top/%s'
+    USER_RECENTLY_PLAYED = '/v1/me/player/recently-played'
 
     # Player
     PLAYER = '/v1/me/player'

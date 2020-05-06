@@ -126,7 +126,7 @@ class User:
             top_type: only get items of this type. One of:
                 sp.ARTIST
                 sp.TRACK
-            limit: max number of items to return. Must be non-negative.
+            limit: max number of items to return. Must be positive.
             time_range: (optional) only get items for this time range. One of:
                 sp.LONG (several years)
                 sp.MEDIUM (about 6 months)
@@ -149,7 +149,7 @@ class User:
             raise ValueError(top_type)
         if time_range not in [sp.LONG, sp.MEDIUM, sp.SHORT]:
             raise ValueError(time_range)
-        if limit < 0:
+        if limit <= 0:
             raise ValueError(limit)
 
         # Parse arguments
@@ -205,16 +205,43 @@ class User:
 
         Keyword arguments:
             limit: (optional) max number of items to return. Must be between
-                0 and 50, inclusive.
+                1 and 50, inclusive.
 
         Return:
             Success: a list of tracks. Could be empty.
             Failure: None
 
+        Auth token requirements:
+            user-read-recently-played
+
+        Calls endpoints:
+            GET     /v1/me/player/recently-played
+
         Note: the 'before' and 'after' functionalities are not supported.
+        Note: does not return the time the tracks were played
+        Note: a track must be played for >30s to be included in the history.
+              Tracks played while in a 'private session' not recorded.
         '''
-        # GET /v1/me/player/recently-played
-        pass
+        # Validate arguments
+        if limit <= 0 or limit > 50:
+            raise ValueError(limit)
+
+        # Execute requests
+        response_json, status_code = self._sp_obj._request(
+            request_type = sp.REQUEST_GET,
+            endpoint     = Endpoint.USER_RECENTLY_PLAYED,
+            body         = None,
+            uri_params   = {'limit': limit}
+        )
+
+        if status_code != 200:
+            raise Exception('Oh no TODO!')
+
+        results = []
+        for elem in response_json['items']:
+            results.append(Track(self._sp_obj, elem))
+
+        return results
 
 
     @typechecked
@@ -225,7 +252,7 @@ class User:
 
         Keyword arguments:
             limit: (optional) the max number of items to return. If None, will
-                return all. Must be non-negative.
+                return all. Must be positive.
 
         Return:
             Success: a list of playlists. Could be empty.
@@ -307,7 +334,7 @@ class User:
         Keyword arguments:
             follow_type: one of sp.ARTIST or sp.PLAYLIST
             limit: (optional) the max number of items to return. If None, will
-                return all. Must be non-negative.
+                return all. Must be positive.
 
         Return:
             Success: List of follow_type objects. Could be empty.
@@ -416,7 +443,7 @@ class User:
         Keyword arguments:
             saved_type: one of sp.ALBUM or sp.TRACK
             limit: (optional) the max number of items to return. If None, will
-                return all. Must be non-negative.
+                return all. Must be positive.
 
         Return:
             Success: List of saved_type objects. Could be empty.
