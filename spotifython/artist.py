@@ -248,7 +248,7 @@ class Artist:
     
     def related_artists(self,
         search_limit: int = 20,
-    ): # List[Artist]
+    ) -> List[Artist]:
         '''
         Gets Spotify catalog information about artists similar to a given artist.
 
