@@ -7,6 +7,7 @@ class Endpoint:
     USER_RECENTLY_PLAYED = '/v1/me/player/recently-played'
     USER_GET_PLAYLISTS = '/v1/users/%s/playlists'
     USER_CREATE_PLAYLIST = '/v1/users/%s/playlists'
+    USER_GET_ARTISTS = '/v1/me/following'
 
 # import endpoint
 # endpoint.BASE_URI        

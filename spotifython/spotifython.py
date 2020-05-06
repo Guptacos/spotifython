@@ -32,6 +32,7 @@ class Spotifython:
     PRIVATE_COLLAB = 'private_collab'
     DEFAULT_REQUEST_TIMEOUT = 10 # in seconds
     SPOTIFY_PAGE_SIZE = 50
+    SPOTIFY_MAX_PLAYLISTS = 100000
     
     def __init__(self, token: str, timeout: int = DEFAULT_REQUEST_TIMEOUT):
         self._token = token
