@@ -5,6 +5,7 @@ from endpoint import Endpoint
 import math
 
 # TODO: remove these after integrating.
+# TODO: consolidate the paging functionality
 #from album import Album
 #from artist import Artist
 #from player import Player
@@ -252,7 +253,7 @@ class User:
 
         Keyword arguments:
             limit: (optional) the max number of items to return. If None, will
-                return all. Must be positive.
+                return all. Must be between 1 and 100000 inclusive
 
         Return:
             Success: a list of playlists. Could be empty.
@@ -261,10 +262,52 @@ class User:
         Note: this includes both playlists owned by this user and playlists
             that this user follows but are owned by others.
 
+        Auth token requirements:
+            playlist-read-private
+            playlist-read-collaborative
+
+        Calls endpoints:
+            GET     /v1/users/{user_id}/playlists
+
         To get only playlists this user follows, use get_following(sp.PLAYLISTS)
         '''
-        # GET /v1/users/{user_id}/playlists
-        pass
+        # Validate inputs
+        spotify_max_playlists = 100000
+        if limit is None:
+            limit = spotify_max_playlists
+
+        if limit <= 0 or limit > spotify_max_playlists:
+            raise ValueError(limit)
+
+        # Execute requests
+        uri_params = {'limit': sp.SPOTIFY_PAGE_SIZE}
+        results = []
+        offset = 0
+
+        # Loop until we get 'limit' many items or run out
+        while offset < User._round(limit, sp.SPOTIFY_PAGE_SIZE):
+            uri_params['offset'] = offset
+
+            response_json, status_code = self._sp_obj._request(
+                request_type = sp.REQUEST_GET,
+                endpoint     = Endpoint.USER_GET_PLAYLISTS % self.user_id(),
+                body         = None,
+                uri_params   = uri_params
+            )
+
+            if status_code != 200:
+                raise Exception('Oh no TODO!')
+
+            # No more results to grab from spotify
+            if len(response_json['items']) == 0:
+                break
+
+            for elem in response_json['items']:
+                results.append(Playlist(self._sp_obj, elem))
+
+            offset += sp.SPOTIFY_PAGE_SIZE
+
+        return results[:limit]
 
 
     @typechecked
