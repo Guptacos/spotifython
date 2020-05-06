@@ -13,10 +13,12 @@ import math
 #from track import Track
 class Album:
     def __init__(self, sp_obj, album_info):
+        self._raw = album_info
         return None
 
 class Artist:
     def __init__(self, sp_obj, artist_info):
+        self._raw = artist_info
         return None
 
 class Player:
@@ -25,10 +27,18 @@ class Player:
 
 class Playlist:
     def __init__(self, sp_obj, playlist_info):
+        self._raw = playlist_info
         return None
+
+    def __str__(self):
+        return ('%s owned by %s' %(self._raw['name'], self._raw['owner']['id']))
+
+    def __repr__(self):
+        return ('%s owned by %s' %(self._raw['name'], self._raw['owner']['id']))
 
 class Track:
     def __init__(self, sp_obj, track_info):
+        self._raw = track_info
         return None
 
 
@@ -299,11 +309,10 @@ class User:
         To get only playlists this user follows, use get_following(sp.PLAYLISTS)
         '''
         # Validate inputs
-        spotify_max_playlists = 100000
         if limit is None:
-            limit = spotify_max_playlists
+            limit = sp.SPOTIFY_MAX_PLAYLISTS
 
-        if limit <= 0 or limit > spotify_max_playlists:
+        if limit <= 0 or limit > sp.SPOTIFY_MAX_PLAYLISTS:
             raise ValueError(limit)
 
         results = self._paginate_get(
@@ -354,7 +363,6 @@ class User:
             'name': name,
         }
 
-
         response_json, status_code = self._sp_obj._request(
             request_type = sp.REQUEST_POST,
             endpoint     = Endpoint.USER_CREATE_PLAYLIST % self.user_id(),
@@ -382,16 +390,18 @@ class User:
 
                 Can only check for Artist, User, and Playlist.
 
-        Exceptions:
-            TypeError: raised if other is not one of the types described above.
+        Auth token requirements:
+            user-follow-read
+            playlist-read-private
+
+        Calls endpoints:
+            GET     /v1/me/following/contains
+            GET     /v1/playlists/{playlist_id}/followers/contains
 
         Return:
-            Success: List of tuples. Each tuple has an input object and whether
-                     the user follows the object.
-            Failure: None
+            List of tuples. Each tuple has an input object and whether the user
+            follows the object.
         '''
-        # GET /v1/me/following/contains
-        # GET /v1/playlists/{playlist_id}/followers/contains
         # Note for me: easier to use get_playlists and check in there
         pass
 
@@ -406,20 +416,80 @@ class User:
         Keyword arguments:
             follow_type: one of sp.ARTIST or sp.PLAYLIST
             limit: (optional) the max number of items to return. If None, will
-                return all. Must be positive.
+                return all. Must be between 1 and 100000 inclusive.
 
         Return:
             Success: List of follow_type objects. Could be empty.
             Failure: None
 
+        Auth token requirements:
+            user-follow-read
+            playlist-read-private
+            playlist-read-collaborative
+
+        Calls endpoints:
+            GET     /v1/me/following
+            GET     /v1/users/{user_id}/playlists
+
         Exceptions:
-            TypeError: if sp.USER is passed in. The Spotify web api does not
+            ValueError: if sp.USER is passed in. The Spotify web api does not
                 currently allow you to access this information.
                 For more info: https://github.com/spotify/web-api/issues/4
         '''
-        # GET /v1/me/following
-        # get user playlists / parse for diff owner to get following playlists
-        pass
+
+        # Validate inputs
+        if follow_type not in [sp.ARTIST, sp.PLAYLIST]:
+            raise ValueError(follow_type)
+        if limit is None:
+            limit = sp.SPOTIFY_MAX_PLAYLISTS
+        if limit <= 0 or limit > sp.SPOTIFY_MAX_PLAYLISTS:
+            raise ValueError(limit)
+
+        if follow_type == sp.PLAYLIST:
+            my_playlists = self.get_playlists()
+            my_id = self.user_id()
+            results = []
+            for playlist in my_playlists:
+                # TODO: shouldn't access _raw
+                if playlist._raw['owner']['id'] != my_id:
+                    results.append(playlist)
+
+            return results[:limit]
+
+        # assert(follow_type == sp.ARTIST)
+        uri_params = {
+            'type': 'artist',
+            'limit': sp.SPOTIFY_PAGE_SIZE
+        }
+        results = []
+
+        # Loop until we get 'limit' many items or run out
+        # Can't use _paginate because the artist endpoint does it differently...
+        while len(results) < limit:
+
+            # Paginate
+            if len(results) != 0:
+                # TODO: shouldn't access _raw
+                uri_params['after'] = results[-1]._raw['id']
+
+            response_json, status_code = self._sp_obj._request(
+                request_type = sp.REQUEST_GET,
+                endpoint     = Endpoint.USER_GET_ARTISTS,
+                body         = None,
+                uri_params   = uri_params
+            )
+
+            if status_code != 200:
+                raise Exception('Oh no TODO!')
+
+            # No more results to grab from spotify
+            if len(response_json['artists']['items']) == 0:
+                break
+
+            for elem in response_json['artists']['items']:
+                results.append(Artist(self._sp_obj, elem))
+
+        return results[:limit]
 
 
     @typechecked
@@ -435,9 +505,6 @@ class User:
                 If other is a list, it can conatin multiple types.
 
                 Can only follow Artist, User, and Playlist.
-
-        Exceptions:
-            TypeError: raised if other is not one of the types described above.
 
         Note: if user is already following other, will do nothing and return
             a success code in response.status()
@@ -464,9 +531,6 @@ class User:
 
                 Can only unfollow Artist, User, and Playlist.
 
-        Exceptions:
-            TypeError: raised if other is not one of the types described above.
-
         Note: if user is already not following other, will do nothing and return
             a success code in response.status()
 
@@ -491,9 +555,6 @@ class User:
                 If other is a list, it can conatin multiple types.
 
                 Can only check for Track and Album.
-
-        Exceptions:
-            TypeError: raised if other is not one of the types described above.
 
         Return:
             Success: List of tuples. Each tuple has an input object and whether
@@ -540,9 +601,6 @@ class User:
 
                 Can only save Track or Album.
 
-        Exceptions:
-            TypeError: raised if other is not one of the types described above.
-
         Note: if user already has other saved, will do nothing and return
             a success code in response.status()
 
@@ -567,9 +625,6 @@ class User:
                 If other is a list, it can conatin multiple types.
 
                 Can only remove Track or Album.
-
-        Exceptions:
-            TypeError: raised if other is not one of the types described above.
 
         Note: if user already does not have other saved, will do nothing and
             return a success code in response.status()
