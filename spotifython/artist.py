@@ -38,34 +38,34 @@ class Artist:
     # Images: unsupported object
     # Type: is an artist. we don't need to include this.
 
-    def genres(self) -> Response: # List[str]
+    def genres(self): # List[str]
         if 'genres' not in self._raw: self._update_fields()
         return Response(status=Response.OK, contents=self._raw.get('genres'))
 
-    def href(self) -> Response: # str
+    def href(self): # str
         if 'href' not in self._raw: self._update_fields()
         return Response(status=Response.OK, contents=self._raw.get('href'))
     
-    def artist_id(self) -> Response: # str
+    def artist_id(self): # str
         if 'id' not in self._raw: self._update_fields()
         return Response(status=Response.OK, contents=self._raw.get('id'))
     
-    def name(self) -> Response: # str
+    def name(self): # str
         if 'name' not in self._raw: self._update_fields()
         return Response(status=Response.OK, contents=self._raw.get('name'))
     
-    def popularity(self) -> Response: # int
+    def popularity(self): # int
         if 'popularity' not in self._raw: self._update_fields()
         return Response(status=Response.OK, contents=self._raw.get('popularity'))
     
-    def uri(self) -> Response: # str
+    def uri(self): # str
         if 'uri' not in self._raw: self._update_fields()
         return Response(status=Response.OK, contents=self._raw.get('uri'))
     
     # If field is not present, update it using the object's artist id
     # Raise ValueError if artist id not present in the raw object data.
     # Uses endpoint: GET https://api.spotify.com/v1/artists/{id}
-    def _update_fields(self) -> Response: # None
+    def _update_fields(self): # None
         _artist_id = self.artist_id().contents()
         endpoint = f'/v1/artists/{artist_id}'
         response_json, status_code = self._top._request(
@@ -87,7 +87,7 @@ class Artist:
         search_limit: int = None,
         include_groups: List[str] = None,
         market: str = sp.TOKEN_REGION,
-    ) -> Response: # List[Album]
+    ): # List[Album]
         '''
         Gets the albums associated with the current Spotify artist.
         
@@ -178,7 +178,7 @@ class Artist:
     def top_tracks(self,
         market: str = sp.TOKEN_REGION,
         search_limit: int = 10,
-    ) -> Response: # List[Track]
+    ): # List[Track]
         '''
         Gets the top tracks associated with the current Spotify artist.
         
@@ -246,7 +246,7 @@ class Artist:
     
     def related_artists(self,
         search_limit: int = 20,
-    ) -> Response: # List[Artist]
+    ): # List[Artist]
         '''
         Gets Spotify catalog information about artists similar to a given artist.
 
