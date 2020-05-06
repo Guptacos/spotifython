@@ -17,12 +17,14 @@ class Album:
     def __init__(self, sp_obj, album_info):
         self._raw = album_info
         return None
+    def spotify_id(self):
+        return self._raw['id']
 
 class Artist:
     def __init__(self, sp_obj, artist_info):
         self._raw = artist_info
         return None
-    def artist_id(self):
+    def spotify_id(self):
         return self._raw['id']
 
 class Player:
@@ -37,18 +39,19 @@ class Playlist:
     def __str__(self):
         return ('%s owned by %s' %(self._raw['name'], self._raw['owner']['id']))
 
-    def __repr__(self):
-        return ('%s owned by %s' %(self._raw['name'], self._raw['owner']['id']))
-
     def __eq__(self, other):
         if not isinstance(other, Playlist):
             return False
         return self._raw['id'] == other._raw['id']
+    def spotify_id(self):
+        return self._raw['id']
 
 class Track:
     def __init__(self, sp_obj, track_info):
         self._raw = track_info
         return None
+    def spotify_id(self):
+        return self._raw['id']
 
 
 from spotifython import Spotifython
@@ -142,19 +145,57 @@ class User:
         return results[:limit]
 
 
-    def _batch(elems, chunk_size = sp.SPOTIFY_PAGE_SIZE):
-        ''' Helper function to break elems into batches
-        E.g.
-            elems = [1, 2, 3, 4, 5, 6, 7]
-            _batch(elems, 2)
-            >>> [[1,2], [3,4], [5,6], [7]]
+    # TODO: partial failure?
+    def _batch_get(self,
+                   elements: List[Any],
+                   endpoint: str,
+                   uri_params: Dict={}
+    ) -> List[Tuple[Any, bool]]:
+        ''' Helper to break a large request into many smaller requests so that
+            Spotify doesn't complain.
+
+        Keyword arguments:
+            elements: the list of things to be sent to Spotify
+            endpoint: the Spotify endpoint to send a GET request
+            uri_params: any uri params besides 'id' to be sent
+
+        Returns:
+            A list of tuples, where each tuple contains an object and the
+            boolean value Spotify returned for that object.
         '''
+        def create_batches(elems, chunk_size = sp.SPOTIFY_PAGE_SIZE):
+            ''' Helper function to break elems into batches
+            E.g.
+                elems = [1, 2, 3, 4, 5, 6, 7]
+                _batch(elems, 2)
+                >>> [[1,2], [3,4], [5,6], [7]]
+            '''
+            results = []
+            for i in range(0, len(elems), chunk_size):
+                if i >= len(elems):
+                    results += [elems[i:]]
+                else:
+                    results += [elems[i:i + chunk_size]]
+
+            return results
+
+        # Break into manageable batches for Spotify
+        batches = create_batches(elements, sp.SPOTIFY_PAGE_SIZE)
         results = []
-        for i in range(0, len(elems), chunk_size):
-            if i >= len(elems):
-                results += [elems[i:]]
-            else:
-                results += [elems[i:i + chunk_size]]
+        for batch in batches:
+            uri_params['ids'] = [elem.spotify_id() for elem in batch]
+
+            response_json, status_code = self._sp_obj._request(
+                request_type = sp.REQUEST_GET,
+                endpoint     = endpoint,
+                body         = None,
+                uri_params   = uri_params
+            )
+
+            if status_code != 200:
+                raise Exception('Oh no TODO!')
+
+            results += list(zip(batch, response_json))
 
         return results
 
@@ -174,7 +215,7 @@ class User:
         pass
 
 
-    def user_id(self) -> str:
+    def spotify_id(self) -> str:
         ''' Get the id of this user
 
         Return:
@@ -233,9 +274,9 @@ class User:
         '''
         # Validate arguments
         if top_type not in [sp.ARTIST, sp.TRACK]:
-            raise ValueError(top_type)
+            raise TypeError(top_type)
         if time_range not in [sp.LONG, sp.MEDIUM, sp.SHORT]:
-            raise ValueError(time_range)
+            raise TypeError(time_range)
         if limit <= 0:
             raise ValueError(limit)
 
@@ -344,7 +385,8 @@ class User:
         results = self._paginate_get(
                         limit = limit,
                         return_class = Playlist,
-                        endpoint = Endpoint.USER_GET_PLAYLISTS % self.user_id(),
+                        endpoint = Endpoint.USER_GET_PLAYLISTS
+                                   % self.spotify_id(),
                         uri_params = {},
                         body = None)
 
@@ -382,7 +424,7 @@ class User:
         '''
         # Validate inputs
         if visibility not in [sp.PUBLIC, sp.PRIVATE, sp.PRIVATE_COLLAB]:
-            raise ValueError(visibility)
+            raise TypeError(visibility)
 
         # Make the request
         body = {
@@ -391,7 +433,8 @@ class User:
 
         response_json, status_code = self._sp_obj._request(
             request_type = sp.REQUEST_POST,
-            endpoint     = Endpoint.USER_CREATE_PLAYLIST % self.user_id(),
+            endpoint     = Endpoint.USER_CREATE_PLAYLIST
+                           % self.spotify_id(),
             body         = body,
             uri_params   = None
         )
@@ -433,52 +476,15 @@ class User:
         if not isinstance(other, List):
             other = [other]
 
-        artists = []
-        users = []
-        playlists = []
-        for elem in other:
-            if isinstance(elem, Artist):
-                artists.append(elem)
+        artists = list(filter(lambda elem: isinstance(elem, Artist), other))
+        users = list(filter(lambda elem: isinstance(elem, User), other))
+        playlists = list(filter(lambda elem: isinstance(elem, Playlist), other))
 
-            elif isinstance(elem, User):
-                users.append(elem)
+        endpoint = Endpoint.USER_FOLLOWING_CONTAINS
+        results = self._batch_get(artists, endpoint, {'type': 'artist'})
+        results += self._batch_get(users, endpoint, {'type': 'user'})
 
-            elif isinstance(elem, Playlist):
-                playlists.append(elem)
-
-            else:
-                raise TypeError(elem)
-
-        # Break into manageable batches for Spotify
-        artists = User._batch(artists, sp.SPOTIFY_PAGE_SIZE)
-        users = User._batch(users, sp.SPOTIFY_PAGE_SIZE)
-
-        # TODO: partial failure?
-        def check_batches(batches, request_type):
-            results = []
-            for batch in batches:
-                if request_type == 'artist':
-                    ids = [artist.artist_id() for artist in batch]
-                else:
-                    ids = [user.user_id() for user in batch]
-
-                response_json, status_code = self._sp_obj._request(
-                    request_type = sp.REQUEST_GET,
-                    endpoint     = Endpoint.USER_FOLLOWING_CONTAINS,
-                    body         = None,
-                    uri_params   = {'type': request_type, 'ids': ids}
-                )
-
-                if status_code != 200:
-                    raise Exception('Oh no TODO!')
-
-                results += list(zip(batch, response_json))
-
-            return results
-
-        results = check_batches(artists, 'artist')
-        results += check_batches(users, 'user')
-
+        # For each playlist in other, check if in the User's followed playlists
         followed_playlists = self.get_following(sp.PLAYLIST)
         results += list(map(lambda p: (p, p in followed_playlists), playlists))
 
@@ -525,7 +531,7 @@ class User:
 
         if follow_type == sp.PLAYLIST:
             my_playlists = self.get_playlists()
-            my_id = self.user_id()
+            my_id = self.spotify_id()
             results = []
             for playlist in my_playlists:
                 # TODO: shouldn't access _raw
@@ -638,10 +644,26 @@ class User:
             Success: List of tuples. Each tuple has an input object and whether
                      the user has that object saved.
             Failure: None
+
+        Auth token requirements:
+            user-library-read
+
+        Calls endpoints
+            GET     /v1/me/albums/contains
+            GET     /v1/me/tracks/contains
         '''
-        # GET /v1/me/albums/contains
-        # GET /v1/me/tracks/contains
-        pass
+        # Sort input
+        if not isinstance(other, List):
+            other = [other]
+
+        tracks = list(filter(lambda elem: isinstance(elem, Track), other))
+        albums = list(filter(lambda elem: isinstance(elem, Album), other))
+
+        endpoint = Endpoint.USER_HAS_SAVED
+        results = self._batch_get(tracks, endpoint % 'tracks')
+        results += self._batch_get(albums, endpoint % 'albums')
+
+        return results
 
 
     @typechecked
