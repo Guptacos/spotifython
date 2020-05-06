@@ -33,6 +33,7 @@ class Spotifython:
     DEFAULT_REQUEST_TIMEOUT = 10 # in seconds
     SPOTIFY_PAGE_SIZE = 50
     SPOTIFY_MAX_PLAYLISTS = 100000
+    SPOTIFY_MAX_LIB_SIZE = 10000
     
     def __init__(self, token: str, timeout: int = DEFAULT_REQUEST_TIMEOUT):
         self._token = token

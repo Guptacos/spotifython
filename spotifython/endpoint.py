@@ -11,6 +11,7 @@ class Endpoint:
     USER_FOLLOWING_CONTAINS = '/v1/me/following/contains'
     # One of 'albums' or 'tracks'
     USER_HAS_SAVED = '/v1/me/%s/contains'
+    USER_GET_SAVED = '/v1/me/%s'
 
 # import endpoint
 # endpoint.BASE_URI        
