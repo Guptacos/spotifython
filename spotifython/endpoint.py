@@ -4,6 +4,7 @@ class Endpoint:
 
     # User
     USER_TOP = '/v1/me/top/%s'
+    USER_RECENTLY_PLAYED = '/v1/me/player/recently-played'
 
 # import endpoint
 # endpoint.BASE_URI        
