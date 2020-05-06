@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, List
 import requests
 import math
 
@@ -133,16 +133,16 @@ class Spotifython:
             self._tracks_paging += tracks
 
         # Field accessors
-        def albums(self): # List[Album]
+        def albums(self) -> List[Album]:
             return self._albums_paging.get('items', list())
 
-        def artists(self): # List[Artist]
+        def artists(self) -> List[Artist]: 
             return self._artists_paging.get('items', list())
 
-        def playlists(self): # List[Playlist]
+        def playlists(self) -> List[Playlist]:
             return self._playlists_paging.get('items', list())
         
-        def tracks(self): # List[Track]
+        def tracks(self) -> List[Track]: 
             return self._tracks_paging.get('items', list())
     
     ##################################
@@ -155,7 +155,7 @@ class Spotifython:
         search_limit: int,
         market: str = self.TOKEN_REGION,
         include_external_audio: bool = False
-    ): # SearchResult
+    ) -> SearchResult:
         '''
         Searches for content with the given query.
 
@@ -305,7 +305,7 @@ class Spotifython:
     def get_albums(self, 
         album_ids: Union[str, List[str]],
         market: str = self.TOKEN_REGION
-    ): # Union[Album, List[Album]]
+    ) -> Union[Album, List[Album]]: 
         '''
         Gets the albums with the given Spotify album ids.
 
@@ -380,7 +380,7 @@ class Spotifython:
 
     def get_artists(self, 
         artist_ids: Union[str, List[str]]
-    ): # Union[Artist, List[Artist]]
+    ) -> Union[Artist, List[Artist]]:
         '''
         Gets the artists with the given Spotify artists ids.
 
@@ -443,7 +443,7 @@ class Spotifython:
     def get_tracks(self, 
         track_ids: Union[str, List[str]], 
         market: str = self.TOKEN_REGION
-    ): # Union[Track, List[Track]]
+    ) -> Union[Track, List[Track]]:
         '''
         Gets the tracks with the given Spotify track ids.
 
@@ -518,7 +518,7 @@ class Spotifython:
     
     def get_users(self, 
         user_ids: Union[str, List[str]]
-    ): # Union[User, List[User]]
+    ) -> Union[User, List[User]]:
         '''
         Gets the users with the given Spotify user ids.
 
@@ -570,7 +570,7 @@ class Spotifython:
 
         return result if len(result) != 1 else result[0]
     
-    def get_current_user(self): # User
+    def get_current_user(self) -> User:
         '''
         Gets the user associated with the current Spotify API authentication key.
         
@@ -613,7 +613,7 @@ class Spotifython:
         playlist_ids: Union[str, List[str]],
         fields: str = None,
         market: str = self.TOKEN_REGION
-    ): # Union[Playlist, List[Playlist]]
+    ) -> Union[Playlist, List[Playlist]]:
         '''
         Gets the tracks with the given Spotify playlist ids.
 
