@@ -4,6 +4,8 @@ from copy import deepcopy
 from response import Response
 from endpoint import Endpoint
 import spotifython as sp
+from typing import List
+
 
 class Artist:
     # User should never call this constructor. As a result, they should never
@@ -38,27 +40,27 @@ class Artist:
     # Images: unsupported object
     # Type: is an artist. we don't need to include this.
 
-    def genres(self): # List[str]
+    def genres(self) -> List[str]:
         if 'genres' not in self._raw: self._update_fields()
         return Response(status=Response.OK, contents=self._raw.get('genres'))
 
-    def href(self): # str
+    def href(self) -> str:
         if 'href' not in self._raw: self._update_fields()
         return Response(status=Response.OK, contents=self._raw.get('href'))
     
-    def artist_id(self): # str
+    def artist_id(self) -> str: 
         if 'id' not in self._raw: self._update_fields()
         return Response(status=Response.OK, contents=self._raw.get('id'))
     
-    def name(self): # str
+    def name(self) -> str: 
         if 'name' not in self._raw: self._update_fields()
         return Response(status=Response.OK, contents=self._raw.get('name'))
     
-    def popularity(self): # int
+    def popularity(self) -> int: 
         if 'popularity' not in self._raw: self._update_fields()
         return Response(status=Response.OK, contents=self._raw.get('popularity'))
     
-    def uri(self): # str
+    def uri(self) -> str:
         if 'uri' not in self._raw: self._update_fields()
         return Response(status=Response.OK, contents=self._raw.get('uri'))
     
@@ -87,7 +89,7 @@ class Artist:
         search_limit: int = None,
         include_groups: List[str] = None,
         market: str = sp.TOKEN_REGION,
-    ): # List[Album]
+    ) -> List[Album]: 
         '''
         Gets the albums associated with the current Spotify artist.
         
@@ -178,7 +180,7 @@ class Artist:
     def top_tracks(self,
         market: str = sp.TOKEN_REGION,
         search_limit: int = 10,
-    ): # List[Track]
+    ) -> List[Track]:
         '''
         Gets the top tracks associated with the current Spotify artist.
         
