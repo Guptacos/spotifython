@@ -82,8 +82,17 @@ class Spotifython:
                 response_json, status_code = _request(...)
         '''
         request_uri = Endpoint.BASE_URI + endpoint
-        headers = {"Authorization": "Bearer " + self._token}
-        r = requests.request(request_type, request_uri, data=body, params=uri_params, headers=headers, timeout=self._timeout)
+        headers = {
+            'Authorization': 'Bearer ' + self._token,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        }
+        r = requests.request(request_type,
+                             request_uri,
+                             json=body,
+                             params=uri_params,
+                             headers=headers,
+                             timeout=self._timeout)
         
         # Extract the information from response. No exception should be present in the event of a successful 
         # response, but the response json may or may not be present.
