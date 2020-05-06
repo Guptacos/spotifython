@@ -60,16 +60,16 @@ class Session:
             self._tracks_paging += tracks
 
         # Field accessors
-        def albums(self): # List[Album]
+        def albums(self) -> List[Album]:
             return self._albums_paging.get('items', list())
 
-        def artists(self): # List[Artist]
+        def artists(self) -> List[Artist]: 
             return self._artists_paging.get('items', list())
 
-        def playlists(self): # List[Playlist]
+        def playlists(self) -> List[Playlist]:
             return self._playlists_paging.get('items', list())
         
-        def tracks(self): # List[Track]
+        def tracks(self) -> List[Track]: 
             return self._tracks_paging.get('items', list())
     
     ##################################
@@ -82,7 +82,7 @@ class Session:
         search_limit: int,
         market: str = TOKEN_REGION,
         include_external_audio: bool = False
-    ): # SearchResult
+    ) -> SearchResult:
         '''
         Searches for content with the given query.
 
@@ -307,7 +307,7 @@ class Session:
 
     def get_artists(self, 
         artist_ids: Union[str, List[str]]
-    ): # Union[Artist, List[Artist]]
+    ) -> Union[Artist, List[Artist]]:
         '''
         Gets the artists with the given Spotify artists ids.
 
@@ -445,7 +445,7 @@ class Session:
     
     def get_users(self, 
         user_ids: Union[str, List[str]]
-    ): # Union[User, List[User]]
+    ) -> Union[User, List[User]]:
         '''
         Gets the users with the given Spotify user ids.
 
@@ -497,7 +497,7 @@ class Session:
 
         return result if len(result) != 1 else result[0]
     
-    def get_current_user(self): # User
+    def get_current_user(self) -> User:
         '''
         Gets the user associated with the current Spotify API authentication key.
         
