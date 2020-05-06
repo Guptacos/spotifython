@@ -8,6 +8,7 @@ class Endpoints:
     USER_TOP = '/v1/me/top/%s'
     USER_RECENTLY_PLAYED = '/v1/me/player/recently-played'
     USER_GET_PLAYLISTS = '/v1/users/%s/playlists'
+    USER_CREATE_PLAYLIST = '/v1/users/%s/playlists'
 
     # Player
     PLAYER = '/v1/me/player'

@@ -320,8 +320,8 @@ class User:
     def create_playlist(self,
                         name: str,
                         visibility: str=sp.PUBLIC,
-                        description: str=""
-    ) -> None:
+                        description: str=None
+    ) -> Playlist:
         ''' Create a new playlist owned by the current user
 
         Keyword arguments:
@@ -335,14 +335,37 @@ class User:
             description: (optional) viewable description of the playlist.
 
         Return:
-            None
+            The newly created Playlist object. Note that this modifies the
+            user's library.
 
-        Exceptions:
-            TypeError: raised if visibility is not one of the types described
-                above.
+        Auth token requirements:
+            playlist-modify-public
+            playlist-modify-private
+
+        Calls endpoints:
+            POST    /v1/users/{user_id}/playlists
         '''
-        # POST /v1/users/{user_id}/playlists
-        pass
+        # Validate inputs
+        if visibility not in [sp.PUBLIC, sp.PRIVATE, sp.PRIVATE_COLLAB]:
+            raise ValueError(visibility)
+
+        # Make the request
+        body = {
+            'name': name,
+        }
+
+
+        response_json, status_code = self._sp_obj._request(
+            request_type = sp.REQUEST_POST,
+            endpoint     = Endpoint.USER_CREATE_PLAYLIST % self.user_id(),
+            body         = body,
+            uri_params   = None
+        )
+
+        if status_code != 201:
+            raise Exception('Oh no TODO!')
+
+        return Playlist(self._sp_obj, response_json)
 
 
     @typechecked
