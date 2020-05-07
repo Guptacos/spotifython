@@ -1,38 +1,15 @@
-from typing import Union
+from typing import Union, List
+import requests
+
 from response import Response
 from endpoint import Endpoint
-import requests
+from constants import SpotifythonConstants
 
 # This object should be constructed by the user to instantiate the 
 # session of Spotify Web API usage.
 class Spotifython:
-
-    # Constants
-    TOKEN_REGION = 'from_token'
-    ALBUM = 'album'
-    ARTIST = 'artist'
-    PLAYLIST = 'playlist'
-    TRACK = 'track'
-    SHOW = 'show'
-    EPISODE = 'episode'
-    REQUEST_GET = 'GET'
-    REQUEST_PUT = 'PUT'
-    REQUEST_DELETE = 'DELETE'
-    REQUEST_POST = 'POST'
-    USER = 'user'
-    LONG = 'long'
-    MEDIUM = 'medium'
-    SHORT = 'short'
-    CONTEXT = 'context'
-    OFF = 'off'
-    KEEP_PLAY_STATE = 'keep_play_state'
-    FORCE_PLAY = 'force_play'
-    PUBLIC = 'public'
-    PRIVATE = 'private'
-    PRIVATE_COLLAB = 'private_collab'
-    DEFAULT_REQUEST_TIMEOUT = 10 # in seconds
     
-    def __init__(self, token: str, timeout: int = DEFAULT_REQUEST_TIMEOUT):
+    def __init__(self, token: str, timeout: int = SpotifythonConstants.DEFAULT_REQUEST_TIMEOUT):
         self._token = token
         self._timeout = timeout
     
@@ -143,7 +120,7 @@ class Spotifython:
         query: str, 
         type: Union[str, List[str]],
         search_limit: int,
-        market: str = self.TOKEN_REGION,
+        market: str = SpotifythonConstants.TOKEN_REGION,
         include_external_audio: bool = False
     ) -> Response: # SearchResult
         '''
@@ -201,7 +178,7 @@ class Spotifython:
 
     def get_albums(self, 
         album_ids: Union[str, List[str]],
-        market: str = self.TOKEN_REGION
+        market: str = SpotifythonConstants.TOKEN_REGION
     ) -> Response: # Union[Album, List[Album]]
         '''
         Gets the albums with the given Spotify album ids.
@@ -253,7 +230,7 @@ class Spotifython:
 
     def get_tracks(self, 
         track_ids: Union[str, List[str]], 
-        market: str = self.TOKEN_REGION
+        market: str = SpotifythonConstants.TOKEN_REGION
     ) -> Response: # Union[Track, List[Track]]
         '''
         Gets the tracks with the given Spotify track ids.
@@ -321,7 +298,7 @@ class Spotifython:
     def get_playlists(self,
         playlist_ids: Union[str, List[str]],
         fields: str = None,
-        market: str = self.TOKEN_REGION
+        market: str = SpotifythonConstants.TOKEN_REGION
     ) -> Response: # Union[Playlist, List[Playlist]]
         '''
         Gets the tracks with the given Spotify playlist ids.
