@@ -1,8 +1,10 @@
 from user import User
 from track import Track
+from spotifython import Spotifython
 from copy import deepcopy
 from typing import Union, List
 
+# TODO move endpoints into endpoint.py
 # objects created in this constructor
 class Playlist:
     """
@@ -13,21 +15,42 @@ class Playlist:
     """
 
     # GET https://api.spotify.com/v1/playlists/{playlist_id}
-    def __init__(self, playlist_info: dict):
+    def __init__(self, playlist_info: dict, top: Spotifython):
         """
         Playlist constructor that should never be called directly.
         """
         self._raw = deepcopy(playlist_info)
+        self._top = top
         self._owner = User(playlist_info.get('owner', {}))
         self._tracks = []
         tracks = playlist_info.get('tracks', {})
         if tracks:
             for item in tracks.get('items', []):
                 self._tracks.append(Track(item.get('track', {})))
+
+
+    def owner(self):
+        """
+        Returns the owner of the playlist.
+
+        Returns:
+        A User object.
+        """
+        return deepcopy(self._owner)
+
+
+    def uri(self):
+        """
+        Returns the URI of the playlist.
+
+        Returns:
+        A String URI.
+        """
+        return self._raw['uri']
         
 
     # POST https://api.spotify.com/v1/playlists/{playlist_id}/tracks
-    def add_tracks(self, track: Union[Track, List[Track]], position: int=None):
+    def add_tracks(self, tracks: Union[Track, List[Track]], position: int=None):
         """
         Add one or more tracks to the playlist.
 
@@ -42,7 +65,19 @@ class Playlist:
         Returns:
         A Response object.
         """
-        pass
+        endpoint = '/v1/playlists/' + self._raw['id'] + '/tracks'
+        body = {}
+        uris = []
+        if isinstance(tracks, list):
+            for track in tracks:
+                uris.append(track.uri())
+        else:
+            uris.append(tracks.uri())
+        body['uris'] = uris
+        if position:
+            body['position'] = position
+        response_json, status_code = self._top._request('POST', endpoint, body=body)
+        return response_json
 
     # PUT https://api.spotify.com/v1/playlists/{playlist_id}
     def update_name(self, name: str):
@@ -55,7 +90,11 @@ class Playlist:
         Returns:
         A Response object.
         """
-        pass
+        endpoint = '/v1/playlists/' + self._raw['id']
+        body = {}
+        body['name'] = name
+        response_json, status_code = self._top._request('PUT', endpoint, body=body)
+        return response_json
 
     # PUT https://api.spotify.com/v1/playlists/{playlist_id}
     def update_description(self, description: str):
@@ -68,7 +107,11 @@ class Playlist:
         Returns:
         A Response object.
         """
-        pass
+        endpoint = '/v1/playlists/' + self._raw['id']
+        body = {}
+        body['description'] = name
+        response_json, status_code = self._top._request('PUT', endpoint, body=body)
+        return response_json
 
     # PUT https://api.spotify.com/v1/playlists/{playlist_id}
     def update_visibility(self, visibility: str):
@@ -76,13 +119,25 @@ class Playlist:
         Update the playlist public/private visibility and collaborative access.
 
         Parameters:
-        visibility: A Visibility enum containing the new visibility of this
-                    playlist.
+        visibility: One of [sp.PUBLIC, sp.PRIVATE, sp.PRIVATE_COLLAB]
+                    containing the new visibility of this playlist.
 
         Returns:
         A Response object.
         """
-        pass
+        endpoint = '/v1/playlists/' + self._raw['id']
+        body = {}
+        if visibility == sp.PUBLIC:
+            body['public'] = true
+        elif visibility == sp.PRIVATE:
+            body['public'] = false
+        elif visibility == s.PRIVATE_COLLAB:
+            body['public'] = false
+            body['collaborative'] = true
+        else:
+            raise ValueError("Invalid visibility, must be one of [sp.PUBLIC, sp.PRIVATE, sp.PRIVATE_COLLAB]")
+        response_json, status_code = self._top._request('PUT', endpoint, body=body)
+        return response_json
 
     # TODO test the response from this endpoint and clarify usage
     # GET https://api.spotify.com/v1/playlists/{playlist_id}/images
@@ -93,7 +148,9 @@ class Playlist:
         Returns:
         A Response object containing the cover image url as a string.
         """
-        pass
+        endpoint = '/v1/playlists/' + self._raw['id'] + '/images'
+        response_json, status_code = self._top._request('GET', endpoint)
+        return response_json['url']
 
     # GET https://api.spotify.com/v1/playlists/{playlist_id}/tracks
     def tracks(self, start: int=0, num_tracks: int=None):
@@ -116,7 +173,17 @@ class Playlist:
         Returns:
         A Response object containing a list of Track objects.
         """
-        pass
+        endpoint = '/v1/playlists/' + self._raw['id'] + '/tracks'
+        body = {}
+        body['offset'] = start
+        # TODO repeat queries if greater than 100
+        if num_tracks:
+            body['limit'] = num_tracks
+        response_json, status_code = self._top._request('GET', endpoint)
+        tracks = []
+        for track in response_json['items']:
+            tracks.append(Track(track))
+        return tracks
 
     # TODO test this in practice, what does it actually mean? Nobody knows.
     # DELETE https://api.spotify.com/v1/playlists/{playlist_id}/tracks
@@ -213,16 +280,3 @@ class Playlist:
     def __len__(self):
         """Return the number of tracks in the playlist."""
         return len(self._raw['tracks']['items'])
-
-    class Visibility(Enum):
-        """
-        An Enum to describe the three possible playlist visibilities.
-
-        Playlists can be public, private but not collaborative, and private and
-        collaborative. Playlists cannot be collaborative without also being
-        private.
-        """
-
-        PUBLIC = 1
-        PRIVATE = 2
-        COLLABORATIVE = 3
