@@ -18,7 +18,8 @@ You can read more about the python unittest framework
 
 
 ## Writing new test
-TODO:
+For now, follow the format of the test\_user.py file on the user-implementation
+branch. I will add more detailed instructions in the future.
 
 __NOTE__: only print in your tests on failure.
 
