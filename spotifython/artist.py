@@ -1,13 +1,12 @@
 from copy import deepcopy
 from typing import List, Union
 
-import spotifython as sp
+from spotifython import Spotifython as sp
 # from album import Album
 # from track import Track
 
 from response import Response
 from endpoint import Endpoint
-from constants import SpotifythonConstants
 
 ##################################
 # Stub Classes
@@ -109,7 +108,7 @@ class Artist:
         _artist_id = self.artist_id().contents()
         endpoint = f'/v1/artists/{artist_id}'
         response_json, status_code = self._top._request(
-            request_type=Spotifython.REQUEST_GET, 
+            request_type=sp.REQUEST_GET, 
             endpoint=endpoint, 
         )
         # Updates _raw with new values.
@@ -126,7 +125,7 @@ class Artist:
     def albums(self, 
         search_limit: int = None,
         include_groups: List[str] = None,
-        market: str = SpotifythonConstants.TOKEN_REGION,
+        market: str = sp.TOKEN_REGION,
     ) -> List[Album]: 
         '''
         Gets the albums associated with the current Spotify artist.
@@ -136,8 +135,8 @@ class Artist:
             include_groups: (Optional) A list of keywords 
                 that will be used to filter the response. If not supplied, 
                 all album types will be returned. 
-                Valid values are: SpotifythonConstants.ALBUM, SpotifythonConstants.SINGLE, SpotifythonConstants.APPEARS_ON, SpotifythonConstants.COMPILATION 
-            market: (Optional) An ISO 3166-1 alpha-2 country code or the string SpotifythonConstants.TOKEN_REGION.
+                Valid values are: sp.ALBUM, sp.SINGLE, sp.APPEARS_ON, sp.COMPILATION 
+            market: (Optional) An ISO 3166-1 alpha-2 country code or the string sp.TOKEN_REGION.
                 Supply this parameter to limit the response to one particular geographical 
                 market. If this value is None, results will be returned for all countries and you 
                 are likely to get duplicate results per album, one for each country in 
@@ -193,7 +192,7 @@ class Artist:
             uri_params['limit'] = search_limit
             uri_params['offset'] = offset
             response_json, status_code = self._top._request(
-                request_type=Spotifython.REQUEST_GET, 
+                request_type=sp.REQUEST_GET, 
                 endpoint=endpoint, 
                 uri_params=uri_params
             )
@@ -216,14 +215,14 @@ class Artist:
     
     
     def top_tracks(self,
-        market: str = SpotifythonConstants.TOKEN_REGION,
+        market: str = sp.TOKEN_REGION,
         search_limit: int = 10,
     ) -> List[Track]:
         '''
         Gets the top tracks associated with the current Spotify artist.
         
         Args:
-            market: An ISO 3166-1 alpha-2 country code or the string SpotifythonConstants.TOKEN_REGION.
+            market: An ISO 3166-1 alpha-2 country code or the string sp.TOKEN_REGION.
             search_limit: (Optional) the maximum number of results to return.
 
         Returns: 
@@ -270,7 +269,7 @@ class Artist:
 
         # Execute requests
         response_json, status_code = self._top._request(
-            request_type=Spotifython.REQUEST_GET, 
+            request_type=sp.REQUEST_GET, 
             endpoint=endpoint, 
             uri_params=uri_params
         )
@@ -328,7 +327,7 @@ class Artist:
 
         # Execute requests
         response_json, status_code = self._top._request(
-            request_type=Spotifython.REQUEST_GET, 
+            request_type=sp.REQUEST_GET, 
             endpoint=endpoint, 
         )
 

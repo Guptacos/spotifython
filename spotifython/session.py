@@ -91,15 +91,15 @@ class Session:
         Args:
             query: search query keywords and optional field filters and operators.
             type: singular type or a list of the types of results to search for.
-                Valid arguments are sp.ALBUM, sp.ARTIST, sp.PLAYLIST, and sp.TRACK.
+                Valid arguments are ALBUM, ARTIST, PLAYLIST, and TRACK.
                 Note: shows and episodes are not supported in this version.
             search_limit: the maximum number of results to return.
             market: (Optional) An ISO 3166-1 alpha-2 country code or the string 
-                sp.TOKEN_REGION. If a country code is specified, only artists, albums,
+                TOKEN_REGION. If a country code is specified, only artists, albums,
                 and tracks with content that is playable in that market is returned.
                 Note:
                 - Playlist results are not affected by the market parameter.
-                - If market is set to sp.TOKEN_REGION, and a valid access token is 
+                - If market is set to TOKEN_REGION, and a valid access token is 
                 specified in the request header, only content playable
                 in the country associated with the user account, is returned.
                 - If market is set to None, no market is passed to Spotify's Web API, 
