@@ -36,7 +36,7 @@ class Session:
     # User should never call this constructor. As a result, they should never
     # have access to the search_info structure prior to creating an SearchResult.
     # Internally, the search result will perform all necessary API calls to get the
-    # desired number of search results (up to search_limit).
+    # desired number of search results (up to search limit).
     class SearchResult:
 
         def __init__(self, search_info: dict = dict()):
@@ -78,8 +78,8 @@ class Session:
 
     def search(self, 
         query: str, 
-        search_types: Union[str, List[str]],
-        search_limit: int,
+        types: Union[str, List[str]],
+        limit: int,
         market: str = TOKEN_REGION,
         include_external_audio: bool = False
     ) -> SearchResult:
@@ -88,10 +88,10 @@ class Session:
 
         Args:
             query: search query keywords and optional field filters and operators.
-            search_types: singular search type or a list of the types of results to search for.
+            types: singular search type or a list of the types of results to search for.
                 Valid arguments are ALBUM, ARTIST, PLAYLIST, and TRACK.
                 Note: shows and episodes are not supported in this version.
-            search_limit: the maximum number of results to return.
+            limit: the maximum number of results to return.
             market: (Optional) An ISO 3166-1 alpha-2 country code or the string 
                 TOKEN_REGION. If a country code is specified, only artists, albums,
                 and tracks with content that is playable in that market is returned.
@@ -108,15 +108,15 @@ class Session:
                 from responses.
 
         Returns:
-            A response object containing a SearchResult if the request succeeded.
-            TODO: update failure behavior including for partial failures
-            On failure, returns a response object containing the raw Spotify Web API
+            Returns a SearchResult if the request succeeded.
+            On failure or partial failure, throws an HTTPError.
             JSON and a corresponding status code defined in the Response class.
 
         Exceptions:
             TypeError for invalid types in any argument.
             ValueError if query type or market is invalid. TODO: how to validate?
-            ValueError if search_limit is > 2000: this is the Spotify API's search limit.
+            ValueError if limit is > 2000: this is the Spotify API's search limit.
+            HTTPError if failure or partial failure.
 
         Calls endpoints: 
             GET   /v1/search
@@ -134,10 +134,10 @@ class Session:
         # Type validation
         if (not isinstance(query, str)):
             raise TypeError(query)
-        if (not isinstance(search_types, str) and not isinstance(search_types, List[str])):
-            raise TypeError(search_types)
-        if (not isinstance(search_limit, int)):
-            raise TypeError(search_limit)
+        if (not isinstance(types, str) and not isinstance(types, List[str])):
+            raise TypeError(types)
+        if (not isinstance(limit, int)):
+            raise TypeError(limit)
         if (market is not None and not isinstance(market, str)):
             raise TypeError(market)
         if (not isinstance(include_external_audio, bool)):
@@ -148,12 +148,12 @@ class Session:
         encoded_query = query.replace(' ', '+')
 
         # Argument validation
-        search_types = search_types if isinstance(search_types, List[str]) else list(search_types)
-        valid_search_types = [ALBUM, ARTIST, PLAYLIST, TRACK]
-        for search_type_filter in search_types:
-            if (search_type_filter not in valid_search_types):
-                raise ValueError(search_types)
-        if (search_limit > 2000):
+        types = types if isinstance(types, List[str]) else list(types)
+        valid_types = [ALBUM, ARTIST, PLAYLIST, TRACK]
+        for search_type_filter in types:
+            if (search_type_filter not in valid_types):
+                raise ValueError(types)
+        if (limit > 2000):
             raise ValueError("Spotify only supports up to 2000 search results.")
 
         # Construct params for API call
@@ -168,19 +168,18 @@ class Session:
         # A maximum 50 search results per search type can be returned per API call
         api_call_limit = 50
         total_search_limit = 2000
-        num_requests = math.ceil(len(search_limit) / api_call_limit) if search_limit is not None else float('inf')
-        limit = min(total_search_limit, search_limit)
+        num_requests = math.ceil(len(limit) / api_call_limit) if limit is not None else float('inf')
+        limit = min(total_search_limit, limit)
         offset = 0
         
         # Initialize SearchResult object
         result = self.SearchResult()
         
         # We want the plural search types, while our constants are singular search types.
-        remaining_search_types = [s + 's' for s in search_types]
-
+        remaining_types = [s + 's' for s in types]
 
         while (num_requests > 0):
-            uri_params['type'] = ','.join(remaining_search_types)
+            uri_params['type'] = ','.join(remaining_types)
             uri_params['limit'] = limit
             uri_params['offset'] = offset
 
@@ -192,7 +191,7 @@ class Session:
             )
 
             # Extract data per search type
-            for t in remaining_search_types:
+            for t in remaining_types:
                 items = response_json[t]['items']
                 acc = list()
 
@@ -221,11 +220,11 @@ class Session:
             num_requests -= 1
             
             # Only make necessary search queries
-            new_remaining_search_types = list()
-            for t in remaining_search_types:
+            new_remaining_types = list()
+            for t in remaining_types:
                 if (response_json[t]['next'] != 'null'):
-                    new_remaining_search_types.append(t)
-            remaining_search_types = new_remaining_search_types
+                    new_remaining_types.append(t)
+            remaining_types = new_remaining_types
             
         return result
 
@@ -244,14 +243,14 @@ class Session:
                 behavior is invoked.
 
         Returns:
-            A response object containing an Album or List[Album] if the request succeeded.
-            TODO: update failure behavior including for partial failures
-            On failure, returns a response object containing the raw Spotify Web API
+            Returns an Album or List[Album] if the request succeeded.
+            On failure or partial failure, throws an HTTPError.
             JSON and a corresponding status code defined in the Response class.
 
         Exceptions:
             TypeError for invalid types in any argument.
             ValueError if market type is invalid. TODO
+            HTTPError if failure or partial failure.
 
         Calls endpoints: 
             GET   /v1/albums
@@ -315,13 +314,13 @@ class Session:
             artist_ids: a string or list of strings of the Spotify artist ids to search for.
 
         Returns:
-            A response object containing an Artist or List[Artists] if the request succeeded.
-            TODO: update failure behavior including for partial failures
-            On failure, returns a response object containing the raw Spotify Web API
+            Returns an Artist or List[Artists] if the request succeeded.
+            On failure or partial failure, throws an HTTPError.
             JSON and a corresponding status code defined in the Response class.
 
         Exceptions:
             TypeError for invalid types in any argument.
+            HTTPError if failure or partial failure.
 
         Calls endpoints: 
             GET   /v1/artists
@@ -382,14 +381,14 @@ class Session:
                 behavior is invoked.
 
         Returns:
-            A response object containing a Track or List[Track] if the request succeeded.
-            TODO: update failure behavior including for partial failures
-            On failure, returns a response object containing the raw Spotify Web API
+            Returns a Track or List[Track] if the request succeeded.
+            On failure or partial failure, throws an HTTPError.
             JSON and a corresponding status code defined in the Response class.
 
         Exceptions:
             TypeError for invalid types in any argument.
             ValueError if market type is invalid. TODO
+            HTTPError if failure or partial failure.
 
         Calls endpoints: 
             GET   /v1/tracks
@@ -452,14 +451,14 @@ class Session:
         Args:
             user_ids: a string or list of strings of the Spotify user id to search for.
         
-        Returns: A response object containing a User or List[User] if the request succeeded.
-            TODO: update failure behavior including for partial failures
-            TODO: document partial failure means corresponding object is None in the result
-            On failure, returns a response object containing the raw Spotify Web API
+        Returns: 
+            Returns a User or List[User] if the request succeeded.
+            On failure or partial failure, throws an HTTPError.
             JSON and a corresponding status code defined in the Response class.
 
         Exceptions:
             TypeError for invalid types in any argument.
+            HTTPError if failure or partial failure.
         
         Calls endpoints:
             GET	/v1/users/{user_id}
@@ -481,19 +480,13 @@ class Session:
             uri_params['ids'] = user_id
 
             # Execute requests
-            # API behavior: if user with user_id does not exist, status_code is 404
-            try:
-                response_json, status_code = self._request(
-                    request_type=REQUEST_GET, 
-                    endpoint=endpoint, 
-                    uri_params=uri_params
-                )
-                result.append(User(response_json))
-            except requests.exceptions.HTTPError as e:
-                if (e.response.status_code is 404):
-                    result.append(None)
-                else:
-                    raise e
+            # TODO: Partial failure - if user with user_id does not exist, status_code is 404
+            response_json, status_code = self._request(
+                request_type=REQUEST_GET, 
+                endpoint=endpoint, 
+                uri_params=uri_params
+            )
+            result.append(User(response_json))
 
         return result if len(result) != 1 else result[0]
     
@@ -503,13 +496,13 @@ class Session:
         
         Returns: 
             A response object containing a User if the request succeeded.
-            TODO: update failure behavior
-            On failure, returns a response object containing the raw Spotify Web API
+            On failure or partial failure, throws an HTTPError.
             JSON and a corresponding status code defined in the Response class.
 
         Exceptions:
             ValueError if the Spotify API key is not valid.
             ValueError if the response is empty.
+            HTTPError if failure or partial failure.
         
         Calls endpoints:
             GET	/v1/me
@@ -557,13 +550,13 @@ class Session:
 
         Returns:
             A response object containing a Playlist or List[Playlist] if the request succeeded.
-            TODO: update failure behavior
-            On failure, returns a response object containing the raw Spotify Web API
+            On failure or partial failure, throws an HTTPError.
             JSON and a corresponding status code defined in the Response class.
 
         Exceptions:
             TypeError for invalid types in any argument.
             ValueError if market type is invalid. TODO
+            HTTPError if failure or partial failure.
 
         Calls endpoints:
             GET	/v1/playlists/{playlist_id}
