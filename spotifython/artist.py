@@ -148,6 +148,7 @@ class Artist:
         Exceptions:
             TypeError for invalid types in any argument.
             ValueError for invalid market. TODO: is this even necessary, will raise ex
+            HTTPError for web request errors or partial failures.
         
         Calls endpoints:
             GET	/v1/artists/{id}/albums
@@ -183,7 +184,6 @@ class Artist:
             search_query == self._albums_query_params else list()
 
         # Execute requests
-        # TODO: how to handle partial failures?
         while (num_requests > 0):
             if (search_limit is None):
                 search_limit = api_call_limit
@@ -233,6 +233,7 @@ class Artist:
             ValueError if market is None.
             ValueError for invalid market. TODO: is this even necessary, will raise ex
             ValueError if search_limit is > 10: this is the Spotify API's search limit.
+            HTTPError for web request errors.
         
         Calls endpoints:
             GET	/v1/artists/{id}/top-tracks
@@ -299,6 +300,7 @@ class Artist:
         Exceptions:
             TypeError for invalid types in any argument.
             ValueError if search_limit is > 20: this is the Spotify API's search limit.
+            HTTPError for web request errors.
         
         Calls endpoints:
             GET	/v1/artists/{id}/related-artists
