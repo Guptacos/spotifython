@@ -89,15 +89,15 @@ class Session:
         Args:
             query: search query keywords and optional field filters and operators.
             search_types: singular search type or a list of the types of results to search for.
-                Valid arguments are SpotifythonConstants.ALBUM, SpotifythonConstants.ARTIST, SpotifythonConstants.PLAYLIST, and SpotifythonConstants.TRACK.
+                Valid arguments are ALBUM, ARTIST, PLAYLIST, and TRACK.
                 Note: shows and episodes are not supported in this version.
             search_limit: the maximum number of results to return.
             market: (Optional) An ISO 3166-1 alpha-2 country code or the string 
-                sp.TOKEN_REGION. If a country code is specified, only artists, albums,
+                TOKEN_REGION. If a country code is specified, only artists, albums,
                 and tracks with content that is playable in that market is returned.
                 Note:
                 - Playlist results are not affected by the market parameter.
-                - If market is set to sp.TOKEN_REGION, and a valid access token is 
+                - If market is set to TOKEN_REGION, and a valid access token is 
                 specified in the request header, only content playable
                 in the country associated with the user account, is returned.
                 - If market is set to None, no market is passed to Spotify's Web API, 
@@ -149,7 +149,7 @@ class Session:
 
         # Argument validation
         search_types = search_types if isinstance(search_types, List[str]) else list(search_types)
-        valid_search_types = [SpotifythonConstants.ALBUM, SpotifythonConstants.ARTIST, SpotifythonConstants.PLAYLIST, SpotifythonConstants.TRACK]
+        valid_search_types = [ALBUM, ARTIST, PLAYLIST, TRACK]
         for search_type_filter in search_types:
             if (search_type_filter not in valid_search_types):
                 raise ValueError(search_types)
@@ -186,7 +186,7 @@ class Session:
 
             # Execute requests
             response_json, status_code = self._request(
-                request_type=Spotifython.REQUEST_GET, 
+                request_type=REQUEST_GET, 
                 endpoint=endpoint, 
                 uri_params=uri_params
             )
@@ -198,23 +198,23 @@ class Session:
 
                 # Add items to accumulator
                 for item in items:
-                    if (t is SpotifythonConstants.SEARCH_RESPONSE_TYPE_ALBUM):
+                    if (t is SEARCH_RESPONSE_TYPE_ALBUM):
                         acc.append(Album(item))
-                    elif (t is SpotifythonConstants.SEARCH_RESPONSE_TYPE_ARTIST):
+                    elif (t is SEARCH_RESPONSE_TYPE_ARTIST):
                         acc.append(Artist(item))
-                    elif (t is SpotifythonConstants.SEARCH_RESPONSE_TYPE_PLAYLIST):
+                    elif (t is SEARCH_RESPONSE_TYPE_PLAYLIST):
                         acc.append(Playlist(item))
-                    elif (t is SpotifythonConstants.SEARCH_RESPONSE_TYPE_TRACK):
+                    elif (t is SEARCH_RESPONSE_TYPE_TRACK):
                         acc.append(Track(item))
 
                 # Update accumulated results into search result
-                if (t is SpotifythonConstants.SEARCH_RESPONSE_TYPE_ALBUM):
+                if (t is SEARCH_RESPONSE_TYPE_ALBUM):
                     result._add_albums(acc)
-                elif (t is SpotifythonConstants.SEARCH_RESPONSE_TYPE_ARTIST):
+                elif (t is SEARCH_RESPONSE_TYPE_ARTIST):
                     result._add_artists(acc)
-                elif (t is SpotifythonConstants.SEARCH_RESPONSE_TYPE_PLAYLIST):
+                elif (t is SEARCH_RESPONSE_TYPE_PLAYLIST):
                     result._add_playlists(acc)
-                elif (t is SpotifythonConstants.SEARCH_RESPONSE_TYPE_TRACK):
+                elif (t is SEARCH_RESPONSE_TYPE_TRACK):
                     result._add_tracks(acc)
 
             offset += api_call_limit
@@ -238,7 +238,7 @@ class Session:
 
         Args:
             album_ids: a string or list of strings of the Spotify album ids to search for.
-            market: (Optional) An ISO 3166-1 alpha-2 country code or the string SpotifythonConstants.TOKEN_REGION. 
+            market: (Optional) An ISO 3166-1 alpha-2 country code or the string TOKEN_REGION. 
                 Provide this parameter if you want to apply Track Relinking.
                 If market is set to None, no market is passed to Spotify's Web API, and its default
                 behavior is invoked.
@@ -290,7 +290,7 @@ class Session:
 
             # Execute requests
             response_json, status_code = self._request(
-                request_type=SpotifythonConstants.REQUEST_GET, 
+                request_type=REQUEST_GET, 
                 endpoint=endpoint, 
                 uri_params=uri_params
             )
@@ -352,7 +352,7 @@ class Session:
 
             # Execute requests
             response_json, status_code = self._request(
-                request_type=SpotifythonConstants.REQUEST_GET, 
+                request_type=REQUEST_GET, 
                 endpoint=endpoint, 
                 uri_params=uri_params
             )
@@ -376,7 +376,7 @@ class Session:
 
         Args:
             track_ids: a string or list of strings of the Spotify track ids to search for.
-            market: (Optional) An ISO 3166-1 alpha-2 country code or the string SpotifythonConstants.TOKEN_REGION. 
+            market: (Optional) An ISO 3166-1 alpha-2 country code or the string TOKEN_REGION. 
                 Provide this parameter if you want to apply Track Relinking.
                 If market is set to None, no market is passed to Spotify's Web API, and its default
                 behavior is invoked.
@@ -428,7 +428,7 @@ class Session:
 
             # Execute requests
             response_json, status_code = self._request(
-                request_type=SpotifythonConstants.REQUEST_GET, 
+                request_type=REQUEST_GET, 
                 endpoint=endpoint, 
                 uri_params=uri_params
             )
@@ -484,7 +484,7 @@ class Session:
             # API behavior: if user with user_id does not exist, status_code is 404
             try:
                 response_json, status_code = self._request(
-                    request_type=SpotifythonConstants.REQUEST_GET, 
+                    request_type=REQUEST_GET, 
                     endpoint=endpoint, 
                     uri_params=uri_params
                 )
@@ -521,7 +521,7 @@ class Session:
         # Execute requests
         try:
             response_json, status_code = self._request(
-                request_type=SpotifythonConstants.REQUEST_GET, 
+                request_type=REQUEST_GET, 
                 endpoint=endpoint
             )
         except requests.exceptions.HTTPError as e:
@@ -551,7 +551,7 @@ class Session:
                 non-reoccurring fields, while parentheses can be used to specify reoccurring 
                 fields within objects. Use multiple parentheses to drill down into nested objects. 
                 Fields can be excluded by prefixing them with an exclamation mark.
-            market: (Optional) An ISO 3166-1 alpha-2 country code or the string SpotifythonConstants.TOKEN_REGION. 
+            market: (Optional) An ISO 3166-1 alpha-2 country code or the string TOKEN_REGION. 
                 Provide this parameter if you want to apply Track Relinking.
                 If market is set to None, no market is passed to Spotify's Web API.
 
@@ -599,7 +599,7 @@ class Session:
 
             # Execute requests
             response_json, status_code = self._request(
-                request_type=SpotifythonConstants.REQUEST_GET, 
+                request_type=REQUEST_GET, 
                 endpoint=endpoint, 
                 uri_params=uri_params
             )
