@@ -2,7 +2,6 @@ from typing import Union, List
 import requests
 import math
 
-from response import Response
 from endpoint import Endpoint
 
 # from album import Album
