@@ -9,23 +9,16 @@ The easiest way to get a developer access token is through any of the methods on
 the developer console, such as [this
 one.](https://developer.spotify.com/console/get-users-currently-playing-track/?market=&additional_types=)
 
-`>>> python all_tests.py` to run all tests
-`>>> python __test_name__` to run an individual test
+While in the test directory, run 
+`python -m unittest` to run all tests
+`python -m unittest __filename__` to run a specific set of tests
+`python -m unittest __filename__.classname.module` to run a specific test
+You can read more about the python unittest framework
+[here.](https://docs.python.org/3/library/unittest.html#unittest.TestCase.assertRaises)
 
 
 ## Writing new test
-1. Create a new file (called foo.py for this example)
-2. At the top of foo.py add `from base_testing import *`
-3. Write your tests as a script, i.e. it should have a `main` function and
-    ```python
-    if __name__ == '__main__':
-        main()
-    ```
-    at the bottom.
-4. Add to the start of `main`: `print('Starting Foo tests')`
-4. Add to the end of `main`: `print('Foo tests finished.')`
-5. Add `import foo` at the top of all_tests.py
-6. Add `foo` to test_files at the top of all_tests.py
+TODO:
 
 __NOTE__: only print in your tests on failure.
 
