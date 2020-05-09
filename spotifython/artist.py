@@ -47,8 +47,7 @@ class User:
 class Artist:
     # User should never call this constructor. As a result, they should never
     # have access to the artist_info structure prior to creating an Artist.
-    def __init__(self, artist_info: dict, top: Spotifython):
-        self._top = top
+    def __init__(self, artist_info: dict):
         self._raw = artist_info
         # Lazily loaded fields from API calls
         self.albums = None 

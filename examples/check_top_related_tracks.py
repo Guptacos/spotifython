@@ -1,4 +1,4 @@
-import spotifython as sp
+from spotifython import Spotifython as sp
 
 # You shouldn't do this for security reasons, but we want to demonstrate that
 # however the user chooses to store the token for an API session is decoupled

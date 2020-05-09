@@ -1,0 +1,1 @@
+from typing import Union # Use this in order to provide type hinting for multiple return types
