@@ -21,6 +21,7 @@ class Playlist:
     # TODO add disclaimer about equivalence and stale data
     # TODO add raw function with disclaimer about updating object data
     # TODO add refresh
+    # TODO use get_field
 
     # TODO store only static fields
     def __init__(self, session, info):
@@ -42,7 +43,7 @@ class Playlist:
             for item in tracks.get('items', []):
                 if 'track' not in item:
                     raise ValueError('Track information missing')
-                self._tracks.append(Track(item.get('track', {})))
+                self._tracks.append(Track(session, item.get('track', {})))
 
 
     def owner(self):
