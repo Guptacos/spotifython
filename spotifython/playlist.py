@@ -3,8 +3,9 @@ from track import Track
 from spotifython import Spotifython
 from copy import deepcopy
 from typing import Union, List
+from endpoint import Endpoint
+import base64
 
-# TODO move endpoints into endpoint.py
 # objects created in this constructor
 class Playlist:
     """
@@ -14,7 +15,6 @@ class Playlist:
     values.
     """
 
-    # GET https://api.spotify.com/v1/playlists/{playlist_id}
     def __init__(self, playlist_info: dict, top: Spotifython):
         """
         Playlist constructor that should never be called directly.
@@ -49,7 +49,6 @@ class Playlist:
         return self._raw['uri']
         
 
-    # POST https://api.spotify.com/v1/playlists/{playlist_id}/tracks
     def add_tracks(self, tracks: Union[Track, List[Track]], position: int=None):
         """
         Add one or more tracks to the playlist.
@@ -61,11 +60,8 @@ class Playlist:
         position: An integer specifying the 0-indexed position in the playlist
                   to insert tracks. Position can be omitted to append to the
                   playlist instead.
-
-        Returns:
-        A Response object.
         """
-        endpoint = '/v1/playlists/' + self._raw['id'] + '/tracks'
+        endpoint = Endpoint.BASE_URI + Endpoint.PLAYLIST_TRACKS.replace('{playlist_id}', self._raw['id'])
         body = {}
         uris = []
         if isinstance(tracks, list):
@@ -77,43 +73,34 @@ class Playlist:
         if position:
             body['position'] = position
         response_json, status_code = self._top._request('POST', endpoint, body=body)
-        return response_json
 
-    # PUT https://api.spotify.com/v1/playlists/{playlist_id}
+
     def update_name(self, name: str):
         """
         Update the playlist name.
 
         Parameters:
         name: A string containing the new name of this playlist.
-
-        Returns:
-        A Response object.
         """
-        endpoint = '/v1/playlists/' + self._raw['id']
+        endpoint = Endpoint.BASE_URI + Endpoint.PLAYLIST.replace('{playlist_id}', self._raw['id'])
         body = {}
         body['name'] = name
         response_json, status_code = self._top._request('PUT', endpoint, body=body)
-        return response_json
 
-    # PUT https://api.spotify.com/v1/playlists/{playlist_id}
+
     def update_description(self, description: str):
         """
         Update the playlist description.
 
         Parameters:
         description: A string containing the new description of this playlist.
-
-        Returns:
-        A Response object.
         """
-        endpoint = '/v1/playlists/' + self._raw['id']
+        endpoint = Endpoint.BASE_URI + Endpoint.PLAYLIST.replace('{playlist_id}', self._raw['id'])
         body = {}
         body['description'] = name
         response_json, status_code = self._top._request('PUT', endpoint, body=body)
-        return response_json
 
-    # PUT https://api.spotify.com/v1/playlists/{playlist_id}
+
     def update_visibility(self, visibility: str):
         """
         Update the playlist public/private visibility and collaborative access.
@@ -121,11 +108,8 @@ class Playlist:
         Parameters:
         visibility: One of [sp.PUBLIC, sp.PRIVATE, sp.PRIVATE_COLLAB]
                     containing the new visibility of this playlist.
-
-        Returns:
-        A Response object.
         """
-        endpoint = '/v1/playlists/' + self._raw['id']
+        endpoint = Endpoint.BASE_URI + Endpoint.PLAYLIST.replace('{playlist_id}', self._raw['id'])
         body = {}
         if visibility == sp.PUBLIC:
             body['public'] = true
@@ -137,22 +121,21 @@ class Playlist:
         else:
             raise ValueError("Invalid visibility, must be one of [sp.PUBLIC, sp.PRIVATE, sp.PRIVATE_COLLAB]")
         response_json, status_code = self._top._request('PUT', endpoint, body=body)
-        return response_json
+
 
     # TODO test the response from this endpoint and clarify usage
-    # GET https://api.spotify.com/v1/playlists/{playlist_id}/images
     def image(self):
         """
         Return the playlist cover image.
 
         Returns:
-        A Response object containing the cover image url as a string.
+        The String URL of the cover image.
         """
-        endpoint = '/v1/playlists/' + self._raw['id'] + '/images'
+        endpoint = Endpoint.BASE_URI + Endpoint.PLAYLIST_IMAGES.replace('{playlist_id}', self._raw['id'])
         response_json, status_code = self._top._request('GET', endpoint)
         return response_json['url']
 
-    # GET https://api.spotify.com/v1/playlists/{playlist_id}/tracks
+
     def tracks(self, start: int=0, num_tracks: int=None):
         """
         Return one or more tracks in the playlist.
@@ -171,22 +154,21 @@ class Playlist:
                     start.
 
         Returns:
-        A Response object containing a list of Track objects.
+        A List of Track objects.
         """
-        endpoint = '/v1/playlists/' + self._raw['id'] + '/tracks'
+        endpoint = Endpoint.BASE_URI + Endpoint.PLAYLIST_TRACKS.replace('{playlist_id}', self._raw['id'])
         body = {}
         body['offset'] = start
         # TODO repeat queries if greater than 100
         if num_tracks:
             body['limit'] = num_tracks
-        response_json, status_code = self._top._request('GET', endpoint)
+        response_json, status_code = self._top._request('GET', endpoint, body=body)
         tracks = []
         for track in response_json['items']:
             tracks.append(Track(track))
         return tracks
 
     # TODO test this in practice, what does it actually mean? Nobody knows.
-    # DELETE https://api.spotify.com/v1/playlists/{playlist_id}/tracks
     def remove_tracks(self, tracks: Union[Track, List[Track]]=None, positions:
                       Union[int, List[int]]=None):
         """
@@ -205,13 +187,34 @@ class Playlist:
         positions: A list of integers specifying the 0-indexed positions of
                    tracks to be removed from the playlist. Only tracks in these
                    positions will be removed.
-
-        Returns:
-        A Response object.
         """
-        pass
+        endpoint = Endpoint.BASE_URI + Endpoint.PLAYLIST_TRACKS.replace('{playlist_id}', self._raw['id'])
+        body = {}
+        body['tracks'] = []
+        if tracks and not positions:
+            if not isinstance(tracks, list):
+                tracks = [tracks]
+            for track in tracks:
+                track_info = {}
+                track_info['uri'] = track.uri()
+                body['tracks'].append(track_info)
+        elif positions:
+            if not isinstance(positions, list):
+                positions = [positions]
+            if not tracks:
+                all_tracks = self._raw['tracks']['items']
+                tracks = [all_tracks[i] for i in range(len(all_tracks)) if i in positions]
+            for i in range(len(tracks)):
+                if i in positions:
+                    track = tracks[i]
+                    track_info = {}
+                    track_info['uri'] = track['uri']
+                    track_info['positions'] = [i]
+                    body['tracks'].append(track_info)
+        else:
+            return
+        response_json, status_code = self._top._request('DELETE', endpoint, body=body)
 
-    # PUT https://api.spotify.com/v1/playlists/{playlist_id}/tracks
     def reorder_tracks(self, source_index, destination_index, number=1):
         """
         Move one or more tracks to another position in the playlist.
@@ -237,13 +240,22 @@ class Playlist:
         number:            A nonnegative integer specifying the number of tracks to
                            be moved. Specifying 0 will result in no change to the
                            playlist.
-
-        Returns:
-        A Response object.
         """
-        pass
+        endpoint = Endpoint.BASE_URI + Endpoint.PLAYLIST_TRACKS.replace('{playlist_id}', self._raw['id'])
+        if source_index < 0:
+            source_index += len(self._raw['tracks']['items'])
+        if destination_index < 0:
+            destination_index += len(self._raw['tracks']['items'])
+        if source_index < 0 or source_index >= len(self._raw['tracks']['items']):
+            raise ValueError
+        if destination_index < 0 or destination_index >= len(self._raw['tracks']['items']):
+            raise ValueError
+        body = {}
+        body['range_start'] = source_index
+        body['range_length'] = number
+        body['insert_before'] = destination_index
+        response_json, status_code = self._top._request('PUT', endpoint, body=body)
 
-    # PUT https://api.spotify.com/v1/playlists/{playlist_id}/tracks
     def replace_all_tracks(self, tracks):
         """
         Replace all of the tracks in the playlist.
@@ -251,13 +263,15 @@ class Playlist:
         Parameters:
         tracks: A list of Track objects to populate the playlist. These will
                 be the only tracks in the playlist.
-
-        Returns:
-        A Response object.
         """
-        pass
+        endpoint = Endpoint.BASE_URI + Endpoint.PLAYLIST_TRACKS.replace('{playlist_id}', self._raw['id'])
+        body = {}
+        body['uris'] = []
+        for track in tracks:
+            body['uris'].append(track.uri())
+        response_json, status_code = self._top._request('PUT', endpoint, body=body)
 
-    # PUT https://api.spotify.com/v1/playlists/{playlist_id}/images
+    # TODO test this, no example in web api reference
     def replace_image(self, image):
         """
         Replace the playlist cover image.
@@ -267,11 +281,12 @@ class Playlist:
         Parameters:
         image: A string containing the filename of the image to use as the
                playlist cover image. The image must be a JPEG up to 256 KB.
-
-        Returns:
-        A Response object.
         """
-        pass
+        endpoint = Endpoint.BASE_URI + Endpoint.PLAYLIST_IMAGES.replace('{playlist_id}', self._raw['id'])
+        body = []
+        with open(image, "rb") as f:
+            body.append(base64.b64encode(f.read()))
+        response_json, status_code = self._top._request('GET', endpoint, body=body)
 
     def __str__(self):
         """Return a printable representation of the playlist."""
