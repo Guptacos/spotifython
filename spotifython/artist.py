@@ -1,48 +1,18 @@
-from copy import deepcopy
-from typing import List, Union
+from __future__ import annotations
 
-from spotifython import Spotifython as sp
-# from album import Album
-# from track import Track
+from typing import List, Union, TYPE_CHECKING
+if TYPE_CHECKING:
+    from spotifython import Spotifython as sp
+    from album import Album
+    from player import Player
+    from playlist import Playlist
+    from track import Track
+    from user import User
 
 from response import Response
 from endpoint import Endpoint
+from copy import deepcopy
 
-##################################
-# Stub Classes
-##################################
-
-class Album:
-    def __init__(self, raw):
-        self._raw = raw
-
-class Artist:
-    def __init__(self, raw):
-        self._raw = raw
-
-class Player:
-    def __init__(self, raw):
-        self._raw = raw
-
-class Playlist:
-    def __init__(self, raw):
-        self._raw = raw
-
-class Spotifython:
-    def __init__(self, raw):
-        self._raw = raw
-
-class Track:
-    def __init__(self, raw):
-        self._raw = raw
-
-class User:
-    def __init__(self, raw):
-        self._raw = raw
-
-##################################
-# End Stub Classes
-##################################
 
 class Artist:
     # User should never call this constructor. As a result, they should never
@@ -340,3 +310,11 @@ class Artist:
         self._related_artists_query_params = search_query
 
         return self.related_artists[:search_limit]
+
+
+from spotifython import Spotifython as sp
+from album import Album
+from player import Player
+from playlist import Playlist
+from track import Track
+from user import User

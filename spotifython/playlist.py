@@ -1,8 +1,15 @@
-from user import User
-from track import Track
-from spotifython import Spotifython
+from __future__ import annotations
+
+from typing import List, Union, TYPE_CHECKING
+if TYPE_CHECKING:
+    from spotifython import Spotifython
+    from album import Album
+    from artist import Artist
+    from player import Player
+    from track import Track
+    from user import User
+
 from copy import deepcopy
-from typing import Union, List
 from endpoint import Endpoint
 import base64
 
@@ -295,3 +302,11 @@ class Playlist:
     def __len__(self):
         """Return the number of tracks in the playlist."""
         return len(self._raw['tracks']['items'])
+
+
+from spotifython import Spotifython
+from album import Album
+from artist import Artist
+from player import Player
+from track import Track
+from user import User

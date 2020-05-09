@@ -1,7 +1,3 @@
-from track import Track
-from artist import Artist
-
-
 class Album:
     def __init__(self, album_info):
         self._album_type = album_info.get('album_type', '')
@@ -72,3 +68,7 @@ class Album:
 
     def release_date(self):
         return self._release_date
+
+
+from track import Track
+from artist import Artist

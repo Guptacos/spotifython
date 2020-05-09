@@ -1,12 +1,15 @@
-from album import Album
-from artist import Artist
-from playlist import Playlist
-from track import Track
-from user import User
-from spotifython import Spotifython as sp
+from __future__ import annotations
+
+from typing import Union, TYPE_CHECKING
+if TYPE_CHECKING:
+    from spotifython import Spotifython as sp
+    from album import Album
+    from artist import Artist
+    from playlist import Playlist
+    from track import Track
+    from user import User
 
 from response import Response
-from typing import Union
 
 class Player():
     ''' Interact with a user's playback, such as pausing / playing the current
@@ -373,3 +376,11 @@ class Player():
         '''
         # POST /v1/me/player/queue
         pass
+
+
+from spotifython import Spotifython as sp
+from album import Album
+from artist import Artist
+from playlist import Playlist
+from track import Track
+from user import User

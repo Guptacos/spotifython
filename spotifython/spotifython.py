@@ -1,50 +1,18 @@
-from typing import Union, List
+from __future__ import annotations
+
+from typing import List, Union, TYPE_CHECKING
+if TYPE_CHECKING:
+    from album import Album
+    from artist import Artist
+    from player import Player
+    from playlist import Playlist
+    from track import Track
+    from user import User
+
 import requests
 import math
-
 from endpoint import Endpoint
 
-# from album import Album
-# from artist import Artist
-# from playlist import Playlist
-# from track import Track
-# from user import User
-
-##################################
-# Stub Classes
-##################################
-
-class Album:
-    def __init__(self, raw):
-        self._raw = raw
-
-class Artist:
-    def __init__(self, raw):
-        self._raw = raw
-
-class Player:
-    def __init__(self, raw):
-        self._raw = raw
-
-class Playlist:
-    def __init__(self, raw):
-        self._raw = raw
-
-class Spotifython:
-    def __init__(self, raw):
-        self._raw = raw
-
-class Track:
-    def __init__(self, raw):
-        self._raw = raw
-
-class User:
-    def __init__(self, raw):
-        self._raw = raw
-
-##################################
-# End Stub Classes
-##################################
 
 # This object should be constructed by the user to instantiate the 
 # session of Spotify Web API usage.
@@ -726,3 +694,11 @@ class Spotifython:
             result.append(Playlist(item))
 
         return result if len(result) != 1 else result[0]
+
+
+from album import Album
+from artist import Artist
+from player import Player
+from playlist import Playlist
+from track import Track
+from user import User

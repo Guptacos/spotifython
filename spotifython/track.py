@@ -1,5 +1,14 @@
-from album import Album
-from artist import Artist
+from __future__ import annotations
+
+from typing import List, Union, TYPE_CHECKING
+if TYPE_CHECKING:
+    from spotifython import Spotifython as sp
+    from album import Album
+    from artist import Artist
+    from player import Player
+    from playlist import Playlist
+    from user import User
+
 from copy import deepcopy
 
 AUDIO_FEATURES = 'GET https://api.spotify.com/v1/audio-features/%s'
@@ -69,3 +78,11 @@ class Track:
         request = AUDIO_ANALYSIS % (track_id)
         # TODO: send the actual request
         return
+
+
+from spotifython import Spotifython as sp
+from album import Album
+from artist import Artist
+from player import Player
+from playlist import Playlist
+from user import User

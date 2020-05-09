@@ -1,5 +1,15 @@
 from __future__ import annotations # Allow type hinting a class within the class
-from typing import Union, List, Dict, Tuple
+
+from typing import List, Union, Dict, Tuple, TYPE_CHECKING
+if TYPE_CHECKING:
+    from spotifython import Spotifython as sp
+    from spotifython import Spotifython
+    from album import Album
+    from artist import Artist
+    from player import Player
+    from playlist import Playlist
+    from track import Track
+
 from typeguard import typechecked
 from endpoint import Endpoint
 import math
@@ -9,54 +19,7 @@ import math
 # TODO: have to implement equality methods
 # TODO: market as input?
 # TODO: what to do about partial success?
-#from album import Album
-#from artist import Artist
-#from player import Player
-#from playlist import Playlist
-#from track import Track
-class Album:
-    def __init__(self, sp_obj, album_info):
-        self._raw = album_info
-        return None
-    def spotify_id(self):
-        return self._raw['id']
 
-class Artist:
-    def __init__(self, sp_obj, artist_info):
-        self._raw = artist_info
-        return None
-    def spotify_id(self):
-        return self._raw['id']
-
-class Player:
-    def __init__(self, sp_obj, user):
-        return None
-
-class Playlist:
-    def __init__(self, sp_obj, playlist_info):
-        self._raw = playlist_info
-        return None
-
-    def __str__(self):
-        return ('%s owned by %s' %(self._raw['name'], self._raw['owner']['id']))
-
-    def __eq__(self, other):
-        if not isinstance(other, Playlist):
-            return False
-        return self._raw['id'] == other._raw['id']
-    def spotify_id(self):
-        return self._raw['id']
-
-class Track:
-    def __init__(self, sp_obj, track_info):
-        self._raw = track_info
-        return None
-    def spotify_id(self):
-        return self._raw['id']
-
-
-from spotifython import Spotifython
-from spotifython import Spotifython as sp
 
 class User:
     ''' Define behaviors related to a user, such as reading / modifying the
@@ -798,3 +761,12 @@ class User:
         # Note: ids can go in body or uri
         # 200 on success
         pass
+
+
+from spotifython import Spotifython as sp
+from spotifython import Spotifython
+from album import Album
+from artist import Artist
+from player import Player
+from playlist import Playlist
+from track import Track
