@@ -1,17 +1,22 @@
 [MASTER]
-
-max-line-length=80
-# Make sure single / double quotes are used consistently within a module
-check-quote-consistency=yes
-
 # Set to 0 to auto-detect the number of processors available to use.
 jobs=0
 
+[FORMAT]
+max-line-length=80
+
+[STRING]
+# Make sure single / double quotes are used consistently within a module
+check-quote-consistency=yes
+
+[MESSAGES CONTROL]
 # Don't complain about "TODO", "FIXME", and "XXX" in the code
 disable=fixme
 
+[REPORTS]
 # Only display messages, no aggregate report
 reports=no
 
+[DESIGN]
 # Maximum number of attributes for a class (see R0902).
 max-attributes=7
