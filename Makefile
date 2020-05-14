@@ -7,3 +7,6 @@ lint:
 
 lint-diff:
 	pylint $(DIFF_LINT_FILES)
+
+test:
+	python -m unittest
