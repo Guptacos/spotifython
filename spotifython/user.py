@@ -11,12 +11,6 @@ import math
 # Local imports
 from spotifython.spotifython import Spotifython as sp
 from .endpoint import Endpoint
-from .stubs import Album, Artist, Player, Playlist, Track
-#from album import Album
-#from artist import Artist
-#from player import Player
-#from playlist import Playlist
-#from track import Track
 
 
 # TODO: fix imports after integrating.
@@ -747,3 +741,10 @@ class User:
         # Note: ids can go in body or uri
         # 200 on success
         pass
+
+#pylint: disable=wrong-import-position
+from .album import Album
+from .artist import Artist
+from .player import Player
+from .playlist import Playlist
+from .track import Track
