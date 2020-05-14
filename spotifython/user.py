@@ -1,59 +1,20 @@
 from __future__ import annotations # Allow type hinting a class within the class
 from typing import Union, List, Dict, Tuple
+import math
 from typeguard import typechecked
 from endpoint import Endpoint
-import math
 
-# TODO: remove these after integrating.
+# TODO: fix imports after integrating.
 # TODO: feels like TypeError and ValueError used interchangeably
 # TODO: have to implement equality methods
 # TODO: market as input?
 # TODO: what to do about partial success?
+from stubs import *
 #from album import Album
 #from artist import Artist
 #from player import Player
 #from playlist import Playlist
 #from track import Track
-class Album:
-    def __init__(self, sp_obj, album_info):
-        self._raw = album_info
-        return None
-    def spotify_id(self):
-        return self._raw['id']
-
-class Artist:
-    def __init__(self, sp_obj, artist_info):
-        self._raw = artist_info
-        return None
-    def spotify_id(self):
-        return self._raw['id']
-
-class Player:
-    def __init__(self, sp_obj, user):
-        return None
-
-class Playlist:
-    def __init__(self, sp_obj, playlist_info):
-        self._raw = playlist_info
-        return None
-
-    def __str__(self):
-        return ('%s owned by %s' %(self._raw['name'], self._raw['owner']['id']))
-
-    def __eq__(self, other):
-        if not isinstance(other, Playlist):
-            return False
-        return self._raw['id'] == other._raw['id']
-    def spotify_id(self):
-        return self._raw['id']
-
-class Track:
-    def __init__(self, sp_obj, track_info):
-        self._raw = track_info
-        return None
-    def spotify_id(self):
-        return self._raw['id']
-
 
 from spotifython import Spotifython
 from spotifython import Spotifython as sp
@@ -73,8 +34,7 @@ class User:
     @typechecked
     def __init__(self,
                  sp_obj: Spotifython,
-                 user_info: Dict=None
-    ):
+                 user_info: Dict = None):
         self._sp_obj = sp_obj
         self._raw = user_info
         self._player = Player(self._sp_obj, self)
@@ -94,7 +54,7 @@ class User:
                       endpoint: str,
                       uri_params: Dict = None,
                       body: Dict = None
-    ) -> List[Any]:
+                     ) -> List[Any]:
         ''' Helper function to make many requests to Spotify
 
         Keyword arguments:
@@ -123,10 +83,10 @@ class User:
             uri_params['offset'] = offset
 
             response_json, status_code = self._sp_obj._request(
-                request_type = sp.REQUEST_GET,
-                endpoint     = endpoint,
-                body         = body,
-                uri_params   = uri_params
+                request_type=sp.REQUEST_GET,
+                endpoint=endpoint,
+                body=body,
+                uri_params=uri_params
             )
 
             if status_code != 200:
@@ -148,8 +108,8 @@ class User:
     def _batch_get(self,
                    elements: List[Any],
                    endpoint: str,
-                   uri_params: Dict={}
-    ) -> List[Tuple[Any, bool]]:
+                   uri_params: Dict = {}
+                  ) -> List[Tuple[Any, bool]]:
         ''' Helper to break a large request into many smaller requests so that
             Spotify doesn't complain.
 
@@ -162,7 +122,7 @@ class User:
             A list of tuples, where each tuple contains an object and the
             boolean value Spotify returned for that object.
         '''
-        def create_batches(elems, chunk_size = sp.SPOTIFY_PAGE_SIZE):
+        def create_batches(elems, chunk_size=sp.SPOTIFY_PAGE_SIZE):
             ''' Helper function to break elems into batches
             E.g.
                 elems = [1, 2, 3, 4, 5, 6, 7]
@@ -185,10 +145,10 @@ class User:
             uri_params['ids'] = [elem.spotify_id() for elem in batch]
 
             response_json, status_code = self._sp_obj._request(
-                request_type = sp.REQUEST_GET,
-                endpoint     = endpoint,
-                body         = None,
-                uri_params   = uri_params
+                request_type=sp.REQUEST_GET,
+                endpoint=endpoint,
+                body=None,
+                uri_params=uri_params
             )
 
             if status_code != 200:
@@ -201,7 +161,7 @@ class User:
 
     def _update_internal(self,
                          new_vals: Dict
-    ) -> None:
+                        ) -> None:
         ''' Used internally to keep cached data up to date
 
         Keyword arguments:
@@ -211,7 +171,6 @@ class User:
         '''
         # {**A, **B} returns (A - B) U B
         self._raw = {**self._raw, **new_vals}
-        pass
 
 
     def spotify_id(self) -> str:
@@ -245,8 +204,8 @@ class User:
     def top(self,
             top_type: str,
             limit: int,
-            time_range: str=sp.MEDIUM
-    ) -> Union[List[Artist], List[Track]]:
+            time_range: str = sp.MEDIUM
+           ) -> Union[List[Artist], List[Track]]:
         ''' Get the top artists or tracks for the user over a time range.
 
         Keyword arguments:
@@ -292,17 +251,17 @@ class User:
 
         # Execute requests
         return self._paginate_get(
-                        limit = limit,
-                        return_class = return_class,
-                        endpoint = Endpoint.USER_TOP % endpoint_type,
-                        uri_params = uri_params,
-                        body = None)
+                        limit=limit,
+                        return_class=return_class,
+                        endpoint=Endpoint.USER_TOP % endpoint_type,
+                        uri_params=uri_params,
+                        body=None)
 
 
     @typechecked
     def recently_played(self,
-                        limit: int=50
-    ) -> List[Track]:
+                        limit: int = 50
+                       ) -> List[Track]:
         ''' Get the user's recently played tracks
 
         Keyword arguments:
@@ -330,10 +289,10 @@ class User:
 
         # Execute requests
         response_json, status_code = self._sp_obj._request(
-            request_type = sp.REQUEST_GET,
-            endpoint     = Endpoint.USER_RECENTLY_PLAYED,
-            body         = None,
-            uri_params   = {'limit': limit}
+            request_type=sp.REQUEST_GET,
+            endpoint=Endpoint.USER_RECENTLY_PLAYED,
+            body=None,
+            uri_params={'limit': limit}
         )
 
         if status_code != 200:
@@ -348,8 +307,8 @@ class User:
 
     @typechecked
     def get_playlists(self,
-                      limit: int=None
-    ) -> List[Playlist]:
+                      limit: int = None
+                     ) -> List[Playlist]:
         ''' Get all playlists that this user has in their library
 
         Keyword arguments:
@@ -380,20 +339,19 @@ class User:
             raise ValueError(limit)
 
         return self._paginate_get(
-                        limit = limit,
-                        return_class = Playlist,
-                        endpoint = Endpoint.USER_GET_PLAYLISTS
-                                   % self.spotify_id(),
-                        uri_params = {},
-                        body = None)
+                        limit=limit,
+                        return_class=Playlist,
+                        endpoint=Endpoint.USER_GET_PLAYLISTS % self.spotify_id(),
+                        uri_params={},
+                        body=None)
 
 
     @typechecked
     def create_playlist(self,
                         name: str,
-                        visibility: str=sp.PUBLIC,
-                        description: str=None
-    ) -> Playlist:
+                        visibility: str = sp.PUBLIC,
+                        description: str = None
+                       ) -> Playlist:
         ''' Create a new playlist owned by the current user
 
         Keyword arguments:
@@ -427,11 +385,10 @@ class User:
         }
 
         response_json, status_code = self._sp_obj._request(
-            request_type = sp.REQUEST_POST,
-            endpoint     = Endpoint.USER_CREATE_PLAYLIST
-                           % self.spotify_id(),
-            body         = body,
-            uri_params   = None
+            request_type=sp.REQUEST_POST,
+            endpoint=Endpoint.USER_CREATE_PLAYLIST % self.spotify_id(),
+            body=body,
+            uri_params=None
         )
 
         if status_code != 201:
@@ -444,7 +401,7 @@ class User:
     def is_following(self,
                      other: Union[Artist, User, Playlist,
                                   List[Union[Artist, User, Playlist]]]
-    ) -> List[Tuple[Union[Artist, User, Playlist], bool]]:
+                    ) -> List[Tuple[Union[Artist, User, Playlist], bool]]:
         ''' Check if the current user is following something
 
         Keyword arguments:
@@ -489,8 +446,8 @@ class User:
     @typechecked
     def get_following(self,
                       follow_type: str,
-                      limit: int=None
-    ) -> Union[List[Artist], List[Playlist]]:
+                      limit: int = None
+                     ) -> Union[List[Artist], List[Playlist]]:
         ''' Get all follow_type objects the current user is following
 
         Keyword arguments:
@@ -552,10 +509,10 @@ class User:
                 uri_params['after'] = results[-1]._raw['id']
 
             response_json, status_code = self._sp_obj._request(
-                request_type = sp.REQUEST_GET,
-                endpoint     = Endpoint.USER_GET_ARTISTS,
-                body         = None,
-                uri_params   = uri_params
+                request_type=sp.REQUEST_GET,
+                endpoint=Endpoint.USER_GET_ARTISTS,
+                body=None,
+                uri_params=uri_params
             )
 
             if status_code != 200:
@@ -575,7 +532,7 @@ class User:
     def follow(self,
                other: Union[Artist, User, Playlist,
                             List[Union[Artist, User, Playlist]]]
-    ) -> None:
+              ) -> None:
         ''' Follow one or more things
 
         Keyword arguments:
@@ -610,7 +567,7 @@ class User:
     def unfollow(self,
                  other: Union[Artist, User, Playlist,
                               List[Union[Artist, User, Playlist]]]
-    ) -> None:
+                ) -> None:
         ''' Unfollow one or more things
 
         Keyword arguments:
@@ -645,7 +602,7 @@ class User:
     def has_saved(self,
                   other: Union[Track, Album,
                                List[Union[Track, Album]]]
-    ) -> List[Tuple[Union[Track, Album], bool]]:
+                 ) -> List[Tuple[Union[Track, Album], bool]]:
         ''' Check if the user has one or more things saved to their library
 
         Keyword arguments:
@@ -685,9 +642,9 @@ class User:
     @typechecked
     def get_saved(self,
                   saved_type: str,
-                  limit: int=None,
-                  market: str=sp.TOKEN_REGION
-    ) -> Union[List[Album], List[Track]]:
+                  limit: int = None,
+                  market: str = sp.TOKEN_REGION
+                 ) -> Union[List[Album], List[Track]]:
         ''' Get all saved_type objects the user has saved to their library
 
         Keyword arguments:
@@ -729,18 +686,18 @@ class User:
         uri_params = {'market': market}
 
         return self._paginate_get(
-                        limit = limit,
-                        return_class = return_class,
-                        endpoint = Endpoint.USER_GET_SAVED % endpoint_type,
-                        uri_params = uri_params,
-                        body = None)
+                        limit=limit,
+                        return_class=return_class,
+                        endpoint=Endpoint.USER_GET_SAVED % endpoint_type,
+                        uri_params=uri_params,
+                        body=None)
 
 
     @typechecked
     def save(self,
              other: Union[Track, Album,
                           List[Union[Track, Album]]]
-    ) -> None:
+            ) -> None:
         ''' Save one or more things to the user's library
 
         Keyword arguments:
@@ -772,7 +729,7 @@ class User:
     def remove(self,
                other: Union[Track, Album,
                             List[Union[Track, Album]]]
-    ) -> None:
+              ) -> None:
         ''' Remove one or more things from the user's library
 
         Keyword arguments:
