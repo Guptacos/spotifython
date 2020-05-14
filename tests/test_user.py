@@ -18,8 +18,6 @@ from unittest.mock import patch
 
 # Local imports
 from spotifython.spotifython import Spotifython as sp
-from spotifython.user import User
-from spotifython.stubs import Album, Artist, Player, Playlist, Track
 
 USER_ID = ''
 NO_ACCESS_TOKEN = ''
@@ -288,3 +286,10 @@ if __name__ == '__main__':
     # unfollow
     # save
     # remove
+
+from spotifython.user import User
+from spotifython.album import Album
+from spotifython.artist import Artist
+from spotifython.player import Player
+from spotifython.playlist import Playlist
+from spotifython.track import Track
