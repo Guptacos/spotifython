@@ -1,23 +1,31 @@
-from __future__ import annotations # Allow type hinting a class within the class
-from typing import Union, List, Dict, Tuple
-import math
-from typeguard import typechecked
-from endpoint import Endpoint
+''' User class
 
-# TODO: fix imports after integrating.
-# TODO: feels like TypeError and ValueError used interchangeably
-# TODO: have to implement equality methods
-# TODO: market as input?
-# TODO: what to do about partial success?
-from stubs import *
+This class represents a User object, tied to a Spotify user id.
+
+'''
+
+# Standard library imports
+from __future__ import annotations # Allow type hinting a class within the class
+import math
+
+# Local imports
+from spotifython.spotifython import Spotifython as sp
+from .endpoint import Endpoint
+from .stubs import Album, Artist, Player, Playlist, Track
 #from album import Album
 #from artist import Artist
 #from player import Player
 #from playlist import Playlist
 #from track import Track
 
-from spotifython import Spotifython
-from spotifython import Spotifython as sp
+
+# TODO: fix imports after integrating.
+# TODO: feels like TypeError and ValueError used interchangeably
+# TODO: have to implement equality methods
+# TODO: market as input?
+# TODO: what to do about partial success?
+# TODO: return success vs failure in docstring
+# TODO: default params
 
 class User:
     ''' Define behaviors related to a user, such as reading / modifying the
@@ -31,16 +39,21 @@ class User:
     '''
 
 
-    @typechecked
+    #@typechecked
     def __init__(self,
-                 sp_obj: Spotifython,
-                 user_info: Dict = None):
+                 sp_obj,
+                 user_info=None):
+        '''
+        Keyword arguments:
+            sp_obj: a Spotifython instance
+            user_info: a dictionary containing known values about the user
+        '''
         self._sp_obj = sp_obj
         self._raw = user_info
         self._player = Player(self._sp_obj, self)
 
 
-    def __str__(self) -> str:
+    def __str__(self):
         uid = self._raw.get('id', None)
         # TODO:
         if uid is None:
@@ -49,22 +62,22 @@ class User:
 
 
     def _paginate_get(self,
-                      limit: int,
-                      return_class: Any,
-                      endpoint: str,
-                      uri_params: Dict = None,
-                      body: Dict = None
-                     ) -> List[Any]:
+                      limit,
+                      return_class,
+                      endpoint,
+                      uri_params=None,
+                      body=None):
+        #pylint: disable=too-many-arguments
         ''' Helper function to make many requests to Spotify
 
         Keyword arguments:
-            limit: the maximum number of items to return
-            return_type: the class to construct for the list contents
-            endpoint: the endpoint to call.
+            limit: (int) the maximum number of items to return
+            return_class: the class to construct for the list contents
+            endpoint: (str) the endpoint to call.
                 Must accept 'limit' and 'offset' in uri_params
                 Return json must contain key 'items'
-            uri_params: the uri parameters for the request
-            body: the body of the call
+            uri_params: (dict) the uri parameters for the request
+            body: (dict) the body of the call
 
         Return:
             a list of objects of type return_class
@@ -75,9 +88,9 @@ class User:
         uri_params['limit'] = sp.SPOTIFY_PAGE_SIZE
 
         # Loop until we get 'limit' many items or run out
-        round = lambda num, multiple: math.ceil(num / multiple) * multiple
+        next_multiple = lambda num, mult: math.ceil(num / mult) * mult
 
-        num_to_request = round(limit, sp.SPOTIFY_PAGE_SIZE)
+        num_to_request = next_multiple(limit, sp.SPOTIFY_PAGE_SIZE)
         while offset < num_to_request:
 
             uri_params['offset'] = offset
@@ -106,22 +119,24 @@ class User:
 
     # TODO: partial failure?
     def _batch_get(self,
-                   elements: List[Any],
-                   endpoint: str,
-                   uri_params: Dict = {}
-                  ) -> List[Tuple[Any, bool]]:
+                   elements,
+                   endpoint,
+                   uri_params=None):
         ''' Helper to break a large request into many smaller requests so that
             Spotify doesn't complain.
 
         Keyword arguments:
-            elements: the list of things to be sent to Spotify
-            endpoint: the Spotify endpoint to send a GET request
-            uri_params: any uri params besides 'id' to be sent
+            elements: (list) the things to be sent to Spotify
+            endpoint: (str) the Spotify endpoint to send a GET request
+            uri_params: (dict) any uri params besides 'id' to be sent
 
         Returns:
-            A list of tuples, where each tuple contains an object and the
-            boolean value Spotify returned for that object.
+            A list of tuples, where each tuple contains one of the input
+            elements and the boolean value Spotify returned for that element.
         '''
+        if uri_params is None:
+            uri_params = {}
+
         def create_batches(elems, chunk_size=sp.SPOTIFY_PAGE_SIZE):
             ''' Helper function to break elems into batches
             E.g.
@@ -159,25 +174,26 @@ class User:
         return results
 
 
-    def _update_internal(self,
-                         new_vals: Dict
-                        ) -> None:
+    def _update_internal(self, new_vals):
         ''' Used internally to keep cached data up to date
 
         Keyword arguments:
-            new_vals: a dictionary with fields that should be added to or
-                updated in the internal cache. Any values in the dictionary will
-                become the new value for that key.
+            new_vals: (dict) the fields that should be added to or updated in
+                the internal cache. Any values in the dictionary will become the
+                new value for that key.
+
+        Return:
+            None
         '''
         # {**A, **B} returns (A - B) U B
         self._raw = {**self._raw, **new_vals}
 
 
-    def spotify_id(self) -> str:
+    def spotify_id(self):
         ''' Get the id of this user
 
         Return:
-            The same id that this user was created with
+            The same id that this user was created with as a string.
         '''
         result = self._raw.get('id', None)
         if result is None:
@@ -186,7 +202,7 @@ class User:
         return result
 
 
-    def player(self) -> Player:
+    def player(self):
         ''' Get the player object for this user
 
         This is how client code should access a player. For example:
@@ -200,19 +216,18 @@ class User:
 
 
     # TODO: can this return more than 50?
-    @typechecked
+    #@typechecked
     def top(self,
-            top_type: str,
-            limit: int,
-            time_range: str = sp.MEDIUM
-           ) -> Union[List[Artist], List[Track]]:
+            top_type,
+            limit,
+            time_range=sp.MEDIUM):
         ''' Get the top artists or tracks for the user over a time range.
 
         Keyword arguments:
             top_type: only get items of this type. One of:
                 sp.ARTIST
                 sp.TRACK
-            limit: max number of items to return. Must be positive.
+            limit: (int) max number of items to return. Must be positive.
             time_range: (optional) only get items for this time range. One of:
                 sp.LONG (several years)
                 sp.MEDIUM (about 6 months)
@@ -258,15 +273,13 @@ class User:
                         body=None)
 
 
-    @typechecked
-    def recently_played(self,
-                        limit: int = 50
-                       ) -> List[Track]:
+    #@typechecked
+    def recently_played(self, limit=50):
         ''' Get the user's recently played tracks
 
         Keyword arguments:
-            limit: (optional) max number of items to return. Must be between
-                1 and 50, inclusive.
+            limit: (int, optional) max number of items to return. Must be
+                between 1 and 50, inclusive.
 
         Return:
             Success: a list of tracks. Could be empty.
@@ -305,15 +318,14 @@ class User:
         return results
 
 
-    @typechecked
-    def get_playlists(self,
-                      limit: int = None
-                     ) -> List[Playlist]:
+    #@typechecked
+    # TODO: default value
+    def get_playlists(self, limit=None):
         ''' Get all playlists that this user has in their library
 
         Keyword arguments:
-            limit: (optional) the max number of items to return. If None, will
-                return all. Must be between 1 and 100000 inclusive
+            limit: (int, optional) the max number of items to return. If None,
+                will return all. Must be between 1 and 100,000 inclusive.
 
         Return:
             Success: a list of playlists. Could be empty.
@@ -338,35 +350,36 @@ class User:
         if limit <= 0 or limit > sp.SPOTIFY_MAX_PLAYLISTS:
             raise ValueError(limit)
 
+        endpoint = Endpoint.USER_GET_PLAYLISTS % self.spotify_id()
+
         return self._paginate_get(
                         limit=limit,
                         return_class=Playlist,
-                        endpoint=Endpoint.USER_GET_PLAYLISTS % self.spotify_id(),
+                        endpoint=endpoint,
                         uri_params={},
                         body=None)
 
 
-    @typechecked
+    #@typechecked
     def create_playlist(self,
-                        name: str,
-                        visibility: str = sp.PUBLIC,
-                        description: str = None
-                       ) -> Playlist:
+                        name,
+                        visibility=sp.PUBLIC,
+                        description=None):
         ''' Create a new playlist owned by the current user
 
         Keyword arguments:
-            name: The name for the new playlist. Does not need to be unique;
-                a user may have several playlists with the same name.
+            name: (str) The name for the new playlist. Does not need to be
+                unique; a user may have several playlists with the same name.
             visibility: (optional) describes how other users can interact with
                 this playlist. One of:
                     sp.PUBLIC: publicly viewable, not collaborative
                     sp.PRIVATE: not publicly viewable, not collaborative
                     sp.PRIVATE_COLLAB: not publicly viewable, collaborative
-            description: (optional) viewable description of the playlist.
+            description: (str, optional) viewable description of the playlist.
 
         Return:
-            The newly created Playlist object. Note that this modifies the
-            user's library.
+            The newly created Playlist object. Note that this function modifies
+            the user's library.
 
         Auth token requirements:
             playlist-modify-public
@@ -379,10 +392,14 @@ class User:
         if visibility not in [sp.PUBLIC, sp.PRIVATE, sp.PRIVATE_COLLAB]:
             raise TypeError(visibility)
 
-        # Make the request
         body = {
             'name': name,
+            'public': visibility == sp.PUBLIC,
+            'collaborative': visibility == sp.PRIVATE_COLLAB
         }
+
+        if description is not None:
+            body['description'] = description
 
         response_json, status_code = self._sp_obj._request(
             request_type=sp.REQUEST_POST,
@@ -397,19 +414,17 @@ class User:
         return Playlist(self._sp_obj, response_json)
 
 
-    @typechecked
-    def is_following(self,
-                     other: Union[Artist, User, Playlist,
-                                  List[Union[Artist, User, Playlist]]]
-                    ) -> List[Tuple[Union[Artist, User, Playlist], bool]]:
+    #@typechecked
+    def is_following(self, other):
         ''' Check if the current user is following something
 
         Keyword arguments:
             other: check if current user is following 'other'. Other must be
-                either a single object or a list of objects.
-                If other is a list, it can conatin multiple types.
-
-                Can only check for Artist, User, and Playlist.
+                one of the following:
+                    Artist
+                    User
+                    Playlist
+                    List: can contain multiple of the above types
 
         Auth token requirements:
             user-follow-read
@@ -425,7 +440,7 @@ class User:
             follows the object.
         '''
         # Validate and sort input
-        if not isinstance(other, List):
+        if not isinstance(other, list):
             other = [other]
 
         artists = list(filter(lambda elem: isinstance(elem, Artist), other))
@@ -443,17 +458,17 @@ class User:
         return results
 
 
-    @typechecked
+    #@typechecked
+    # TODO: default parameter limit
     def get_following(self,
-                      follow_type: str,
-                      limit: int = None
-                     ) -> Union[List[Artist], List[Playlist]]:
+                      follow_type,
+                      limit=None):
         ''' Get all follow_type objects the current user is following
 
         Keyword arguments:
             follow_type: one of sp.ARTIST or sp.PLAYLIST
-            limit: (optional) the max number of items to return. If None, will
-                return all. Must be between 1 and 100000 inclusive.
+            limit: (int, optional) the max number of items to return. If None,
+                will return all. Must be between 1 and 100000 inclusive.
 
         Return:
             Success: List of follow_type objects. Could be empty.
@@ -482,12 +497,9 @@ class User:
             raise ValueError(limit)
 
         if follow_type == sp.PLAYLIST:
-            my_playlists = self.get_playlists()
-            my_id = self.spotify_id()
             results = []
-            for playlist in my_playlists:
-                # TODO: shouldn't access _raw
-                if playlist._raw['owner']['id'] != my_id:
+            for playlist in self.get_playlists():
+                if playlist.owner().spotify_id() != self.spotify_id():
                     results.append(playlist)
 
             return results[:limit]
@@ -505,8 +517,7 @@ class User:
 
             # Paginate
             if len(results) != 0:
-                # TODO: shouldn't access _raw
-                uri_params['after'] = results[-1]._raw['id']
+                uri_params['after'] = results[-1].spotify_id()
 
             response_json, status_code = self._sp_obj._request(
                 request_type=sp.REQUEST_GET,
@@ -528,19 +539,16 @@ class User:
         return results[:limit]
 
 
-    @typechecked
-    def follow(self,
-               other: Union[Artist, User, Playlist,
-                            List[Union[Artist, User, Playlist]]]
-              ) -> None:
+    #@typechecked
+    def follow(self, other):
         ''' Follow one or more things
 
         Keyword arguments:
-            other: the object(s) to follow. Other must be either a single object
-                or a list of objects.
-                If other is a list, it can conatin multiple types.
-
-                Can only follow Artist, User, and Playlist.
+            other: follow 'other'. Other must be one of the following:
+                    Artist
+                    User
+                    Playlist
+                    List: can contain multiple of the above types
 
         Note: if user is already following other, will do nothing and return
             a success code in response.status()
@@ -563,19 +571,16 @@ class User:
         pass
 
 
-    @typechecked
-    def unfollow(self,
-                 other: Union[Artist, User, Playlist,
-                              List[Union[Artist, User, Playlist]]]
-                ) -> None:
+    #@typechecked
+    def unfollow(self, other):
         ''' Unfollow one or more things
 
         Keyword arguments:
-            other: the object(s) to unfollow. Other must be either a single
-                object or a list of objects.
-                If other is a list, it can conatin multiple types.
-
-                Can only unfollow Artist, User, and Playlist.
+            other: unfollow 'other'. Other must be one of the following:
+                    Artist
+                    User
+                    Playlist
+                    List: can contain multiple of the above types
 
         Note: if user is already not following other, will do nothing and return
             a success code in response.status()
@@ -598,19 +603,16 @@ class User:
         pass
 
 
-    @typechecked
-    def has_saved(self,
-                  other: Union[Track, Album,
-                               List[Union[Track, Album]]]
-                 ) -> List[Tuple[Union[Track, Album], bool]]:
+    #@typechecked
+    def has_saved(self, other):
         ''' Check if the user has one or more things saved to their library
 
         Keyword arguments:
-            other: check if current user has 'other' saved to the library.
-                Other must be either a single object or a list of objects.
-                If other is a list, it can conatin multiple types.
-
-                Can only check for Track and Album.
+            other: check if the current user has 'other' saved to the library.
+                Other must be one of the following:
+                    Track
+                    Album
+                    List: can contain multiple of the above types
 
         Return:
             Success: List of tuples. Each tuple has an input object and whether
@@ -625,7 +627,7 @@ class User:
             GET     /v1/me/tracks/contains
         '''
         # Sort input
-        if not isinstance(other, List):
+        if not isinstance(other, list):
             other = [other]
 
         tracks = list(filter(lambda elem: isinstance(elem, Track), other))
@@ -639,18 +641,17 @@ class User:
 
 
     #TODO: input arg order / labeling of required vs. optional?
-    @typechecked
+    #@typechecked
     def get_saved(self,
-                  saved_type: str,
-                  limit: int = None,
-                  market: str = sp.TOKEN_REGION
-                 ) -> Union[List[Album], List[Track]]:
+                  saved_type,
+                  limit=None,
+                  market=sp.TOKEN_REGION):
         ''' Get all saved_type objects the user has saved to their library
 
         Keyword arguments:
             saved_type: one of sp.ALBUM or sp.TRACK
-            limit: (optional) the max number of items to return. If None, will
-                return all. Must be positive.
+            limit: (int, optional) the max number of items to return. If None,
+                will return all. Must be positive.
             market: (required) a 2 letter country code as defined here:
                 https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
                 Used for track relinking:
@@ -669,7 +670,6 @@ class User:
             GET     /v1/me/albums
             GET     /v1/me/tracks
 
-    ) -> List[Any]:
         '''
         # Validate inputs
         if saved_type not in [sp.ALBUM, sp.TRACK]:
@@ -693,19 +693,15 @@ class User:
                         body=None)
 
 
-    @typechecked
-    def save(self,
-             other: Union[Track, Album,
-                          List[Union[Track, Album]]]
-            ) -> None:
+    #@typechecked
+    def save(self, other):
         ''' Save one or more things to the user's library
 
         Keyword arguments:
-            other: the object(s) to save. Other must be either a single object
-                or a list of objects.
-                If other is a list, it can conatin multiple types.
-
-                Can only save Track or Album.
+            other: the object(s) to save. Other must be one of the following:
+                    Track
+                    Album
+                    List: can contain multiple of the above types
 
         Note: if user already has other saved, will do nothing and return
             a success code in response.status()
@@ -725,19 +721,15 @@ class User:
         pass
 
 
-    @typechecked
-    def remove(self,
-               other: Union[Track, Album,
-                            List[Union[Track, Album]]]
-              ) -> None:
+    #@typechecked
+    def remove(self, other):
         ''' Remove one or more things from the user's library
 
         Keyword arguments:
-            other: the object(s) to remove. Other must be either a single object
-                or a list of objects.
-                If other is a list, it can conatin multiple types.
-
-                Can only remove Track or Album.
+            other: the object(s) to remove. Other must be one of the following:
+                    Track
+                    Album
+                    List: can contain multiple of the above types
 
         Note: if user already does not have other saved, will do nothing and
             return a success code in response.status()
