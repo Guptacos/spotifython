@@ -1,16 +1,20 @@
-# This file is a template for how to write tests for this library
-# The test are for the nonexistent 'DeadBeef' library, located in
-# spotifython/deadbeef.py
-#
-# Note that this code doesn't compile as is because DeadBeef doesn't exist
+'''This file is a template for how to write tests for this library
 
-from mock import patch
+The test are for the nonexistent 'DeadBeef' library, located in
+spotifython/deadbeef.py
+
+Note that this code doesn't compile as is because DeadBeef doesn't exist
+'''
+#pylint: disable=missing-class-docstring
+#pylint: disable=missing-function-docstring
+
+# Standard library imports
 import unittest
-import sys
-sys.path.append('../spotifython')
+from unittest.mock import patch
 
-from spotifython import Spotifython as sp
-from deadbeef import DeadBeef
+# Local imports
+from spotifython.spotifython import Spotifython as sp
+from spotifython.deadbeef import DeadBeef
 
 
 class TestDeadBeef(unittest.TestCase):
@@ -19,7 +23,9 @@ class TestDeadBeef(unittest.TestCase):
     # This function is called before every test_* function. Anything that is
     # needed by every test_* function should be stored in "self" here.
     def setUp(self):
-        self.session = sp(ALL_ACCESS_TOKEN)
+        # Note: since we're mocking Spotify and never actually using the token,
+        # we can put any string here for the token.
+        self.session = sp('super secret fake token')
         self.deadbeef = self.session.get_beef({'id': 'deadbeef'})
 
         # Mock the sp._request method so that we never actually reach Spotify
@@ -41,7 +47,7 @@ class TestDeadBeef(unittest.TestCase):
 
 
     # This shows how to skip tests so they don't execute when running
-    @unittest.skip("Not yet implemented")
+    @unittest.skip('Not yet implemented')
     def test_beyond_beef(self):
         self.assertTrue(False)
 

@@ -1,8 +1,8 @@
 ## Running tests
-While in the test directory, run 
-`python -m unittest` to run all tests
-`python -m unittest __filename__` to run a specific set of tests
-`python -m unittest __filename__.classname.module` to run a specific test
+While in the top level directory, run
+`python -m unittest tests` to run all tests
+`python -m unittest tests.__filename__` to run a specific set of tests
+`python -m unittest tests.__filename__.classname.module` to run a specific test
 You can read more about the python unittest framework
 [here](https://docs.python.org/3/library/unittest.html), including the variety
 of assert statements available to use in your tests.
