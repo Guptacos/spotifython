@@ -10,16 +10,20 @@
 
 # TODO: mock all the functions
 
-from base_testing import *
-from spotifython import Spotifython as sp
-from user import Artist
-from user import Album
-from user import Track
-from user import User
-from user import Playlist
-
-from mock import Mock, patch
+from mock import patch
 import unittest
+import sys
+sys.path.append('../spotifython')
+
+from spotifython import Spotifython as sp
+from user import User
+from stubs import *
+
+import os
+USER_ID = os.environ['USER_ID']
+NO_ACCESS_TOKEN = os.environ['NO_ACCESS_TOKEN']
+ALL_ACCESS_TOKEN = os.environ['ALL_ACCESS_TOKEN']
+INVALID_TOKEN = 'deadbeef'
 
 
 class TestUser(unittest.TestCase):
@@ -27,6 +31,13 @@ class TestUser(unittest.TestCase):
         self.session = sp(ALL_ACCESS_TOKEN)
         #TODO: fix when sp.get_users() is merged
         self.user = User(self.session, {'id': USER_ID})
+
+        # Mock the sp._request method so that we never actually reach Spotify
+        self.patcher = patch.object(sp, '_request', autospec=True)
+
+        # Add cleanup to unmock sp._request. Cleanup always called at end.
+        self.addCleanup(self.patcher.stop)
+        self.request_mock = self.patcher.start()
 
         
     # Test that methods raise appropriate exns when given an unauthorized token.
@@ -53,7 +64,7 @@ class TestUser(unittest.TestCase):
 
 
     # User.user_id
-    def test_user_id(self):
+    def test_spotify_id(self):
         user = self.user
         uid = user.spotify_id()
         self.assertEqual(uid, USER_ID)
@@ -70,6 +81,11 @@ class TestUser(unittest.TestCase):
         self.assertRaises(ValueError, user.top, sp.TRACK, -1)
 
         # Get top track
+        # Want to mock items, limit, offset
+        self.request_mock.return_value = (
+            {},
+            200
+        )
         top = user.top(sp.TRACK, 1)
         self.assertLessEqual(len(top), 1)
         self.assertIsInstance(top[0], Track)
@@ -126,18 +142,15 @@ class TestUser(unittest.TestCase):
     def test_create_playlist(self):
         user = self.user
 
-        # Mock the requests library so as not to create an actual playlist
-        with patch.object(sp, '_request', autospec=True) as request_mock:
-            request_mock.return_value = {}, 201
+        # Validate input checking
+        self.assertRaises(TypeError, user.create_playlist, 'test', sp.TRACK)
 
-            # Validate input checking
-            self.assertRaises(TypeError, user.create_playlist, 'test', sp.TRACK)
-
-            # Make sure playlist creation returns the playlist
-            # TODO: add integration test to check that playlist was created
-            p = user.create_playlist('test', sp.PRIVATE,
-                                     description='test playlist, pls del')
-            self.assertIsInstance(p, Playlist)
+        self.request_mock.return_value = {}, 201
+        # Make sure playlist creation returns the playlist
+        # TODO: add integration test to check that playlist was created
+        p = user.create_playlist('test', sp.PRIVATE,
+                                 description='test playlist, pls del')
+        self.assertIsInstance(p, Playlist)
 
 
     # User.is_following
