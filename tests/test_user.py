@@ -1,28 +1,29 @@
-# Note: the following methods will modify your user library
-#
-# create_playlist
-# follow
-# unfollow
-# save
-# remove
-#
-# As such, their functionality is replicated using mock
+''' Tests for the User class
+
+Note: these tests are not exhaustive and could always be improved. Since the
+Spotify REST api is mocked, if it's functionality ever changes these tests may
+become obsolete.
+
+Last updated: May 14, 2020
+
+'''
+#pylint: disable=missing-class-docstring
+#pylint: disable=missing-function-docstring
 
 # TODO: mock all the functions
 
-from mock import patch
+# Standard library imports
 import unittest
-import sys
-sys.path.append('../spotifython')
+from unittest.mock import patch
 
-from spotifython import Spotifython as sp
-from user import User
-from stubs import *
+# Local imports
+from spotifython.spotifython import Spotifython as sp
+from spotifython.user import User
+from spotifython.stubs import Album, Artist, Player, Playlist, Track
 
-import os
-USER_ID = os.environ['USER_ID']
-NO_ACCESS_TOKEN = os.environ['NO_ACCESS_TOKEN']
-ALL_ACCESS_TOKEN = os.environ['ALL_ACCESS_TOKEN']
+USER_ID = ''
+NO_ACCESS_TOKEN = ''
+ALL_ACCESS_TOKEN = ''
 INVALID_TOKEN = 'deadbeef'
 
 
@@ -39,19 +40,20 @@ class TestUser(unittest.TestCase):
         self.addCleanup(self.patcher.stop)
         self.request_mock = self.patcher.start()
 
-        
+
     # Test that methods raise appropriate exns when given an unauthorized token.
     # TODO:
-    @unittest.skip("Not yet implemented")
+    @unittest.skip('Not yet implemented')
     def test_unauthorized_token(self):
-        session = sp(NO_ACCESS_TOKEN)
+        #session = sp(NO_ACCESS_TOKEN)
         #TODO: fix when sp.get_users() is merged
-        user = User(session, {'id': USER_ID})
+        #user = User(session, {'id': USER_ID})
+        pass
 
 
     # Test that methods raise appropriate exns when given a bad token.
     # TODO:
-    @unittest.skip("Not yet implemented")
+    @unittest.skip('Not yet implemented')
     def test_invalid_token(self):
         pass
 
@@ -59,8 +61,7 @@ class TestUser(unittest.TestCase):
     # User.player
     def test_player(self):
         user = self.user
-        p = user.player()
-        self.assertIsInstance(p, Player)
+        self.assertIsInstance(user.player(), Player)
 
 
     # User.user_id
@@ -108,9 +109,9 @@ class TestUser(unittest.TestCase):
         self.assertRaises(ValueError, user.recently_played, 51)
 
         # Make sure you get at most 10 Tracks
-        rp = user.recently_played(10)
-        self.assertLessEqual(len(rp), 10)
-        for elem in rp:
+        recently_played = user.recently_played(10)
+        self.assertLessEqual(len(recently_played), 10)
+        for elem in recently_played:
             self.assertIsInstance(elem, Track)
 
 
@@ -123,17 +124,17 @@ class TestUser(unittest.TestCase):
         self.assertRaises(ValueError, user.get_playlists, 100123)
 
         # Make sure you get 1 Playlist
-        p = user.get_playlists(1)
-        self.assertEqual(len(p), 1)
-        self.assertIsInstance(p[0], Playlist)
+        playlist = user.get_playlists(1)
+        self.assertEqual(len(playlist), 1)
+        self.assertIsInstance(playlist[0], Playlist)
 
-        p = user.get_playlists()
-        total = len(p)
+        playlists = user.get_playlists()
+        total = len(playlists)
         print('\n%s has %d playlists in their library. Does this look right?'
               % (user, total))
 
         if total >= 2:
-            minus_one = user.get_playlists(limit = total - 1)
+            minus_one = user.get_playlists(limit=total - 1)
             self.assertEqual(len(minus_one), total - 1)
 
 
@@ -148,9 +149,10 @@ class TestUser(unittest.TestCase):
         self.request_mock.return_value = {}, 201
         # Make sure playlist creation returns the playlist
         # TODO: add integration test to check that playlist was created
-        p = user.create_playlist('test', sp.PRIVATE,
-                                 description='test playlist, pls del')
-        self.assertIsInstance(p, Playlist)
+        playlist = user.create_playlist('test',
+                                        sp.PRIVATE,
+                                        description='test playlist, pls del')
+        self.assertIsInstance(playlist, Playlist)
 
 
     # User.is_following
@@ -164,22 +166,23 @@ class TestUser(unittest.TestCase):
         playlists = user.get_following(sp.PLAYLIST)
         for playlist, following in user.is_following(playlists):
             self.assertTrue(following,
-                msg='%s in user.get_following(sp.PLAYLIST), but False in'
-                    ' user.is_following' % playlist)
+                            msg='%s in user.get_following(sp.PLAYLIST), but '
+                                'False in user.is_following' % playlist)
 
         artists = user.get_following(sp.ARTIST)
         for artist, following in user.is_following(artists):
             self.assertTrue(following,
-                msg = '%s in user.get_following(sp.ARTIST), but False in'
-                      ' user.is_following' % playlist)
+                            msg='%s in user.get_following(sp.ARTIST), but '
+                                'False in user.is_following' % artist)
 
 
         # TODO: test following users
         # TODO: test failing cases
         # TODO: maybe mock this instead of hardcoding an artist?
         # TODO: this is messy... should it return a bool instead?
-        x = user.is_following(Artist(None, {'id':'6GI52t8N5F02MxU0g5U69P'}))
-        self.assertFalse(x[0][1], msg = 'Apparently you\'re following Santana')
+        art = Artist(None, {'id':'6GI52t8N5F02MxU0g5U69P'})
+        result = user.is_following(art)
+        self.assertFalse(result[0][1], msg='Apparently following Santana')
 
 
     # User.get_following
@@ -201,7 +204,8 @@ class TestUser(unittest.TestCase):
               % (user, total_playlists))
 
         if total_playlists >= 2:
-            minus_one = user.get_following(sp.PLAYLIST, limit = total_playlists - 1)
+            minus_one = user.get_following(sp.PLAYLIST,
+                                           limit=total_playlists - 1)
             self.assertEqual(len(minus_one), total_playlists - 1)
 
         # Get all followed artists
@@ -224,8 +228,8 @@ class TestUser(unittest.TestCase):
         # TODO: this is messy... should it return a bool instead?
         track = Track(None, {'id':'65rgrr0kAPjOkeWA2bDoUQ'})
         self.assertFalse(user.has_saved(track)[0][1],
-                         msg = 'Apparently you have a random lofi song saved')
-            
+                         msg='Apparently you have a random lofi song saved')
+
 
     # User.get_saved
     def test_get_saved(self):
@@ -247,7 +251,7 @@ class TestUser(unittest.TestCase):
             self.assertIsInstance(elem, Track)
 
         if total_tracks >= 2:
-            minus_one = user.get_saved(sp.TRACK, limit = total_tracks - 1)
+            minus_one = user.get_saved(sp.TRACK, limit=total_tracks - 1)
             self.assertEqual(len(minus_one), total_tracks - 1)
 
         # Get all saved albums
@@ -260,29 +264,27 @@ class TestUser(unittest.TestCase):
             self.assertIsInstance(elem, Album)
 
         if total_albums >= 2:
-            minus_one = user.get_saved(sp.ALBUM, limit = total_albums - 1)
+            minus_one = user.get_saved(sp.ALBUM, limit=total_albums - 1)
             self.assertEqual(len(minus_one), total_albums - 1)
 
 
 if __name__ == '__main__':
     unittest.main()
 
-    '''
-    bad token, expired token, correct token
+    # bad token, expired token, correct token
 
-    player
-    user_id
-    top
-    recently_played
-    get_playlists
-    create_playlist
-    is_following
-    get_following
-    has_saved
-    get_saved
+    # player
+    # user_id
+    # top
+    # recently_played
+    # get_playlists
+    # create_playlist
+    # is_following
+    # get_following
+    # has_saved
+    # get_saved
 
-    follow
-    unfollow
-    save
-    remove
-    '''
+    # follow
+    # unfollow
+    # save
+    # remove
