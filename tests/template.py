@@ -5,8 +5,15 @@ spotifython/deadbeef.py
 
 Note that this code doesn't compile as is because DeadBeef doesn't exist
 '''
+# These 2 statements are fine to include in your test file
 #pylint: disable=missing-class-docstring
 #pylint: disable=missing-function-docstring
+
+# These are here so the template in particular passes pylint; don't copy them
+#pylint: disable=no-name-in-module
+#pylint: disable=no-member
+#pylint: disable=import-error
+#pylint: disable=redundant-unittest-assert
 
 # Standard library imports
 import unittest
