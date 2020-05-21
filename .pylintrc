@@ -22,4 +22,4 @@ reports=no
 max-attributes=7
 
 [BASIC]
-good-names=i,j,k,fp
+good-names=i,j,k,fp,sp

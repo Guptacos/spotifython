@@ -1,8 +1,7 @@
 from typing import Union, List
-from constants import *
+import constants as const
 from endpoint import Endpoint
 from response import Response
-import requests
 
 # This object should be constructed by the user to instantiate the 
 # session of Spotify Web API usage.
@@ -23,67 +22,17 @@ class Session:
             TypeError for invalid types in any argument.
         '''
         self._token = token
-    
-    ##################################
-    # HTTP REQUEST 
-    ##################################
-    # https://stackoverflow.com/questions/23267409/how-to-implement-retry-mechanism-into-python-requests-library
-    
-    # request_type: REQUEST_GET, REQUEST_POST, REQUEST_PUT, REQUEST_DELETE
-    def _request(self,
-                 request_type: str,
-                 endpoint: str,
-                 body: dict=None,
-                 uri_params: dict=None
-    ):
+
+    def token(self):
+        ''' Getter for the token provided by the client
         '''
-            Does request with retry. This method should return a tuple (response_json, status_code) if
-            the request is executed, and raises an Exception if the request type is invalid.
-   
-            Args:
-                request_type: one of sp.REQUEST_GET, sp.REQUEST_POST, sp.REQUEST_PUT, sp.REQUEST_DELETE.
-                endpoint: an endpoint string defined in the Endpoint class.
-                body: (Optional) dictionary of values for the request body.
-                uri_params: (Optional) params to encode into the uri.
+        return self._token
 
-            Returns:
-                Only returns when successful. Returns the request JSON and the request's status code.
-                If the response contains invalid JSON or no content, response_json=None.
-
-            Exceptions:      
-                Raises an HTTPError object in the event of an unsuccessful web request.
-                All exceptions are as according to requests.Request.
-
-            Usage:
-                response_json, status_code = _request(...)
+    def timeout(self):
+        ''' Getter for the timeout provided by the client
         '''
-        request_uri = Endpoint.BASE_URI + endpoint
-        headers = {
-            'Authorization': 'Bearer ' + self._token,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        }
-        r = requests.request(request_type,
-                             request_uri,
-                             json=body,
-                             params=uri_params,
-                             headers=headers,
-                             timeout=self._timeout)
-        
-        # Extract the information from response. No exception should be present in the event of a successful 
-        # response, but the response json may or may not be present.
-
-        # r.raise_for_status() raises HTTPError if request unsuccessful - this is a real error
-        r.raise_for_status() 
+        return self._timeout
     
-        try: # content = Union[json, bytes]
-            # r.json() raises ValueError if no content - this is not an error and no exception should be returned
-            content = r.json()
-        except (ValueError):
-            content = None # May be malformed or no 
-
-        return content, r.status_code
-
     # User should never call this constructor. As a result, they should never
     # have access to the search_info structure prior to creating an SearchResult.
     # Internally, the search result will perform all necessary API calls to get the
