@@ -1,7 +1,7 @@
 from typing import Union, List
-import constants as const
-from endpoint import Endpoint
-from response import Response
+import spotifython.constants as const
+from spotifython.endpoint import Endpoint
+from spotifython.response import Response
 
 # This object should be constructed by the user to instantiate the 
 # session of Spotify Web API usage.
