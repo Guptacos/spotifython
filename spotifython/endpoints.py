@@ -1,4 +1,4 @@
-class Endpoint:
+class Endpoints:
     BASE_URI = 'https://api.spotify.com'
     GET_ALBUMS = '/v1/artists/{id}/albums'
 
