@@ -1,16 +1,17 @@
-''' User class
+""" User class
 
 This class represents a User object, tied to a Spotify user id.
 
-'''
+"""
 
 # Standard library imports
 from __future__ import annotations # Allow type hinting a class within the class
 import math
 
 # Local imports
-from spotifython.spotifython import Spotifython as sp
-from .endpoint import Endpoint
+import spotifython.constants as const
+from spotifython.endpoints import Endpoints
+import spotifython.utils as utils
 
 
 # TODO: fix imports after integrating.
@@ -22,29 +23,29 @@ from .endpoint import Endpoint
 # TODO: default params
 
 class User:
-    ''' Define behaviors related to a user, such as reading / modifying the
+    """ Define behaviors related to a user, such as reading / modifying the
         library and following artists.
 
     Getting an instance of User should be done using spotifython.get_users()
 
-    Exceptions:
+    Raises:
         TypeError:  if incorrectly typed parameters are given.
         ValueError: if parameters with illegal values are given.
-    '''
+    """
 
 
     #@typechecked
     def __init__(self,
-                 sp_obj,
+                 session,
                  user_info=None):
-        '''
-        Keyword arguments:
-            sp_obj: a Spotifython instance
+        """
+        Args:
+            session: a Spotifython instance
             user_info: a dictionary containing known values about the user
-        '''
-        self._sp_obj = sp_obj
+        """
+        self.session = session
         self._raw = user_info
-        self._player = Player(self._sp_obj, self)
+        self._player = Player(self.session, self)
 
 
     def __str__(self):
@@ -62,9 +63,9 @@ class User:
                       uri_params=None,
                       body=None):
         #pylint: disable=too-many-arguments
-        ''' Helper function to make many requests to Spotify
+        """ Helper function to make many requests to Spotify
 
-        Keyword arguments:
+        Args:
             limit: (int) the maximum number of items to return
             return_class: the class to construct for the list contents
             endpoint: (str) the endpoint to call.
@@ -73,24 +74,25 @@ class User:
             uri_params: (dict) the uri parameters for the request
             body: (dict) the body of the call
 
-        Return:
+        Returns:
             a list of objects of type return_class
-        '''
+        """
         # Execute requests
         results = []
         offset = 0
-        uri_params['limit'] = sp.SPOTIFY_PAGE_SIZE
+        uri_params['limit'] = const.SPOTIFY_PAGE_SIZE
 
         # Loop until we get 'limit' many items or run out
         next_multiple = lambda num, mult: math.ceil(num / mult) * mult
 
-        num_to_request = next_multiple(limit, sp.SPOTIFY_PAGE_SIZE)
+        num_to_request = next_multiple(limit, const.SPOTIFY_PAGE_SIZE)
         while offset < num_to_request:
 
             uri_params['offset'] = offset
 
-            response_json, status_code = self._sp_obj._request(
-                request_type=sp.REQUEST_GET,
+            response_json, status_code = utils.request(
+                self.session,
+                request_type=const.REQUEST_GET,
                 endpoint=endpoint,
                 body=body,
                 uri_params=uri_params
@@ -104,9 +106,9 @@ class User:
                 break
 
             for elem in response_json['items']:
-                results.append(return_class(self._sp_obj, elem))
+                results.append(return_class(self.session, elem))
 
-            offset += sp.SPOTIFY_PAGE_SIZE
+            offset += const.SPOTIFY_PAGE_SIZE
 
         return results[:limit]
 
@@ -116,10 +118,10 @@ class User:
                    elements,
                    endpoint,
                    uri_params=None):
-        ''' Helper to break a large request into many smaller requests so that
+        """ Helper to break a large request into many smaller requests so that
             Spotify doesn't complain.
 
-        Keyword arguments:
+        Args:
             elements: (list) the things to be sent to Spotify
             endpoint: (str) the Spotify endpoint to send a GET request
             uri_params: (dict) any uri params besides 'id' to be sent
@@ -127,17 +129,17 @@ class User:
         Returns:
             A list of tuples, where each tuple contains one of the input
             elements and the boolean value Spotify returned for that element.
-        '''
+        """
         if uri_params is None:
             uri_params = {}
 
-        def create_batches(elems, chunk_size=sp.SPOTIFY_PAGE_SIZE):
-            ''' Helper function to break elems into batches
+        def create_batches(elems, chunk_size=const.SPOTIFY_PAGE_SIZE):
+            """ Helper function to break elems into batches
             E.g.
                 elems = [1, 2, 3, 4, 5, 6, 7]
                 _batch(elems, 2)
                 >>> [[1,2], [3,4], [5,6], [7]]
-            '''
+            """
             results = []
             for i in range(0, len(elems), chunk_size):
                 if i >= len(elems):
@@ -148,13 +150,14 @@ class User:
             return results
 
         # Break into manageable batches for Spotify
-        batches = create_batches(elements, sp.SPOTIFY_PAGE_SIZE)
+        batches = create_batches(elements, const.SPOTIFY_PAGE_SIZE)
         results = []
         for batch in batches:
             uri_params['ids'] = [elem.spotify_id() for elem in batch]
 
-            response_json, status_code = self._sp_obj._request(
-                request_type=sp.REQUEST_GET,
+            response_json, status_code = utils.request(
+                self.session,
+                request_type=const.REQUEST_GET,
                 endpoint=endpoint,
                 body=None,
                 uri_params=uri_params
@@ -169,26 +172,26 @@ class User:
 
 
     def _update_internal(self, new_vals):
-        ''' Used internally to keep cached data up to date
+        """ Used internally to keep cached data up to date
 
-        Keyword arguments:
+        Args:
             new_vals: (dict) the fields that should be added to or updated in
                 the internal cache. Any values in the dictionary will become the
                 new value for that key.
 
-        Return:
+        Returns:
             None
-        '''
+        """
         # {**A, **B} returns (A - B) U B
         self._raw = {**self._raw, **new_vals}
 
 
     def spotify_id(self):
-        ''' Get the id of this user
+        """ Get the id of this user
 
-        Return:
+        Returns:
             The same id that this user was created with as a string.
-        '''
+        """
         result = self._raw.get('id', None)
         if result is None:
             raise Exception('Uh oh! TODO!')
@@ -197,15 +200,15 @@ class User:
 
 
     def player(self):
-        ''' Get the player object for this user
+        """ Get the player object for this user
 
         This is how client code should access a player. For example:
             u = sp.get_user(user_id)
             u.player().pause()
 
-        Return:
+        Returns:
             A Player object.
-        '''
+        """
         return self._player
 
 
@@ -214,72 +217,72 @@ class User:
     def top(self,
             top_type,
             limit,
-            time_range=sp.MEDIUM):
-        ''' Get the top artists or tracks for the user over a time range.
+            time_range=const.MEDIUM):
+        """ Get the top artists or tracks for the user over a time range.
 
-        Keyword arguments:
+        Args:
             top_type: only get items of this type. One of:
-                sp.ARTIST
-                sp.TRACK
+                sp.ARTISTS
+                sp.TRACKS
             limit: (int) max number of items to return. Must be positive.
             time_range: (optional) only get items for this time range. One of:
                 sp.LONG (several years)
                 sp.MEDIUM (about 6 months)
                 sp.SHORT (about 4 weeks)
 
-        Return:
+        Returns:
             A list of artists or a list of tracks, depending on top_type. Could
             be empty.
 
-        Auth token requirements:
+        Required token scopes:
             user-top-read
 
         Calls endpoints:
             GET     /v1/me/top/{type}
 
         Note: Spotify defines "top items" using internal metrics.
-        '''
+        """
         # Validate arguments
-        if top_type not in [sp.ARTIST, sp.TRACK]:
+        if top_type not in [const.ARTISTS, const.TRACKS]:
             raise TypeError(top_type)
-        if time_range not in [sp.LONG, sp.MEDIUM, sp.SHORT]:
+        if time_range not in [const.LONG, const.MEDIUM, const.SHORT]:
             raise TypeError(time_range)
         if limit <= 0:
             raise ValueError(limit)
 
         # Parse arguments
         time_ranges = {
-            sp.LONG: 'long_term',
-            sp.MEDIUM: 'medium_term',
-            sp.SHORT: 'short_term',
+            const.LONG: 'long_term',
+            const.MEDIUM: 'medium_term',
+            const.SHORT: 'short_term',
         }
 
         uri_params = {'time_range': time_ranges[time_range]}
-        endpoint_type = 'artists' if top_type == sp.ARTIST else 'tracks'
-        return_class = Artist if top_type == sp.ARTIST else Track
+        endpoint_type = 'artists' if top_type == const.ARTISTS else 'tracks'
+        return_class = Artist if top_type == const.ARTISTS else Track
 
         # Execute requests
         return self._paginate_get(
                         limit=limit,
                         return_class=return_class,
-                        endpoint=Endpoint.USER_TOP % endpoint_type,
+                        endpoint=Endpoints.USER_TOP % endpoint_type,
                         uri_params=uri_params,
                         body=None)
 
 
     #@typechecked
     def recently_played(self, limit=50):
-        ''' Get the user's recently played tracks
+        """ Get the user's recently played tracks
 
-        Keyword arguments:
+        Args:
             limit: (int, optional) max number of items to return. Must be
                 between 1 and 50, inclusive.
 
-        Return:
+        Returns:
             Success: a list of tracks. Could be empty.
             Failure: None
 
-        Auth token requirements:
+        Required token scopes:
             user-read-recently-played
 
         Calls endpoints:
@@ -289,15 +292,16 @@ class User:
         Note: does not return the time the tracks were played
         Note: a track must be played for >30s to be included in the history.
               Tracks played while in a 'private session' not recorded.
-        '''
+        """
         # Validate arguments
         if limit <= 0 or limit > 50:
             raise ValueError(limit)
 
         # Execute requests
-        response_json, status_code = self._sp_obj._request(
-            request_type=sp.REQUEST_GET,
-            endpoint=Endpoint.USER_RECENTLY_PLAYED,
+        response_json, status_code = utils.request(
+            self.session,
+            request_type=const.REQUEST_GET,
+            endpoint=Endpoints.USER_RECENTLY_PLAYED,
             body=None,
             uri_params={'limit': limit}
         )
@@ -307,7 +311,7 @@ class User:
 
         results = []
         for elem in response_json['items']:
-            results.append(Track(self._sp_obj, elem))
+            results.append(Track(self.session, elem))
 
         return results
 
@@ -315,20 +319,20 @@ class User:
     #@typechecked
     # TODO: default value
     def get_playlists(self, limit=None):
-        ''' Get all playlists that this user has in their library
+        """ Get all playlists that this user has in their library
 
-        Keyword arguments:
+        Args:
             limit: (int, optional) the max number of items to return. If None,
                 will return all. Must be between 1 and 100,000 inclusive.
 
-        Return:
+        Returns:
             Success: a list of playlists. Could be empty.
             Failure: None
 
         Note: this includes both playlists owned by this user and playlists
             that this user follows but are owned by others.
 
-        Auth token requirements:
+        Required token scopes:
             playlist-read-private
             playlist-read-collaborative
 
@@ -336,15 +340,15 @@ class User:
             GET     /v1/users/{user_id}/playlists
 
         To get only playlists this user follows, use get_following(sp.PLAYLISTS)
-        '''
+        """
         # Validate inputs
         if limit is None:
-            limit = sp.SPOTIFY_MAX_PLAYLISTS
+            limit = const.SPOTIFY_MAX_PLAYLISTS
 
-        if limit <= 0 or limit > sp.SPOTIFY_MAX_PLAYLISTS:
+        if limit <= 0 or limit > const.SPOTIFY_MAX_PLAYLISTS:
             raise ValueError(limit)
 
-        endpoint = Endpoint.USER_GET_PLAYLISTS % self.spotify_id()
+        endpoint = Endpoints.USER_GET_PLAYLISTS % self.spotify_id()
 
         return self._paginate_get(
                         limit=limit,
@@ -357,11 +361,11 @@ class User:
     #@typechecked
     def create_playlist(self,
                         name,
-                        visibility=sp.PUBLIC,
+                        visibility=const.PUBLIC,
                         description=None):
-        ''' Create a new playlist owned by the current user
+        """ Create a new playlist owned by the current user
 
-        Keyword arguments:
+        Args:
             name: (str) The name for the new playlist. Does not need to be
                 unique; a user may have several playlists with the same name.
             visibility: (optional) describes how other users can interact with
@@ -371,33 +375,36 @@ class User:
                     sp.PRIVATE_COLLAB: not publicly viewable, collaborative
             description: (str, optional) viewable description of the playlist.
 
-        Return:
+        Returns:
             The newly created Playlist object. Note that this function modifies
             the user's library.
 
-        Auth token requirements:
+        Required token scopes:
             playlist-modify-public
             playlist-modify-private
 
         Calls endpoints:
             POST    /v1/users/{user_id}/playlists
-        '''
+        """
         # Validate inputs
-        if visibility not in [sp.PUBLIC, sp.PRIVATE, sp.PRIVATE_COLLAB]:
+        if visibility not in [const.PUBLIC,
+                              const.PRIVATE,
+                              const.PRIVATE_COLLAB]:
             raise TypeError(visibility)
 
         body = {
             'name': name,
-            'public': visibility == sp.PUBLIC,
-            'collaborative': visibility == sp.PRIVATE_COLLAB
+            'public': visibility == const.PUBLIC,
+            'collaborative': visibility == const.PRIVATE_COLLAB
         }
 
         if description is not None:
             body['description'] = description
 
-        response_json, status_code = self._sp_obj._request(
-            request_type=sp.REQUEST_POST,
-            endpoint=Endpoint.USER_CREATE_PLAYLIST % self.spotify_id(),
+        response_json, status_code = utils.request(
+            self.session,
+            request_type=const.REQUEST_POST,
+            endpoint=Endpoints.USER_CREATE_PLAYLIST % self.spotify_id(),
             body=body,
             uri_params=None
         )
@@ -405,14 +412,14 @@ class User:
         if status_code != 201:
             raise Exception('Oh no TODO!')
 
-        return Playlist(self._sp_obj, response_json)
+        return Playlist(self.session, response_json)
 
 
     #@typechecked
     def is_following(self, other):
-        ''' Check if the current user is following something
+        """ Check if the current user is following something
 
-        Keyword arguments:
+        Args:
             other: check if current user is following 'other'. Other must be
                 one of the following:
                     Artist
@@ -420,7 +427,7 @@ class User:
                     Playlist
                     List: can contain multiple of the above types
 
-        Auth token requirements:
+        Required token scopes:
             user-follow-read
             playlist-read-private
             playlist-read-collaborative
@@ -429,24 +436,28 @@ class User:
             GET     /v1/me/following/contains
             GET     /v1/users/{user_id}/playlists
 
-        Return:
+        Returns:
             List of tuples. Each tuple has an input object and whether the user
             follows the object.
-        '''
+        """
         # Validate and sort input
         if not isinstance(other, list):
             other = [other]
+
+        for elem in other:
+            if type(elem) not in [Artist, User, Playlist]:
+                raise TypeError(elem)
 
         artists = list(filter(lambda elem: isinstance(elem, Artist), other))
         users = list(filter(lambda elem: isinstance(elem, User), other))
         playlists = list(filter(lambda elem: isinstance(elem, Playlist), other))
 
-        endpoint = Endpoint.USER_FOLLOWING_CONTAINS
+        endpoint = Endpoints.USER_FOLLOWING_CONTAINS
         results = self._batch_get(artists, endpoint, {'type': 'artist'})
         results += self._batch_get(users, endpoint, {'type': 'user'})
 
         # For each playlist in other, check if in the User's followed playlists
-        followed_playlists = self.get_following(sp.PLAYLIST)
+        followed_playlists = self.get_following(const.PLAYLISTS)
         results += list(map(lambda p: (p, p in followed_playlists), playlists))
 
         return results
@@ -457,18 +468,18 @@ class User:
     def get_following(self,
                       follow_type,
                       limit=None):
-        ''' Get all follow_type objects the current user is following
+        """ Get all follow_type objects the current user is following
 
-        Keyword arguments:
-            follow_type: one of sp.ARTIST or sp.PLAYLIST
+        Args:
+            follow_type: one of sp.ARTISTS or sp.PLAYLISTS
             limit: (int, optional) the max number of items to return. If None,
                 will return all. Must be between 1 and 100000 inclusive.
 
-        Return:
+        Returns:
             Success: List of follow_type objects. Could be empty.
             Failure: None
 
-        Auth token requirements:
+        Required token scopes:
             user-follow-read
             playlist-read-private
             playlist-read-collaborative
@@ -477,20 +488,23 @@ class User:
             GET     /v1/me/following
             GET     /v1/users/{user_id}/playlists
 
-        Exceptions:
-            ValueError: if sp.USER is passed in. The Spotify web api does not
+        Calls functions:
+            self.get_playlists() if follow_type == sp.PLAYLISTS
+
+        Raises:
+            ValueError: if sp.USERS is passed in. The Spotify web api does not
                 currently allow you to access this information.
                 For more info: https://github.com/spotify/web-api/issues/4
-        '''
+        """
         # Validate inputs
-        if follow_type not in [sp.ARTIST, sp.PLAYLIST]:
+        if follow_type not in [const.ARTISTS, const.PLAYLISTS]:
             raise TypeError(follow_type)
         if limit is None:
-            limit = sp.SPOTIFY_MAX_LIB_SIZE
-        if limit <= 0 or limit > sp.SPOTIFY_MAX_LIB_SIZE:
+            limit = const.SPOTIFY_MAX_LIB_SIZE
+        if limit <= 0 or limit > const.SPOTIFY_MAX_LIB_SIZE:
             raise ValueError(limit)
 
-        if follow_type == sp.PLAYLIST:
+        if follow_type == const.PLAYLISTS:
             results = []
             for playlist in self.get_playlists():
                 if playlist.owner().spotify_id() != self.spotify_id():
@@ -498,10 +512,10 @@ class User:
 
             return results[:limit]
 
-        # assert(follow_type == sp.ARTIST)
+        # assert(follow_type == const.ARTISTS)
         uri_params = {
             'type': 'artist',
-            'limit': sp.SPOTIFY_PAGE_SIZE
+            'limit': const.SPOTIFY_PAGE_SIZE
         }
         results = []
 
@@ -513,9 +527,10 @@ class User:
             if len(results) != 0:
                 uri_params['after'] = results[-1].spotify_id()
 
-            response_json, status_code = self._sp_obj._request(
-                request_type=sp.REQUEST_GET,
-                endpoint=Endpoint.USER_GET_ARTISTS,
+            response_json, status_code = utils.request(
+                self.session,
+                request_type=const.REQUEST_GET,
+                endpoint=Endpoints.USER_GET_ARTISTS,
                 body=None,
                 uri_params=uri_params
             )
@@ -528,16 +543,16 @@ class User:
                 break
 
             for elem in response_json['artists']['items']:
-                results.append(Artist(self._sp_obj, elem))
+                results.append(Artist(self.session, elem))
 
         return results[:limit]
 
 
     #@typechecked
     def follow(self, other):
-        ''' Follow one or more things
+        """ Follow one or more things
 
-        Keyword arguments:
+        Args:
             other: follow 'other'. Other must be one of the following:
                     Artist
                     User
@@ -547,18 +562,18 @@ class User:
         Note: if user is already following other, will do nothing and return
             a success code in response.status()
 
-        Return:
+        Returns:
             None
 
-        Auth token requirements:
+        Required token scopes:
             user-follow-modify
             playlist-modify-public
             playlist-modify-private
 
-        Endpoints called:
+        Calls endpoints:
             PUT     /v1/me/following
             PUT     /v1/playlists/{playlist_id}/followers
-        '''
+        """
         # playlist 200 success
         # user/artist 204 success
         # note: calls are completely different :(
@@ -567,9 +582,9 @@ class User:
 
     #@typechecked
     def unfollow(self, other):
-        ''' Unfollow one or more things
+        """ Unfollow one or more things
 
-        Keyword arguments:
+        Args:
             other: unfollow 'other'. Other must be one of the following:
                     Artist
                     User
@@ -579,18 +594,18 @@ class User:
         Note: if user is already not following other, will do nothing and return
             a success code in response.status()
 
-        Return:
+        Returns:
             None
 
-        Auth token requirements:
+        Required token scopes:
             user-follow-modify
             playlist-modify-public
             playlist-modify-private
 
-        Endpoints called:
+        Calls endpoints:
             DELETE  /v1/me/following
             DELETE  /v1/playlists/{playlist_id}/followers
-        '''
+        """
         # playlist 200 success
         # user/artist 204 success
         # note: calls are completely different :(
@@ -599,35 +614,39 @@ class User:
 
     #@typechecked
     def has_saved(self, other):
-        ''' Check if the user has one or more things saved to their library
+        """ Check if the user has one or more things saved to their library
 
-        Keyword arguments:
+        Args:
             other: check if the current user has 'other' saved to the library.
                 Other must be one of the following:
                     Track
                     Album
                     List: can contain multiple of the above types
 
-        Return:
+        Returns:
             Success: List of tuples. Each tuple has an input object and whether
                      the user has that object saved.
             Failure: None
 
-        Auth token requirements:
+        Required token scopes:
             user-library-read
 
         Calls endpoints:
             GET     /v1/me/albums/contains
             GET     /v1/me/tracks/contains
-        '''
+        """
         # Sort input
         if not isinstance(other, list):
             other = [other]
 
+        for elem in other:
+            if type(elem) not in [Track, Album]:
+                raise TypeError(elem)
+
         tracks = list(filter(lambda elem: isinstance(elem, Track), other))
         albums = list(filter(lambda elem: isinstance(elem, Album), other))
 
-        endpoint = Endpoint.USER_HAS_SAVED
+        endpoint = Endpoints.USER_HAS_SAVED
         results = self._batch_get(tracks, endpoint % 'tracks')
         results += self._batch_get(albums, endpoint % 'albums')
 
@@ -635,15 +654,16 @@ class User:
 
 
     #TODO: input arg order / labeling of required vs. optional?
+    # TODO: checking return means ret[0][1] for 1 elem...
     #@typechecked
     def get_saved(self,
                   saved_type,
                   limit=None,
-                  market=sp.TOKEN_REGION):
-        ''' Get all saved_type objects the user has saved to their library
+                  market=const.TOKEN_REGION):
+        """ Get all saved_type objects the user has saved to their library
 
-        Keyword arguments:
-            saved_type: one of sp.ALBUM or sp.TRACK
+        Args:
+            saved_type: one of sp.ALBUMS or sp.TRACKS
             limit: (int, optional) the max number of items to return. If None,
                 will return all. Must be positive.
             market: (required) a 2 letter country code as defined here:
@@ -654,44 +674,44 @@ class User:
                 if sp.TOKEN_REGION (default) is given, will use appropriate
                 country code for user based on their auth token and location.
 
-        Return:
+        Returns:
             List of saved_type objects. Could be empty.
 
-        Auth token requirements:
+        Required token scopes:
             user-library-read
 
         Calls endpoints:
             GET     /v1/me/albums
             GET     /v1/me/tracks
 
-        '''
+        """
         # Validate inputs
-        if saved_type not in [sp.ALBUM, sp.TRACK]:
+        if saved_type not in [const.ALBUMS, const.TRACKS]:
             raise TypeError(saved_type)
         if limit is None:
-            limit = sp.SPOTIFY_MAX_LIB_SIZE
-        if limit <= 0 or limit > sp.SPOTIFY_MAX_LIB_SIZE:
+            limit = const.SPOTIFY_MAX_LIB_SIZE
+        if limit <= 0 or limit > const.SPOTIFY_MAX_LIB_SIZE:
             raise ValueError(limit)
 
         # TODO: should I validate the market?
 
-        endpoint_type = 'albums' if saved_type == sp.ALBUM else 'tracks'
-        return_class = Album if saved_type == sp.ALBUM else Track
+        endpoint_type = 'albums' if saved_type == const.ALBUMS else 'tracks'
+        return_class = Album if saved_type == const.ALBUMS else Track
         uri_params = {'market': market}
 
         return self._paginate_get(
                         limit=limit,
                         return_class=return_class,
-                        endpoint=Endpoint.USER_GET_SAVED % endpoint_type,
+                        endpoint=Endpoints.USER_GET_SAVED % endpoint_type,
                         uri_params=uri_params,
                         body=None)
 
 
     #@typechecked
     def save(self, other):
-        ''' Save one or more things to the user's library
+        """ Save one or more things to the user's library
 
-        Keyword arguments:
+        Args:
             other: the object(s) to save. Other must be one of the following:
                     Track
                     Album
@@ -700,16 +720,16 @@ class User:
         Note: if user already has other saved, will do nothing and return
             a success code in response.status()
 
-        Return:
+        Returns:
             None
 
-        Auth token requirements:
+        Required token scopes:
             user-library-modify
 
-        Endpoints called:
+        Calls endpoints:
             PUT     /v1/me/albums
             PUT     /v1/me/tracks
-        '''
+        """
         # Note: ids can go in body or uri
         # 201 on success
         pass
@@ -717,9 +737,9 @@ class User:
 
     #@typechecked
     def remove(self, other):
-        ''' Remove one or more things from the user's library
+        """ Remove one or more things from the user's library
 
-        Keyword arguments:
+        Args:
             other: the object(s) to remove. Other must be one of the following:
                     Track
                     Album
@@ -728,23 +748,23 @@ class User:
         Note: if user already does not have other saved, will do nothing and
             return a success code in response.status()
 
-        Return:
+        Returns:
             None
 
-        Auth token requirements:
+        Required token scopes:
             user-library-modify
 
-        Endpoints called:
+        Calls endpoints:
             DELETE  /v1/me/albums
             DELETE  /v1/me/tracks
-        '''
+        """
         # Note: ids can go in body or uri
         # 200 on success
         pass
 
 #pylint: disable=wrong-import-position
-from .album import Album
-from .artist import Artist
-from .player import Player
-from .playlist import Playlist
-from .track import Track
+from spotifython.album import Album
+from spotifython.artist import Artist
+from spotifython.player import Player
+from spotifython.playlist import Playlist
+from spotifython.track import Track
