@@ -22,6 +22,7 @@ from unittest.mock import patch
 # Local imports
 from spotifython.spotifython import Spotifython as sp
 from spotifython.deadbeef import DeadBeef
+import spotifython.constants as const
 
 
 class TestDeadBeef(unittest.TestCase):
@@ -70,14 +71,14 @@ class TestDeadBeef(unittest.TestCase):
         beef = self.deadbeef
 
         # Input checking: can't mince beef with a spoon, and True isn't an int!
-        self.assertRaises(TypeError, beef.mince, sp.SPOON, True)
+        self.assertRaises(TypeError, beef.mince, const.SPOON, True)
 
         # Now we mock the _request method. The next time _request is called (and
         # every time afterwards that it's called in this test until it's
         # changed) it will return ({}, 200) to the DeadBeef library.
         self.request_mock.return_value = {}, 200
 
-        minced = beef.mince(sp.KNIFE, quantity=10)
+        minced = beef.mince(const.KNIFE, quantity=10)
         self.assertIsInstance(minced, DeadBeef)
         self.assertEqual(minced.weight, 100)
 
