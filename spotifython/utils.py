@@ -10,6 +10,16 @@ import requests
 from spotifython.endpoint import Endpoint
 import spotifython.constants as const
 
+# Exceptions
+class AuthenticationError(Exception):
+    pass
+
+class NetworkError(Exception):
+    pass
+
+class SpotifyError(Exception):
+    pass
+
 ##################################
 # HTTP REQUEST
 ##################################
