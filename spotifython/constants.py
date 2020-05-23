@@ -24,3 +24,4 @@ PRIVATE_COLLAB = 'private_collab'
 
 # Constants
 DEFAULT_REQUEST_TIMEOUT = 10 # in seconds
+SPOTIFY_PAGE_SIZE = 50

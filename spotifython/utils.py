@@ -3,21 +3,31 @@ Helper utilities for the spotifython library. These should not be used by client
 code.
 '''
 
+# Standard library imports
+import math
+
 # Third party imports
 import requests
 
 # Local imports
-from spotifython.endpoint import Endpoint
+from spotifython.endpoints import Endpoints
 import spotifython.constants as const
 
 # Exceptions
+#pylint: disable=unnecessary-pass
 class AuthenticationError(Exception):
+    """ Used when the token fails to authenticate with Spotify
+    """
     pass
 
 class NetworkError(Exception):
+    """ Used when the network fails
+    """
     pass
 
 class SpotifyError(Exception):
+    """ Used when Spotify fails for an unknown reason
+    """
     pass
 
 ##################################
@@ -49,7 +59,7 @@ def request(session,
         Raises an HTTPError object in the event of an unsuccessful web request.
         All exceptions are as according to requests.Request.
     '''
-    request_uri = Endpoint.BASE_URI + endpoint
+    request_uri = Endpoints.BASE_URI + endpoint
     headers = {
         'Authorization': 'Bearer ' + session.token(),
         'Content-Type': 'application/json',
