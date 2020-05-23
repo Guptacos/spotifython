@@ -207,3 +207,27 @@ def batch_get(session,
         results.append(response_json)
 
     return results
+
+
+def spotifython_eq(self, other):
+    """ Eq function to override the builtin one.
+
+    Note: both self and other must implement spotify_id()
+    """
+
+    #pylint: disable=unidiomatic-typecheck
+    return type(self) == type(other) and self.spotify_id() == other.spotify_id()
+
+
+def spotifython_hash(obj):
+    """ Hash function to override the builtin one.
+
+    Note: obj must implement spotify_id()
+
+    By using this, we can have 2 different objects that represent the same thing
+    have the same hash code. For example, if you get the same track from 2
+    different calls to User.top, they should have the same hash.
+    """
+
+    # Use builtin hash
+    return hash(obj.__class__.__name__ + obj.spotify_id())
