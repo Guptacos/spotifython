@@ -15,7 +15,6 @@ import spotifython.utils as utils
 
 # TODO: fix imports after integrating.
 # TODO: feels like TypeError and ValueError used interchangeably
-# TODO: have to implement equality methods
 # TODO: market as input?
 # TODO: what to do about partial success?
 # TODO: return success vs failure in docstring
@@ -57,6 +56,18 @@ class User:
 
     def __repr__(self):
         return self.__str__()
+
+
+    def __eq__(self, other):
+        return utils.spotifython_eq(self, other)
+
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+
+    def __hash__(self):
+        return utils.spotifython_hash(self)
 
 
     def _update_internal(self, new_vals):
