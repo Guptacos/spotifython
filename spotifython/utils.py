@@ -1,7 +1,7 @@
-'''
+"""
 Helper utilities for the spotifython library. These should not be used by client
 code.
-'''
+"""
 
 # Standard library imports
 import math
@@ -40,7 +40,7 @@ def request(session,
             endpoint,
             body=None,
             uri_params=None):
-    ''' Does HTTP request with retry to a Spotify endpoint.
+    """ Does HTTP request with retry to a Spotify endpoint.
     This method should return a tuple (response_json, status_code) if the
     request is executed, and raises an Exception if the request type is invalid.
 
@@ -58,7 +58,7 @@ def request(session,
     Exceptions:
         Raises an HTTPError object in the event of an unsuccessful web request.
         All exceptions are as according to requests.Request.
-    '''
+    """
     request_uri = Endpoints.BASE_URI + endpoint
     headers = {
         'Authorization': 'Bearer ' + session.token(),
@@ -94,7 +94,7 @@ def paginate_get(session,
                  uri_params=None,
                  body=None):
     #pylint: disable=too-many-arguments
-    ''' Used to get a large number of objects from Spotify
+    """ Used to get a large number of objects from Spotify
     Note: does a GET request
 
     E.g: getting all of a user's saved songs. In this case, Spotify limits
@@ -114,7 +114,7 @@ def paginate_get(session,
 
     Return:
         A list of objects of type return_class
-    '''
+    """
     # Init params
     uri_params = dict() if uri_params is None else uri_params
     body = dict() if body is None else body
@@ -153,57 +153,20 @@ def paginate_get(session,
     return results[:limit]
 
 
-# TODO: partial failure?
-def batch_get(session,
-              elements,
-              endpoint,
-              uri_params=None,
-              batch_size=const.SPOTIFY_PAGE_SIZE):
-    ''' Break large request into smaller requests so Spotify doesn't complain.
-    Note: does a GET request
+def create_batches(elems, batch_size=const.SPOTIFY_PAGE_SIZE):
+    """ Break list into batches of max len 'batch_size'
 
-    Keyword arguments:
-        elements: (list[str]) the ids to be sent to Spotify
-        endpoint: (str) the Spotify endpoint to send a GET request
-        uri_params: (dict) any uri params besides 'id' to be sent
-        batch_size: (int) the max number of ids the endpoint will accept at once
+    Args:
+        elems: the list of elements to split
+        batch_size: the max len of the output batches
 
-    Returns:
-        A list of response dicts from Spotify, exactly as Spotify sent them.
-    '''
-    # Init params
-    uri_params = dict() if uri_params is None else uri_params
-
-    def create_batches(elems):
-        ''' Helper to break list into batches of max len 'batch_size'
-        E.g. if batch_size is 2:
-            >>> elems = [1, 2, 3, 4, 5, 6, 7]
-            >>> create_batches(elems)
-            >>> [[1,2], [3,4], [5,6], [7]]
-        '''
-        results = []
-        for i in range(0, len(elems), batch_size):
-            results += [elems[i:i + batch_size]]
-
-        return results
-
-    # Break into manageable batches for Spotify
-    batches = create_batches(elements)
+    Ex:
+        >>> elems = [1, 2, 3, 4, 5, 6, 7]
+        >>> create_batches(elems, batch_size=2)
+        >>> [[1,2], [3,4], [5,6], [7]]
+    """
     results = []
-    for batch in batches:
-        uri_params['ids'] = batch
-
-        response_json, status_code = request(
-            session,
-            request_type=const.REQUEST_GET,
-            endpoint=endpoint,
-            body=None,
-            uri_params=uri_params
-        )
-
-        if status_code != 200:
-            raise Exception('Oh no TODO!')
-
-        results.append(response_json)
+    for i in range(0, len(elems), batch_size):
+        results += [elems[i:i + batch_size]]
 
     return results
