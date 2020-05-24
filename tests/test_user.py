@@ -10,29 +10,30 @@ Last updated: May 14, 2020
 #pylint: disable=missing-class-docstring
 #pylint: disable=missing-function-docstring
 
-# TODO: mock all the functions
-
 # Standard library imports
+import random
 import unittest
 from unittest.mock import patch
 
 # Local imports
-from spotifython.spotifython import Spotifython as sp
+from tests.help_lib import get_dummy_data
+import spotifython.constants as const
+import spotifython.utils as utils
 
-USER_ID = ''
-NO_ACCESS_TOKEN = ''
-ALL_ACCESS_TOKEN = ''
-INVALID_TOKEN = 'deadbeef'
+USER_ID = 'deadbeef'
+TOKEN = 'feebdaed'
 
 
 class TestUser(unittest.TestCase):
+
+
     def setUp(self):
-        self.session = sp(ALL_ACCESS_TOKEN)
+        self.session = sp(TOKEN)
         #TODO: fix when sp.get_users() is merged
         self.user = User(self.session, {'id': USER_ID})
 
         # Mock the sp._request method so that we never actually reach Spotify
-        self.patcher = patch.object(sp, '_request', autospec=True)
+        self.patcher = patch.object(utils, 'request', autospec=True)
 
         # Add cleanup to unmock sp._request. Cleanup always called at end.
         self.addCleanup(self.patcher.stop)
@@ -74,27 +75,49 @@ class TestUser(unittest.TestCase):
         user = self.user
 
         # Validate input checking
-        self.assertRaises(TypeError, user.top, sp.PLAYLIST, 1)
-        self.assertRaises(TypeError, user.top, sp.TRACK, 1, sp.ARTIST)
-        self.assertRaises(TypeError, user.top, sp.TRACK, 1, 5)
-        self.assertRaises(ValueError, user.top, sp.TRACK, -1)
+        self.assertRaises(TypeError, user.top, const.PLAYLISTS, 1)
+        self.assertRaises(TypeError, user.top, const.TRACKS, 1, const.ARTISTS)
+        self.assertRaises(TypeError, user.top, const.TRACKS, 1, 5)
+        self.assertRaises(ValueError, user.top, const.TRACKS, -1)
 
         # Get top track
         # Want to mock items, limit, offset
         self.request_mock.return_value = (
-            {},
+            {'items': get_dummy_data(const.TRACKS, 1),
+             'offset': 0,
+             'limit': 1},
             200
         )
-        top = user.top(sp.TRACK, 1)
+        top = user.top(const.TRACKS, 1)
         self.assertLessEqual(len(top), 1)
-        self.assertIsInstance(top[0], Track)
+        for elem in top:
+            self.assertIsInstance(elem, Track)
 
         # Get top artist
-        top = user.top(sp.ARTIST, 1)
-        self.assertIsInstance(top[0], Artist)
+        self.request_mock.return_value = (
+            {'items': get_dummy_data(const.ARTISTS, 1),
+             'offset': 0,
+             'limit': 1},
+            200
+        )
+        top = user.top(const.ARTISTS, 1)
+        self.assertLessEqual(len(top), 1)
+        for elem in top:
+            self.assertIsInstance(elem, Artist)
 
         # Get at most 55 top tracks
-        top = user.top(sp.TRACK, 55)
+        top_tracks = get_dummy_data(const.TRACKS, 100)
+        self.request_mock.side_effect = [
+            ({'items': top_tracks[:50],
+              'offset': 0,
+              'limit': 50},
+             200),
+            ({'items': top_tracks[50:],
+              'offset': 50,
+              'limit': 50},
+             200)
+        ]
+        top = user.top(const.TRACKS, 55)
         self.assertLessEqual(len(top), 55)
 
 
@@ -107,6 +130,10 @@ class TestUser(unittest.TestCase):
         self.assertRaises(ValueError, user.recently_played, 51)
 
         # Make sure you get at most 10 Tracks
+        self.request_mock.return_value = (
+            {'items': get_dummy_data(const.TRACKS, 10)},
+            200
+        )
         recently_played = user.recently_played(10)
         self.assertLessEqual(len(recently_played), 10)
         for elem in recently_played:
@@ -119,21 +146,42 @@ class TestUser(unittest.TestCase):
         user = self.user
 
         self.assertRaises(ValueError, user.get_playlists, -1)
-        self.assertRaises(ValueError, user.get_playlists, 100123)
+        self.assertRaises(ValueError, user.get_playlists, 100001)
 
         # Make sure you get 1 Playlist
+        self.request_mock.side_effect = [
+            ({'items': get_dummy_data(const.PLAYLISTS, 1),
+              'offset': 0,
+              'limit': 50},
+             200),
+            ({'items': []},
+             200),
+        ]
         playlist = user.get_playlists(1)
         self.assertEqual(len(playlist), 1)
         self.assertIsInstance(playlist[0], Playlist)
 
+        self.request_mock.side_effect = [
+            ({'items': get_dummy_data(const.PLAYLISTS, 38),
+              'offset': 0,
+              'limit': 50},
+             200),
+            ({'items': []},
+             200)
+        ]
         playlists = user.get_playlists()
-        total = len(playlists)
-        print('\n%s has %d playlists in their library. Does this look right?'
-              % (user, total))
+        self.assertEqual(len(playlists), 38)
 
-        if total >= 2:
-            minus_one = user.get_playlists(limit=total - 1)
-            self.assertEqual(len(minus_one), total - 1)
+        self.request_mock.side_effect = [
+            ({'items': get_dummy_data(const.PLAYLISTS, 37),
+              'offset': 0,
+              'limit': 50},
+             200),
+            ({'items': []},
+             200)
+        ]
+        playlists = user.get_playlists(37)
+        self.assertEqual(len(playlists), 37)
 
 
     # Note: also manually tested, creates a playlist
@@ -142,58 +190,67 @@ class TestUser(unittest.TestCase):
         user = self.user
 
         # Validate input checking
-        self.assertRaises(TypeError, user.create_playlist, 'test', sp.TRACK)
+        self.assertRaises(TypeError, user.create_playlist, 'test', const.TRACKS)
 
-        self.request_mock.return_value = {}, 201
+        to_make = get_dummy_data(const.PLAYLISTS, 1)[0]
+        self.request_mock.return_value = to_make, 201
+
         # Make sure playlist creation returns the playlist
-        # TODO: add integration test to check that playlist was created
-        playlist = user.create_playlist('test',
-                                        sp.PRIVATE,
-                                        description='test playlist, pls del')
-        self.assertIsInstance(playlist, Playlist)
+        new_playlist = user.create_playlist(to_make['name'],
+                                            const.PRIVATE,
+                                            description=to_make['description'])
+
+        self.assertIsInstance(new_playlist, Playlist)
+        self.assertEqual(new_playlist.name(), to_make['name'])
 
 
     # User.is_following
+    @unittest.skip('not yet mocked')
     def test_is_following(self):
         user = self.user
 
         # Validate input checking
-        self.assertRaises(TypeError, user.is_following, sp.TRACK)
+        self.assertRaises(TypeError, user.is_following, const.TRACKS)
         self.assertRaises(TypeError, user.is_following, 5)
 
-        playlists = user.get_following(sp.PLAYLIST)
-        for playlist, following in user.is_following(playlists):
-            self.assertTrue(following,
-                            msg='%s in user.get_following(sp.PLAYLIST), but '
-                                'False in user.is_following' % playlist)
+        self.request_mock.side_effect = [
+            ({'items': get_dummy_data(const.PLAYLISTS, 10)}, 200),
+            ([True]*10, 200)
+        ]
 
-        artists = user.get_following(sp.ARTIST)
-        for artist, following in user.is_following(artists):
-            self.assertTrue(following,
-                            msg='%s in user.get_following(sp.ARTIST), but '
-                                'False in user.is_following' % artist)
+        # Note: current
+        playlists = user.get_following(const.PLAYLISTS)
+        self.assertEqual(len(playlists), 0)
+
+        self.request_mock.side_effect = [
+            ({'items': get_dummy_data(const.ARTISTS, 10)}, 200),
+            ([True]*10, 200)
+        ]
+        artists = user.get_following(const.ARTISTS)
+        self.assertTrue(all(user.is_following(artists)))
 
 
         # TODO: test following users
         # TODO: test failing cases
         # TODO: maybe mock this instead of hardcoding an artist?
         # TODO: this is messy... should it return a bool instead?
-        art = Artist(None, {'id':'6GI52t8N5F02MxU0g5U69P'})
-        result = user.is_following(art)
-        self.assertFalse(result[0][1], msg='Apparently following Santana')
 
 
     # User.get_following
+    @unittest.skip('not yet mocked')
     def test_get_following(self):
         user = self.user
 
         # Validate input checking
-        self.assertRaises(TypeError, user.get_following, sp.USER, 10)
+        self.assertRaises(TypeError, user.get_following, const.USERS, 10)
         self.assertRaises(TypeError, user.get_following, 5, limit=10)
-        self.assertRaises(ValueError, user.get_following, sp.ARTIST, limit=-1)
+        self.assertRaises(ValueError,
+                          user.get_following,
+                          const.ARTISTS,
+                          limit=-1)
 
         # Get all followed playlists
-        playlists = user.get_following(sp.PLAYLIST)
+        playlists = user.get_following(const.PLAYLISTS)
         for elem in playlists:
             self.assertIsInstance(elem, Playlist)
 
@@ -202,12 +259,12 @@ class TestUser(unittest.TestCase):
               % (user, total_playlists))
 
         if total_playlists >= 2:
-            minus_one = user.get_following(sp.PLAYLIST,
+            minus_one = user.get_following(const.PLAYLISTS,
                                            limit=total_playlists - 1)
             self.assertEqual(len(minus_one), total_playlists - 1)
 
         # Get all followed artists
-        artists = user.get_following(sp.ARTIST)
+        artists = user.get_following(const.ARTISTS)
         for elem in artists:
             self.assertIsInstance(elem, Artist)
 
@@ -219,28 +276,44 @@ class TestUser(unittest.TestCase):
         user = self.user
 
         # Validate input checking
-        self.assertRaises(TypeError, user.has_saved, Playlist(None, {}))
+        playlist = get_dummy_data(const.PLAYLISTS, 1)[0]
+        self.assertRaises(TypeError, user.has_saved, playlist)
         self.assertRaises(TypeError, user.has_saved, 5)
 
-        # TODO: maybe mock this instead of hardcoding?
-        # TODO: this is messy... should it return a bool instead?
-        track = Track(None, {'id':'65rgrr0kAPjOkeWA2bDoUQ'})
-        self.assertFalse(user.has_saved(track)[0][1],
-                         msg='Apparently you have a random lofi song saved')
+
+        # Build some objects to check
+        tracks = get_dummy_data(const.TRACKS)
+        tracks = list(map(lambda elem: Track(None, elem), tracks))
+        albums = get_dummy_data(const.ALBUMS)
+        albums = list(map(lambda elem: Album(None, elem), albums))
+
+        other = tracks + albums
+        random.shuffle(other)
+
+        # Return correct number of values depending on input
+        #pylint: disable=unused-argument
+        def request_mock_return(self, request_type, endpoint, body, uri_params):
+            ret_len = len(tracks) if 'tracks' in endpoint else len(albums)
+            return [True]*ret_len, 200
+
+        self.request_mock.side_effect = request_mock_return
+
+        self.assertTrue(all(user.has_saved(other)))
 
 
     # User.get_saved
+    @unittest.skip('not yet mocked')
     def test_get_saved(self):
         user = self.user
 
         # Validate input checking
-        self.assertRaises(TypeError, user.get_saved, sp.PLAYLIST)
-        self.assertRaises(ValueError, user.get_saved, sp.TRACK, limit=-1)
+        self.assertRaises(TypeError, user.get_saved, const.PLAYLISTS)
+        self.assertRaises(ValueError, user.get_saved, const.TRACKS, limit=-1)
 
         # TODO: test the market?
 
         # Get all saved tracks
-        tracks = user.get_saved(sp.TRACK)
+        tracks = user.get_saved(const.TRACKS)
         total_tracks = len(tracks)
         print('\n%s has %d tracks in their library. Does this look right?'
               % (user, total_tracks))
@@ -249,11 +322,11 @@ class TestUser(unittest.TestCase):
             self.assertIsInstance(elem, Track)
 
         if total_tracks >= 2:
-            minus_one = user.get_saved(sp.TRACK, limit=total_tracks - 1)
+            minus_one = user.get_saved(const.TRACKS, limit=total_tracks - 1)
             self.assertEqual(len(minus_one), total_tracks - 1)
 
         # Get all saved albums
-        albums = user.get_saved(sp.ALBUM)
+        albums = user.get_saved(const.ALBUMS)
         total_albums = len(albums)
         print('%s has %d albums in their library. Does this look right?'
               % (user, total_albums))
@@ -262,8 +335,28 @@ class TestUser(unittest.TestCase):
             self.assertIsInstance(elem, Album)
 
         if total_albums >= 2:
-            minus_one = user.get_saved(sp.ALBUM, limit=total_albums - 1)
+            minus_one = user.get_saved(const.ALBUMS, limit=total_albums - 1)
             self.assertEqual(len(minus_one), total_albums - 1)
+
+
+    @unittest.skip('not yet implemented')
+    def test_follow(self):
+        pass
+
+
+    @unittest.skip('not yet implemented')
+    def test_unfollow(self):
+        pass
+
+
+    @unittest.skip('not yet implemented')
+    def test_save(self):
+        pass
+
+
+    @unittest.skip('not yet implemented')
+    def test_remove(self):
+        pass
 
 
 if __name__ == '__main__':
@@ -271,25 +364,17 @@ if __name__ == '__main__':
 
     # bad token, expired token, correct token
 
-    # player
-    # user_id
-    # top
-    # recently_played
-    # get_playlists
-    # create_playlist
-    # is_following
-    # get_following
-    # has_saved
-    # get_saved
-
     # follow
     # unfollow
     # save
     # remove
 
-from spotifython.user import User
+#pylint: disable=wrong-import-position
+#pylint: disable=wrong-import-order
 from spotifython.album import Album
 from spotifython.artist import Artist
 from spotifython.player import Player
 from spotifython.playlist import Playlist
 from spotifython.track import Track
+from spotifython.user import User
+from spotifython.session import Session as sp

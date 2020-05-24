@@ -245,3 +245,15 @@ def spotifython_hash(obj):
 
     # Use builtin hash
     return hash(obj.__class__.__name__ + obj.spotify_id())
+
+
+def separate(elems, filter_type):
+    """ Filter out all objects of type 'filter_type' from elems """
+    filter_func = lambda elem: isinstance(elem, filter_type)
+    return list(filter(filter_func, elems))
+
+
+def map_ids(elems):
+    """ Turn a list of objects into a list of spotify ids """
+    map_func = lambda elem: elem.spotify_id()
+    return list(map(map_func, elems))
