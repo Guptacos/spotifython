@@ -183,7 +183,7 @@ class Artist:
             uri_params['limit'] = search_limit
             uri_params['offset'] = offset
             response_json, status_code = self.session._request(
-                request_type=sp.REQUEST_GET, 
+                request_type=const.REQUEST_GET, 
                 endpoint=endpoint, 
                 uri_params=uri_params
             )
@@ -260,7 +260,7 @@ class Artist:
 
         # Execute requests
         response_json, status_code = self.session._request(
-            request_type=sp.REQUEST_GET, 
+            request_type=const.REQUEST_GET, 
             endpoint=endpoint, 
             uri_params=uri_params
         )
@@ -318,7 +318,7 @@ class Artist:
 
         # Execute requests
         response_json, status_code = self.session._request(
-            request_type=sp.REQUEST_GET, 
+            request_type=const.REQUEST_GET, 
             endpoint=endpoint, 
         )
 
