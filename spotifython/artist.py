@@ -2,53 +2,21 @@ from copy import deepcopy
 from typing import List, Union
 
 from spotifython import Spotifython as sp
-# from album import Album
-# from track import Track
+import spotifython.constants as const
 
 from response import Response
 from endpoint import Endpoint
 
-##################################
-# Stub Classes
-##################################
-
-class Album:
-    def __init__(self, raw):
-        self._raw = raw
-
 class Artist:
-    def __init__(self, raw):
-        self._raw = raw
-
-class Player:
-    def __init__(self, raw):
-        self._raw = raw
-
-class Playlist:
-    def __init__(self, raw):
-        self._raw = raw
-
-class Spotifython:
-    def __init__(self, raw):
-        self._raw = raw
-
-class Track:
-    def __init__(self, raw):
-        self._raw = raw
-
-class User:
-    def __init__(self, raw):
-        self._raw = raw
-
-##################################
-# End Stub Classes
-##################################
-
-class Artist:
-    # User should never call this constructor. As a result, they should never
-    # have access to the artist_info structure prior to creating an Artist.
-    def __init__(self, artist_info: dict, top: Spotifython):
-        self._top = top
+    def __init__(self, session, artist_info):
+        ''' User should never call this constructor. As a result, they should never
+        have access to the artist_info structure prior to creating an Artist.
+        
+        Args:
+            session: a Spotifython instance
+            artist_info: a dictionary containing known values about the artist
+        '''
+        self.session = session
         self._raw = artist_info
         # Lazily loaded fields from API calls
         self.albums = None 
@@ -77,38 +45,61 @@ class Artist:
     # Images: unsupported object
     # Type: is an artist. we don't need to include this.
 
-    def genres(self) -> List[str]:
+    def genres(self):
+        ''' Getter for the genre of an artist. Returns a List[str].
+        '''
         if 'genres' not in self._raw: self._update_fields()
         return Response(status=Response.OK, contents=self._raw.get('genres'))
 
-    def href(self) -> str:
+    def href(self):
+        ''' Getter for the href for an artist. Returns a str.
+        '''
         if 'href' not in self._raw: self._update_fields()
         return Response(status=Response.OK, contents=self._raw.get('href'))
     
-    def artist_id(self) -> str: 
+    def spotify_id(self):
+        ''' Getter for the spotify id for an artist. Returns a str.
+        '''
         if 'id' not in self._raw: self._update_fields()
         return Response(status=Response.OK, contents=self._raw.get('id'))
     
-    def name(self) -> str: 
+    def name(self):
+        ''' Getter for the name for an artist. Returns a str.
+        '''
         if 'name' not in self._raw: self._update_fields()
         return Response(status=Response.OK, contents=self._raw.get('name'))
     
-    def popularity(self) -> int: 
+    def popularity(self):
+        ''' Getter for the popularity for an artist. Returns a str.
+        ''' 
         if 'popularity' not in self._raw: self._update_fields()
         return Response(status=Response.OK, contents=self._raw.get('popularity'))
     
-    def uri(self) -> str:
+    def uri(self):
+        ''' Getter for the uri for an artist. Returns a str.
+        '''
         if 'uri' not in self._raw: self._update_fields()
         return Response(status=Response.OK, contents=self._raw.get('uri'))
     
-    # If field is not present, update it using the object's artist id
-    # Raise ValueError if artist id not present in the raw object data.
-    # Uses endpoint: GET https://api.spotify.com/v1/artists/{id}
-    def _update_fields(self): # None
+    def _update_fields(self):
+        ''' If field is not present, update it using the object's artist id.
+
+        Args:
+            None
+
+        Returns:
+            None
+
+        Raises:
+            ValueError if artist id not present in the raw object data.
+        
+        Calls endpoints: 
+            GET     /v1/artists/{id}
+        '''
         _artist_id = self.artist_id().contents()
         endpoint = f'/v1/artists/{artist_id}'
-        response_json, status_code = self._top._request(
-            request_type=sp.REQUEST_GET, 
+        response_json, status_code = self.session._request(
+            request_type=const.REQUEST_GET,
             endpoint=endpoint, 
         )
         # Updates _raw with new values.
@@ -123,29 +114,28 @@ class Artist:
     ##################################
     
     def albums(self, 
-        search_limit: int = None,
-        include_groups: List[str] = None,
-        market: str = sp.TOKEN_REGION,
-    ) -> List[Album]: 
-        '''
-        Gets the albums associated with the current Spotify artist.
+        search_limit = None,
+        include_groups = None,
+        market = const.TOKEN_REGION,
+    ):
+        ''' Gets the albums associated with the current Spotify artist.
         
         Args:
-            search_limit: (Optional) the maximum number of results to return.
-            include_groups: (Optional) A list of keywords 
+            search_limit: (Optional) int, the maximum number of results to return.
+            include_groups: (Optional) List[str], a list of keywords 
                 that will be used to filter the response. If not supplied, 
                 all album types will be returned. 
-                Valid values are: sp.ALBUM, sp.SINGLE, sp.APPEARS_ON, sp.COMPILATION 
-            market: (Optional) An ISO 3166-1 alpha-2 country code or the string sp.TOKEN_REGION.
+                Valid values are: const.ALBUMS, const.SINGLE, const.APPEARS_ON, const.COMPILATION 
+            market: (Optional) str, An ISO 3166-1 alpha-2 country code or the string const.TOKEN_REGION.
                 Supply this parameter to limit the response to one particular geographical 
                 market. If this value is None, results will be returned for all countries and you 
                 are likely to get duplicate results per album, one for each country in 
                 which the album is available!
 
         Returns: 
-            A response object containing a list of Albums if the request succeeded.
+            A List[Album] if the request succeeded.
 
-        Exceptions:
+        Raises:
             TypeError for invalid types in any argument.
             ValueError for invalid market. TODO: is this even necessary, will raise ex
             HTTPError for web request errors or partial failures.
@@ -169,6 +159,7 @@ class Artist:
         _artist_id = self.artist_id().contents()
         endpoint = Endpoint.ARTIST_GET_ALBUMS.format(artist_id)
         uri_params = dict()
+        # TODO: when testing, double check the valid values (and if the constants exist)
         if (include_groups is not None and len(include_groups) > 0):
             uri_params['include_groups'] = ",".join()
         if (market is not None):
@@ -191,7 +182,7 @@ class Artist:
                 search_limit = min(search_limit, api_call_limit)
             uri_params['limit'] = search_limit
             uri_params['offset'] = offset
-            response_json, status_code = self._top._request(
+            response_json, status_code = self.session._request(
                 request_type=sp.REQUEST_GET, 
                 endpoint=endpoint, 
                 uri_params=uri_params
@@ -215,20 +206,19 @@ class Artist:
     
     
     def top_tracks(self,
-        market: str = sp.TOKEN_REGION,
-        search_limit: int = 10,
-    ) -> List[Track]:
-        '''
-        Gets the top tracks associated with the current Spotify artist.
+        market = const.TOKEN_REGION,
+        search_limit = 10,
+    ):
+        ''' Gets the top tracks associated with the current Spotify artist.
         
         Args:
-            market: An ISO 3166-1 alpha-2 country code or the string sp.TOKEN_REGION.
-            search_limit: (Optional) the maximum number of results to return.
+            market: str, an ISO 3166-1 alpha-2 country code or the string const.TOKEN_REGION.
+            search_limit: (Optional) int, the maximum number of results to return.
 
         Returns: 
-            A response object containing a list of Tracks if the request succeeded.
+            A List[Track] if the request succeeded.
 
-        Exceptions:
+        Raises:
             TypeError for invalid types in any argument.
             ValueError if market is None.
             ValueError for invalid market. TODO: is this even necessary, will raise ex
@@ -269,7 +259,7 @@ class Artist:
             search_query == self._top_tracks_query_params else list()
 
         # Execute requests
-        response_json, status_code = self._top._request(
+        response_json, status_code = self.session._request(
             request_type=sp.REQUEST_GET, 
             endpoint=endpoint, 
             uri_params=uri_params
@@ -285,19 +275,18 @@ class Artist:
         return self.albums[:search_limit]
     
     def related_artists(self,
-        search_limit: int = 20,
-    ) -> List[Artist]:
+        search_limit = 20,
+    ):
         '''
         Gets Spotify catalog information about artists similar to a given artist.
 
         Args:
-            search_limit: (Optional) the maximum number of results to return.
+            search_limit: (Optional) int, the maximum number of results to return.
 
         Returns: 
-            A response object containing a list of Artist objects 
-            if the request succeeded.
+            A response object containing a List[Artist] if the request succeeded.
 
-        Exceptions:
+        Raises:
             TypeError for invalid types in any argument.
             ValueError if search_limit is > 20: this is the Spotify API's search limit.
             HTTPError for web request errors.
@@ -328,7 +317,7 @@ class Artist:
             search_query == self._related_artists_query_params else list()
 
         # Execute requests
-        response_json, status_code = self._top._request(
+        response_json, status_code = self.session._request(
             request_type=sp.REQUEST_GET, 
             endpoint=endpoint, 
         )
