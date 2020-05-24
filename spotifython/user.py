@@ -6,7 +6,6 @@ This class represents a User object, tied to a Spotify user id.
 
 # Standard library imports
 from __future__ import annotations # Allow type hinting a class within the class
-import math
 
 # Local imports
 import spotifython.constants as const
@@ -37,138 +36,27 @@ class User:
     #@typechecked
     def __init__(self,
                  session,
-                 user_info=None):
+                 info=None):
         """
         Args:
             session: a Spotifython instance
-            user_info: a dictionary containing known values about the user
+            info: a dictionary containing known values about the user
         """
-        self.session = session
-        self._raw = user_info
-        self._player = Player(self.session, self)
+        self._session = session
+        self._info = info
+        self._player = Player(self._session, self)
 
 
     def __str__(self):
-        uid = self._raw.get('id', None)
+        uid = self._info.get('id', None)
         # TODO:
         if uid is None:
             return super().__str__()
         return 'User <%s>' % uid
 
 
-    def _paginate_get(self,
-                      limit,
-                      return_class,
-                      endpoint,
-                      uri_params=None,
-                      body=None):
-        #pylint: disable=too-many-arguments
-        """ Helper function to make many requests to Spotify
-
-        Args:
-            limit: (int) the maximum number of items to return
-            return_class: the class to construct for the list contents
-            endpoint: (str) the endpoint to call.
-                Must accept 'limit' and 'offset' in uri_params
-                Return json must contain key 'items'
-            uri_params: (dict) the uri parameters for the request
-            body: (dict) the body of the call
-
-        Returns:
-            a list of objects of type return_class
-        """
-        # Execute requests
-        results = []
-        offset = 0
-        uri_params['limit'] = const.SPOTIFY_PAGE_SIZE
-
-        # Loop until we get 'limit' many items or run out
-        next_multiple = lambda num, mult: math.ceil(num / mult) * mult
-
-        num_to_request = next_multiple(limit, const.SPOTIFY_PAGE_SIZE)
-        while offset < num_to_request:
-
-            uri_params['offset'] = offset
-
-            response_json, status_code = utils.request(
-                self.session,
-                request_type=const.REQUEST_GET,
-                endpoint=endpoint,
-                body=body,
-                uri_params=uri_params
-            )
-
-            if status_code != 200:
-                raise Exception('Oh no TODO!')
-
-            # No more results to grab from spotify
-            if len(response_json['items']) == 0:
-                break
-
-            for elem in response_json['items']:
-                results.append(return_class(self.session, elem))
-
-            offset += const.SPOTIFY_PAGE_SIZE
-
-        return results[:limit]
-
-
-    # TODO: partial failure?
-    def _batch_get(self,
-                   elements,
-                   endpoint,
-                   uri_params=None):
-        """ Helper to break a large request into many smaller requests so that
-            Spotify doesn't complain.
-
-        Args:
-            elements: (list) the things to be sent to Spotify
-            endpoint: (str) the Spotify endpoint to send a GET request
-            uri_params: (dict) any uri params besides 'id' to be sent
-
-        Returns:
-            A list of tuples, where each tuple contains one of the input
-            elements and the boolean value Spotify returned for that element.
-        """
-        if uri_params is None:
-            uri_params = {}
-
-        def create_batches(elems, chunk_size=const.SPOTIFY_PAGE_SIZE):
-            """ Helper function to break elems into batches
-            E.g.
-                elems = [1, 2, 3, 4, 5, 6, 7]
-                _batch(elems, 2)
-                >>> [[1,2], [3,4], [5,6], [7]]
-            """
-            results = []
-            for i in range(0, len(elems), chunk_size):
-                if i >= len(elems):
-                    results += [elems[i:]]
-                else:
-                    results += [elems[i:i + chunk_size]]
-
-            return results
-
-        # Break into manageable batches for Spotify
-        batches = create_batches(elements, const.SPOTIFY_PAGE_SIZE)
-        results = []
-        for batch in batches:
-            uri_params['ids'] = [elem.spotify_id() for elem in batch]
-
-            response_json, status_code = utils.request(
-                self.session,
-                request_type=const.REQUEST_GET,
-                endpoint=endpoint,
-                body=None,
-                uri_params=uri_params
-            )
-
-            if status_code != 200:
-                raise Exception('Oh no TODO!')
-
-            results += list(zip(batch, response_json))
-
-        return results
+    def __repr__(self):
+        return self.__str__()
 
 
     def _update_internal(self, new_vals):
@@ -183,7 +71,7 @@ class User:
             None
         """
         # {**A, **B} returns (A - B) U B
-        self._raw = {**self._raw, **new_vals}
+        self._info = {**self._info, **new_vals}
 
 
     def spotify_id(self):
@@ -192,7 +80,7 @@ class User:
         Returns:
             The same id that this user was created with as a string.
         """
-        result = self._raw.get('id', None)
+        result = self._info.get('id', None)
         if result is None:
             raise Exception('Uh oh! TODO!')
 
@@ -262,7 +150,8 @@ class User:
         return_class = Artist if top_type == const.ARTISTS else Track
 
         # Execute requests
-        return self._paginate_get(
+        return utils.paginate_get(
+                        self._session,
                         limit=limit,
                         return_class=return_class,
                         endpoint=Endpoints.USER_TOP % endpoint_type,
@@ -299,7 +188,7 @@ class User:
 
         # Execute requests
         response_json, status_code = utils.request(
-            self.session,
+            self._session,
             request_type=const.REQUEST_GET,
             endpoint=Endpoints.USER_RECENTLY_PLAYED,
             body=None,
@@ -311,7 +200,7 @@ class User:
 
         results = []
         for elem in response_json['items']:
-            results.append(Track(self.session, elem))
+            results.append(Track(self._session, elem))
 
         return results
 
@@ -350,7 +239,8 @@ class User:
 
         endpoint = Endpoints.USER_GET_PLAYLISTS % self.spotify_id()
 
-        return self._paginate_get(
+        return utils.paginate_get(
+                        self._session,
                         limit=limit,
                         return_class=Playlist,
                         endpoint=endpoint,
@@ -402,7 +292,7 @@ class User:
             body['description'] = description
 
         response_json, status_code = utils.request(
-            self.session,
+            self._session,
             request_type=const.REQUEST_POST,
             endpoint=Endpoints.USER_CREATE_PLAYLIST % self.spotify_id(),
             body=body,
@@ -412,7 +302,7 @@ class User:
         if status_code != 201:
             raise Exception('Oh no TODO!')
 
-        return Playlist(self.session, response_json)
+        return Playlist(self._session, response_json)
 
 
     #@typechecked
@@ -440,7 +330,7 @@ class User:
             List of tuples. Each tuple has an input object and whether the user
             follows the object.
         """
-        # Validate and sort input
+        # Validate input
         if not isinstance(other, list):
             other = [other]
 
@@ -448,19 +338,29 @@ class User:
             if type(elem) not in [Artist, User, Playlist]:
                 raise TypeError(elem)
 
-        artists = list(filter(lambda elem: isinstance(elem, Artist), other))
-        users = list(filter(lambda elem: isinstance(elem, User), other))
-        playlists = list(filter(lambda elem: isinstance(elem, Playlist), other))
+        # Split up input
+        artists = utils.separate(other, Artist)
+        users = utils.separate(other, User)
+        playlists = utils.separate(other, Playlist)
 
+        # Get boolean values for whether the user follows each in 'other'
         endpoint = Endpoints.USER_FOLLOWING_CONTAINS
-        results = self._batch_get(artists, endpoint, {'type': 'artist'})
-        results += self._batch_get(users, endpoint, {'type': 'user'})
+        artist_bools = utils.batch_get(self._session,
+                                       utils.map_ids(artists),
+                                       endpoint,
+                                       uri_params={'type': 'artist'})
+
+        user_bools = utils.batch_get(self._session,
+                                     utils.map_ids(users),
+                                     endpoint,
+                                     uri_params={'type': 'user'})
 
         # For each playlist in other, check if in the User's followed playlists
         followed_playlists = self.get_following(const.PLAYLISTS)
-        results += list(map(lambda p: (p, p in followed_playlists), playlists))
+        playlist_bools = list(map(lambda p: p in followed_playlists, playlists))
 
-        return results
+        # Zip output with input to make tuples
+        return list(zip(artists, artist_bools)) + list(zip(users, user_bools)) + list(zip(playlists, playlist_bools))
 
 
     #@typechecked
@@ -528,7 +428,7 @@ class User:
                 uri_params['after'] = results[-1].spotify_id()
 
             response_json, status_code = utils.request(
-                self.session,
+                self._session,
                 request_type=const.REQUEST_GET,
                 endpoint=Endpoints.USER_GET_ARTISTS,
                 body=None,
@@ -543,7 +443,7 @@ class User:
                 break
 
             for elem in response_json['artists']['items']:
-                results.append(Artist(self.session, elem))
+                results.append(Artist(self._session, elem))
 
         return results[:limit]
 
@@ -577,7 +477,34 @@ class User:
         # playlist 200 success
         # user/artist 204 success
         # note: calls are completely different :(
+
+        # Validate input
+        if not isinstance(other, list):
+            other = [other]
+
+        for elem in other:
+            if type(elem) not in [Artist, User, Playlist]:
+                raise TypeError(elem)
+
+        # Split up input
+        artists = utils.separate(other, Artist)
+        users = utils.separate(other, User)
+        playlists = utils. separate(other, Playlist)
+
+        '''
+        # Get boolean values for whetehr the user has each item saved
+        endpoint = Endpoints.USER_HAS_SAVED
+        track_bools = utils.batch_get(self._session,
+                                      utils.map_ids(tracks),
+                                      endpoint % 'tracks')
+        album_bools = utils.batch_get(self._session,
+                                      utils.map_ids(albums),
+                                      endpoint % 'albums')
+
+        # Zip output with input to make tuples
+        return list(zip(tracks, track_bools)) + list(zip(albums, album_bools))
         pass
+        '''
 
 
     #@typechecked
@@ -635,7 +562,7 @@ class User:
             GET     /v1/me/albums/contains
             GET     /v1/me/tracks/contains
         """
-        # Sort input
+        # Validate input
         if not isinstance(other, list):
             other = [other]
 
@@ -643,14 +570,21 @@ class User:
             if type(elem) not in [Track, Album]:
                 raise TypeError(elem)
 
-        tracks = list(filter(lambda elem: isinstance(elem, Track), other))
-        albums = list(filter(lambda elem: isinstance(elem, Album), other))
+        # Split up input
+        tracks = utils.separate(other, Track)
+        albums = utils.separate(other, Album)
 
+        # Get boolean values for whetehr the user has each item saved
         endpoint = Endpoints.USER_HAS_SAVED
-        results = self._batch_get(tracks, endpoint % 'tracks')
-        results += self._batch_get(albums, endpoint % 'albums')
+        track_bools = utils.batch_get(self._session,
+                                      utils.map_ids(tracks),
+                                      endpoint % 'tracks')
+        album_bools = utils.batch_get(self._session,
+                                      utils.map_ids(albums),
+                                      endpoint % 'albums')
 
-        return results
+        # Zip output with input to make tuples
+        return list(zip(tracks, track_bools)) + list(zip(albums, album_bools))
 
 
     #TODO: input arg order / labeling of required vs. optional?
@@ -699,7 +633,8 @@ class User:
         return_class = Album if saved_type == const.ALBUMS else Track
         uri_params = {'market': market}
 
-        return self._paginate_get(
+        return utils.paginate_get(
+                        self._session,
                         limit=limit,
                         return_class=return_class,
                         endpoint=Endpoints.USER_GET_SAVED % endpoint_type,
