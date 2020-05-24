@@ -1,11 +1,4 @@
-from copy import deepcopy
-from typing import List, Union
-
-from spotifython import Spotifython as sp
-import spotifython.constants as const
-
-from response import Response
-from endpoint import Endpoint
+# TODO: add class level description
 
 class Artist:
     def __init__(self, session, artist_info):
@@ -330,3 +323,12 @@ class Artist:
         self._related_artists_query_params = search_query
 
         return self.related_artists[:search_limit]
+
+# Standard library imports
+from copy import deepcopy
+from typing import List, Union
+
+# Local imports
+import spotifython.constants as const
+from spotifython.endpoints import Endpoints
+import spotifython.utils as utils
