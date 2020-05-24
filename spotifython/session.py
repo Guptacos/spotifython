@@ -1,4 +1,8 @@
-# TODO: add class level description
+""" Session class
+
+This class represents an interactive Spotify session, tied to a Spotify API token.
+
+"""
 
 class Session:
 
