@@ -35,23 +35,24 @@ class User:
     #@typechecked
     def __init__(self,
                  session,
-                 info=None):
+                 info):
         """
         Args:
             session: a Spotifython instance
-            info: a dictionary containing known values about the user
+            info: a dictionary containing known values about the user.
+                  Must contain 'id'.
         """
+        # Validate inputs
+        if 'id' not in info:
+            raise ValueError('Cannot create a User without a user id')
+
         self._session = session
-        self._info = info
+        self._id = info['id']
         self._player = Player(self._session, self)
 
 
     def __str__(self):
-        uid = self._info.get('id', None)
-        # TODO:
-        if uid is None:
-            return super().__str__()
-        return 'User <%s>' % uid
+        return 'User <%s>' % self._id
 
 
     def __repr__(self):
@@ -70,32 +71,13 @@ class User:
         return utils.spotifython_hash(self)
 
 
-    def _update_internal(self, new_vals):
-        """ Used internally to keep cached data up to date
-
-        Args:
-            new_vals: (dict) the fields that should be added to or updated in
-                the internal cache. Any values in the dictionary will become the
-                new value for that key.
-
-        Returns:
-            None
-        """
-        # {**A, **B} returns (A - B) U B
-        self._info = {**self._info, **new_vals}
-
-
     def spotify_id(self):
         """ Get the id of this user
 
         Returns:
             The same id that this user was created with as a string.
         """
-        result = self._info.get('id', None)
-        if result is None:
-            raise Exception('Uh oh! TODO!')
-
-        return result
+        return self._id
 
 
     def player(self):
