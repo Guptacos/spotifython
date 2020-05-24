@@ -1,10 +1,5 @@
 # TODO: add class level description
 
-from typing import Union, List
-import spotifython.constants as const
-from spotifython.endpoints import Endpoints
-import spotifython.utils as utils
-
 class Session:
 
     def __init__(self, token, timeout = const.DEFAULT_REQUEST_TIMEOUT):
@@ -649,3 +644,11 @@ class Session:
             result.append(Playlist(item))
 
         return result if len(result) != 1 else result[0]
+
+# Standard library imports
+from typing import Union, List
+
+# Local imports
+import spotifython.constants as const
+from spotifython.endpoints import Endpoints
+import spotifython.utils as utils
