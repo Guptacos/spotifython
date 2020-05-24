@@ -1,4 +1,8 @@
-# TODO: add class level description
+""" Artist class
+
+This class represents an Artist object, tied to a Spotify user id.
+
+"""
 
 class Artist:
     def __init__(self, session, artist_info):
