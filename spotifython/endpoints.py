@@ -14,6 +14,10 @@ class Endpoints:
     # One of 'albums' or 'tracks'
     USER_HAS_SAVED = '/v1/me/%s/contains'
     USER_GET_SAVED = '/v1/me/%s'
+    USER_FOLLOW_ARTIST_USER = '/v1/me/following'
+    USER_FOLLOW_PLAYLIST = '/v1/playlists/%s/followers'
+    USER_SAVE_TRACKS = '/v1/me/tracks'
+    USER_SAVE_ALBUMS = '/v1/me/albums'
 
     # Player
     PLAYER = '/v1/me/player'

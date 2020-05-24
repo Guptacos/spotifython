@@ -292,7 +292,11 @@ class TestUser(unittest.TestCase):
 
         # Return correct number of values depending on input
         #pylint: disable=unused-argument
-        def request_mock_return(self, request_type, endpoint, body, uri_params):
+        def request_mock_return(session,
+                                request_type,
+                                endpoint,
+                                body,
+                                uri_params):
             ret_len = len(tracks) if 'tracks' in endpoint else len(albums)
             return [True]*ret_len, 200
 
@@ -339,35 +343,145 @@ class TestUser(unittest.TestCase):
             self.assertEqual(len(minus_one), total_albums - 1)
 
 
-    @unittest.skip('not yet implemented')
     def test_follow(self):
-        pass
+        user = self.user
+
+        artists = get_dummy_data(const.ARTISTS, 10, to_obj=True)
+        artist_ids = utils.map_ids(artists)
+        tracks = get_dummy_data(const.TRACKS, 10, to_obj=True)
+        playlists = get_dummy_data(const.PLAYLISTS, 10, to_obj=True)
+
+        # Validate input checking
+        self.assertRaises(TypeError, user.follow, tracks)
+
+        # Make sure following artists does what's expected
+        #pylint: disable=unused-argument
+        def request_mock_return(session,
+                                request_type,
+                                endpoint,
+                                body,
+                                uri_params):
+            self.assertEqual(request_type, const.REQUEST_PUT)
+            self.assertIsNotNone(uri_params)
+            self.assertTrue('ids' in uri_params)
+            for elem in uri_params['ids']:
+                self.assertIsInstance(elem, str)
+                self.assertTrue(elem in artist_ids)
+            return None, 204
+
+        self.request_mock.side_effect = request_mock_return
+        user.follow(artists)
+
+        # Should not raise exception - expects code 200 for playlists
+        self.request_mock.side_effect = [(None, 200)]*10
+        user.follow(playlists)
 
 
-    @unittest.skip('not yet implemented')
     def test_unfollow(self):
-        pass
+        user = self.user
+
+        artists = get_dummy_data(const.ARTISTS, 10, to_obj=True)
+        artist_ids = utils.map_ids(artists)
+        tracks = get_dummy_data(const.TRACKS, 10, to_obj=True)
+        playlists = get_dummy_data(const.PLAYLISTS, 10, to_obj=True)
+
+        # Validate input checking
+        self.assertRaises(TypeError, user.unfollow, tracks)
+
+        # Make sure unfollowing artists does what's expected
+        #pylint: disable=unused-argument
+        def request_mock_return(session,
+                                request_type,
+                                endpoint,
+                                body,
+                                uri_params):
+            self.assertEqual(request_type, const.REQUEST_DELETE)
+            self.assertIsNotNone(uri_params)
+            self.assertTrue('ids' in uri_params)
+            for elem in uri_params['ids']:
+                self.assertIsInstance(elem, str)
+                self.assertTrue(elem in artist_ids)
+            return None, 204
+
+        self.request_mock.side_effect = request_mock_return
+        user.unfollow(artists)
+
+        # Should not raise exception - expects code 200 for playlists
+        self.request_mock.side_effect = [(None, 200)]*10
+        user.unfollow(playlists)
 
 
-    @unittest.skip('not yet implemented')
     def test_save(self):
-        pass
+        user = self.user
+
+        albums = get_dummy_data(const.ALBUMS, 10, to_obj=True)
+        album_ids = utils.map_ids(albums)
+        tracks = get_dummy_data(const.TRACKS, 10, to_obj=True)
+        playlists = get_dummy_data(const.PLAYLISTS, 10, to_obj=True)
+
+        # Validate input checking
+        self.assertRaises(TypeError, user.save, playlists)
+
+        # Make sure saving albums does what's expected
+        #pylint: disable=unused-argument
+        def request_mock_return(session,
+                                request_type,
+                                endpoint,
+                                body,
+                                uri_params):
+            self.assertEqual(request_type, const.REQUEST_PUT)
+            self.assertIsNotNone(uri_params)
+            self.assertTrue('ids' in uri_params)
+            for elem in uri_params['ids']:
+                self.assertIsInstance(elem, str)
+                self.assertTrue(elem in album_ids)
+            return None, 201
+
+        self.request_mock.side_effect = request_mock_return
+        user.save(albums)
+
+        # Should not raise exception - expects code 200 for tracks
+        self.request_mock.side_effect = [(None, 200)]*10
+        user.save(tracks)
 
 
-    @unittest.skip('not yet implemented')
     def test_remove(self):
-        pass
+        user = self.user
 
+        albums = get_dummy_data(const.ALBUMS, 10, to_obj=True)
+        album_ids = utils.map_ids(albums)
+        tracks = get_dummy_data(const.TRACKS, 10, to_obj=True)
+        playlists = get_dummy_data(const.PLAYLISTS, 10, to_obj=True)
+
+        # Validate input checking
+        self.assertRaises(TypeError, user.remove, playlists)
+
+        # Make sure saving albums does what's expected
+        #pylint: disable=unused-argument
+        def request_mock_return(session,
+                                request_type,
+                                endpoint,
+                                body,
+                                uri_params):
+            self.assertEqual(request_type, const.REQUEST_DELETE)
+            self.assertIsNotNone(uri_params)
+            self.assertTrue('ids' in uri_params)
+            for elem in uri_params['ids']:
+                self.assertIsInstance(elem, str)
+                self.assertTrue(elem in album_ids)
+            return None, 200
+
+        self.request_mock.side_effect = request_mock_return
+        user.remove(albums)
+
+        # Should not raise exception - expects code 200 for playlists
+        self.request_mock.side_effect = [(None, 200)]*10
+        user.remove(tracks)
 
 if __name__ == '__main__':
     unittest.main()
-
-    # bad token, expired token, correct token
-
-    # follow
-    # unfollow
-    # save
-    # remove
+    # TODO: bad token, expired token, correct token
+    # TODO: Exceptions?
 
 #pylint: disable=wrong-import-position
 #pylint: disable=wrong-import-order

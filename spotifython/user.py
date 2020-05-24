@@ -345,22 +345,45 @@ class User:
 
         # Get boolean values for whether the user follows each in 'other'
         endpoint = Endpoints.USER_FOLLOWING_CONTAINS
-        artist_bools = utils.batch_get(self._session,
-                                       utils.map_ids(artists),
-                                       endpoint,
-                                       uri_params={'type': 'artist'})
+        artist_bools = []
+        for batch in utils.create_batches(utils.map_ids(artists)):
+            response_json, status_code = utils.request(
+                self._session,
+                request_type=const.REQUEST_GET,
+                endpoint=endpoint,
+                body=None,
+                uri_params={'type': 'artist', 'ids': batch}
+            )
 
-        user_bools = utils.batch_get(self._session,
-                                     utils.map_ids(users),
-                                     endpoint,
-                                     uri_params={'type': 'user'})
+            if status_code != 200:
+                raise Exception('Oh no TODO!')
+
+            artist_bools.append(response_json)
+
+        user_bools = []
+        for batch in utils.create_batches(utils.map_ids(users)):
+            response_json, status_code = utils.request(
+                self._session,
+                request_type=const.REQUEST_GET,
+                endpoint=endpoint,
+                body=None,
+                uri_params={'type': 'user', 'ids': batch}
+            )
+
+            if status_code != 200:
+                raise Exception('Oh no TODO!')
+
+            user_bools.append(response_json)
 
         # For each playlist in other, check if in the User's followed playlists
         followed_playlists = self.get_following(const.PLAYLISTS)
         playlist_bools = list(map(lambda p: p in followed_playlists, playlists))
 
         # Zip output with input to make tuples
-        return list(zip(artists, artist_bools)) + list(zip(users, user_bools)) + list(zip(playlists, playlist_bools))
+        artists = list(zip(artists, artist_bools))
+        users = list(zip(users, user_bools))
+        playlists = list(zip(playlists, playlist_bools))
+        return artists + users + playlists
 
 
     #@typechecked
@@ -448,36 +471,10 @@ class User:
         return results[:limit]
 
 
-    #@typechecked
-    def follow(self, other):
-        """ Follow one or more things
-
-        Args:
-            other: follow 'other'. Other must be one of the following:
-                    Artist
-                    User
-                    Playlist
-                    List: can contain multiple of the above types
-
-        Note: if user is already following other, will do nothing and return
-            a success code in response.status()
-
-        Returns:
-            None
-
-        Required token scopes:
-            user-follow-modify
-            playlist-modify-public
-            playlist-modify-private
-
-        Calls endpoints:
-            PUT     /v1/me/following
-            PUT     /v1/playlists/{playlist_id}/followers
+    def _follow_unfollow_help(self, other, request_type):
+        """ follow and unfollow are identical, except for the request type.
+        This function implements that functionality to remove duplicate code.
         """
-        # playlist 200 success
-        # user/artist 204 success
-        # note: calls are completely different :(
-
         # Validate input
         if not isinstance(other, list):
             other = [other]
@@ -491,20 +488,70 @@ class User:
         users = utils.separate(other, User)
         playlists = utils. separate(other, Playlist)
 
-        '''
-        # Get boolean values for whetehr the user has each item saved
-        endpoint = Endpoints.USER_HAS_SAVED
-        track_bools = utils.batch_get(self._session,
-                                      utils.map_ids(tracks),
-                                      endpoint % 'tracks')
-        album_bools = utils.batch_get(self._session,
-                                      utils.map_ids(albums),
-                                      endpoint % 'albums')
+        for batch in utils.create_batches(utils.map_ids(artists)):
+            _, status_code = utils.request(
+                self._session,
+                request_type=request_type,
+                endpoint=Endpoints.USER_FOLLOW_ARTIST_USER,
+                body=None,
+                uri_params={'type': 'artist', 'ids': batch}
+            )
 
-        # Zip output with input to make tuples
-        return list(zip(tracks, track_bools)) + list(zip(albums, album_bools))
-        pass
-        '''
+            if status_code != 204:
+                raise Exception('Oh no TODO!')
+
+        for batch in utils.create_batches(utils.map_ids(users)):
+            _, status_code = utils.request(
+                self._session,
+                request_type=request_type,
+                endpoint=Endpoints.USER_FOLLOW_ARTIST_USER,
+                body=None,
+                uri_params={'type': 'user', 'ids': batch}
+            )
+
+            if status_code != 204:
+                raise Exception('Oh no TODO!')
+
+        for playlist in playlists:
+            _, status_code = utils.request(
+                self._session,
+                request_type=request_type,
+                endpoint=Endpoints.USER_FOLLOW_PLAYLIST % playlist,
+                body=None,
+                uri_params=None
+            )
+
+            if status_code != 200:
+                raise Exception('Oh no TODO!')
+
+    #@typechecked
+    def follow(self, other):
+        """ Follow one or more things
+
+        Args:
+            other: follow 'other'. Other must be one of the following:
+                    Artist
+                    User
+                    Playlist
+                    List: can contain multiple of the above types
+
+        Note: does not currently support privately following playlists. Any
+            playlists followed will be automatically added to the user's public
+            playlists.
+
+        Returns:
+            None
+
+        Required token scopes:
+            user-follow-modify
+            playlist-modify-public
+            playlist-modify-private
+
+        Calls endpoints:
+            PUT     /v1/me/following
+            PUT     /v1/playlists/{playlist_id}/followers
+        """
+        self._follow_unfollow_help(other, const.REQUEST_PUT)
 
 
     #@typechecked
@@ -518,9 +565,6 @@ class User:
                     Playlist
                     List: can contain multiple of the above types
 
-        Note: if user is already not following other, will do nothing and return
-            a success code in response.status()
-
         Returns:
             None
 
@@ -533,10 +577,7 @@ class User:
             DELETE  /v1/me/following
             DELETE  /v1/playlists/{playlist_id}/followers
         """
-        # playlist 200 success
-        # user/artist 204 success
-        # note: calls are completely different :(
-        pass
+        self._follow_unfollow_help(other, const.REQUEST_DELETE)
 
 
     #@typechecked
@@ -574,17 +615,43 @@ class User:
         tracks = utils.separate(other, Track)
         albums = utils.separate(other, Album)
 
-        # Get boolean values for whetehr the user has each item saved
+        # Get boolean values for whether the user has each item saved
         endpoint = Endpoints.USER_HAS_SAVED
-        track_bools = utils.batch_get(self._session,
-                                      utils.map_ids(tracks),
-                                      endpoint % 'tracks')
-        album_bools = utils.batch_get(self._session,
-                                      utils.map_ids(albums),
-                                      endpoint % 'albums')
+
+        track_bools = []
+        for batch in utils.create_batches(utils.map_ids(tracks)):
+            response_json, status_code = utils.request(
+                self._session,
+                request_type=const.REQUEST_GET,
+                endpoint=endpoint % 'tracks',
+                body=None,
+                uri_params={'ids': batch}
+            )
+
+            if status_code != 200:
+                raise Exception('Oh no TODO!')
+
+            track_bools.append(response_json)
+
+        album_bools = []
+        for batch in utils.create_batches(utils.map_ids(albums)):
+            response_json, status_code = utils.request(
+                self._session,
+                request_type=const.REQUEST_GET,
+                endpoint=endpoint % 'albums',
+                body=None,
+                uri_params={'ids': batch}
+            )
+
+            if status_code != 200:
+                raise Exception('Oh no TODO!')
+
+            album_bools.append(response_json)
 
         # Zip output with input to make tuples
-        return list(zip(tracks, track_bools)) + list(zip(albums, album_bools))
+        zipped_tracks = list(zip(tracks, track_bools))
+        zipped_albums = list(zip(albums, album_bools))
+        return zipped_tracks + zipped_albums
 
 
     #TODO: input arg order / labeling of required vs. optional?
@@ -642,6 +709,50 @@ class User:
                         body=None)
 
 
+    def _save_remove_help(self, other, request_type):
+        """ save and remove are identical, except for the request type and
+        return codes.
+        This function implements that functionality to remove duplicate code.
+        """
+        # Validate input
+        if not isinstance(other, list):
+            other = [other]
+
+        for elem in other:
+            if type(elem) not in [Album, Track]:
+                raise TypeError(elem)
+
+        # Split up input
+        albums = utils.separate(other, Album)
+        tracks = utils.separate(other, Track)
+
+        for batch in utils.create_batches(utils.map_ids(albums)):
+            _, status_code = utils.request(
+                self._session,
+                request_type=request_type,
+                endpoint=Endpoints.USER_SAVE_ALBUMS,
+                body=None,
+                uri_params={'ids': batch}
+            )
+
+            # All success codes are 200, except saving an album
+            success = 201 if request_type == const.REQUEST_PUT else 200
+            if status_code != success:
+                raise Exception('Oh no TODO!')
+
+        for batch in utils.create_batches(utils.map_ids(tracks)):
+            _, status_code = utils.request(
+                self._session,
+                request_type=request_type,
+                endpoint=Endpoints.USER_SAVE_TRACKS,
+                body=None,
+                uri_params={'ids': batch}
+            )
+
+            if status_code != 200:
+                raise Exception('Oh no TODO!')
+
+
     #@typechecked
     def save(self, other):
         """ Save one or more things to the user's library
@@ -665,9 +776,7 @@ class User:
             PUT     /v1/me/albums
             PUT     /v1/me/tracks
         """
-        # Note: ids can go in body or uri
-        # 201 on success
-        pass
+        self._save_remove_help(other, const.REQUEST_PUT)
 
 
     #@typechecked
@@ -693,9 +802,8 @@ class User:
             DELETE  /v1/me/albums
             DELETE  /v1/me/tracks
         """
-        # Note: ids can go in body or uri
-        # 200 on success
-        pass
+        self._save_remove_help(other, const.REQUEST_DELETE)
+
 
 #pylint: disable=wrong-import-position
 from spotifython.album import Album
