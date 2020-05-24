@@ -14,11 +14,9 @@ import spotifython.utils as utils
 
 
 # TODO: fix imports after integrating.
-# TODO: feels like TypeError and ValueError used interchangeably
 # TODO: market as input?
 # TODO: what to do about partial success?
 # TODO: return success vs failure in docstring
-# TODO: default params
 
 class User:
     """ Define behaviors related to a user, such as reading / modifying the
@@ -32,15 +30,13 @@ class User:
     """
 
 
-    #@typechecked
     def __init__(self,
                  session,
                  info):
         """
         Args:
             session: a Spotifython instance
-            info: a dictionary containing known values about the user.
-                  Must contain 'id'.
+            info: (dict) known values about the user. Must contain 'id'.
         """
         # Validate inputs
         if 'id' not in info:
@@ -94,7 +90,6 @@ class User:
 
 
     # TODO: can this return more than 50?
-    #@typechecked
     def top(self,
             top_type,
             limit,
@@ -102,11 +97,11 @@ class User:
         """ Get the top artists or tracks for the user over a time range.
 
         Args:
-            top_type: only get items of this type. One of:
+            top_type: get top items of this type. One of:
                 sp.ARTISTS
                 sp.TRACKS
             limit: (int) max number of items to return. Must be positive.
-            time_range: (optional) only get items for this time range. One of:
+            time_range: get top items for this time range. One of:
                 sp.LONG (several years)
                 sp.MEDIUM (about 6 months)
                 sp.SHORT (about 4 weeks)
@@ -152,17 +147,15 @@ class User:
                         body=None)
 
 
-    #@typechecked
     def recently_played(self, limit=50):
         """ Get the user's recently played tracks
 
         Args:
-            limit: (int, optional) max number of items to return. Must be
-                between 1 and 50, inclusive.
+            limit: (int) max number of items to return. Must be between 1 and
+                50, inclusive.
 
         Returns:
-            Success: a list of tracks. Could be empty.
-            Failure: None
+            A list of tracks. Could be empty.
 
         Required token scopes:
             user-read-recently-played
@@ -198,18 +191,15 @@ class User:
         return results
 
 
-    #@typechecked
-    # TODO: default value
-    def get_playlists(self, limit=None):
-        """ Get all playlists that this user has in their library
+    def get_playlists(self, limit=const.SPOTIFY_MAX_PLAYLISTS):
+        """ Get the playlists the user has in their library
 
         Args:
-            limit: (int, optional) the max number of items to return. If None,
-                will return all. Must be between 1 and 100,000 inclusive.
+            limit: (int) the max number of items to return. Must be between
+                1 and 100,000 inclusive. Default is 100,000.
 
         Returns:
-            Success: a list of playlists. Could be empty.
-            Failure: None
+            A list of playlists. Could be empty.
 
         Note: this includes both playlists owned by this user and playlists
             that this user follows but are owned by others.
@@ -224,9 +214,6 @@ class User:
         To get only playlists this user follows, use get_following(sp.PLAYLISTS)
         """
         # Validate inputs
-        if limit is None:
-            limit = const.SPOTIFY_MAX_PLAYLISTS
-
         if limit <= 0 or limit > const.SPOTIFY_MAX_PLAYLISTS:
             raise ValueError(limit)
 
@@ -241,7 +228,6 @@ class User:
                         body=None)
 
 
-    #@typechecked
     def create_playlist(self,
                         name,
                         visibility=const.PUBLIC,
@@ -251,12 +237,11 @@ class User:
         Args:
             name: (str) The name for the new playlist. Does not need to be
                 unique; a user may have several playlists with the same name.
-            visibility: (optional) describes how other users can interact with
-                this playlist. One of:
+            visibility: how other users interact with this playlist. One of:
                     sp.PUBLIC: publicly viewable, not collaborative
                     sp.PRIVATE: not publicly viewable, not collaborative
                     sp.PRIVATE_COLLAB: not publicly viewable, collaborative
-            description: (str, optional) viewable description of the playlist.
+            description: (str) viewable description of the playlist.
 
         Returns:
             The newly created Playlist object. Note that this function modifies
@@ -298,7 +283,6 @@ class User:
         return Playlist(self._session, response_json)
 
 
-    #@typechecked
     def is_following(self, other):
         """ Check if the current user is following something
 
@@ -379,21 +363,20 @@ class User:
         return artists + users + playlists
 
 
-    #@typechecked
-    # TODO: default parameter limit
     def get_following(self,
                       follow_type,
-                      limit=None):
+                      limit=const.SPOTIFY_MAX_LIB_SIZE):
         """ Get all follow_type objects the current user is following
 
         Args:
-            follow_type: one of sp.ARTISTS or sp.PLAYLISTS
-            limit: (int, optional) the max number of items to return. If None,
-                will return all. Must be between 1 and 100000 inclusive.
+            follow_type: one of:
+                sp.ARTISTS
+                sp.PLAYLISTS
+            limit: (int) the max number of items to return. If None,
+                will return all. Must be between 1 and 100,000 inclusive.
 
         Returns:
-            Success: List of follow_type objects. Could be empty.
-            Failure: None
+            List of follow_type objects. Could be empty.
 
         Required token scopes:
             user-follow-read
@@ -415,8 +398,6 @@ class User:
         # Validate inputs
         if follow_type not in [const.ARTISTS, const.PLAYLISTS]:
             raise TypeError(follow_type)
-        if limit is None:
-            limit = const.SPOTIFY_MAX_LIB_SIZE
         if limit <= 0 or limit > const.SPOTIFY_MAX_LIB_SIZE:
             raise ValueError(limit)
 
@@ -517,7 +498,6 @@ class User:
             if status_code != 200:
                 raise Exception('Oh no TODO!')
 
-    #@typechecked
     def follow(self, other):
         """ Follow one or more things
 
@@ -547,7 +527,6 @@ class User:
         self._follow_unfollow_help(other, const.REQUEST_PUT)
 
 
-    #@typechecked
     def unfollow(self, other):
         """ Unfollow one or more things
 
@@ -573,7 +552,6 @@ class User:
         self._follow_unfollow_help(other, const.REQUEST_DELETE)
 
 
-    #@typechecked
     def has_saved(self, other):
         """ Check if the user has one or more things saved to their library
 
@@ -585,9 +563,8 @@ class User:
                     List: can contain multiple of the above types
 
         Returns:
-            Success: List of tuples. Each tuple has an input object and whether
-                     the user has that object saved.
-            Failure: None
+            List of tuples. Each tuple has an input object and whether the user
+            has that object saved.
 
         Required token scopes:
             user-library-read
@@ -647,9 +624,8 @@ class User:
         return zipped_tracks + zipped_albums
 
 
-    #TODO: input arg order / labeling of required vs. optional?
+    # TODO: input arg order / labeling of required vs. optional?
     # TODO: checking return means ret[0][1] for 1 elem...
-    #@typechecked
     def get_saved(self,
                   saved_type,
                   limit=None,
@@ -657,10 +633,12 @@ class User:
         """ Get all saved_type objects the user has saved to their library
 
         Args:
-            saved_type: one of sp.ALBUMS or sp.TRACKS
-            limit: (int, optional) the max number of items to return. If None,
+            saved_type: one of:
+                sp.ALBUMS
+                sp.TRACKS
+            limit: (int) the max number of items to return. If None,
                 will return all. Must be positive.
-            market: (required) a 2 letter country code as defined here:
+            market: a 2 letter country code as defined here:
                 https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
                 Used for track relinking:
                 https://developer.spotify.com/documentation/general/guides/track-relinking-guide/
@@ -686,8 +664,6 @@ class User:
             limit = const.SPOTIFY_MAX_LIB_SIZE
         if limit <= 0 or limit > const.SPOTIFY_MAX_LIB_SIZE:
             raise ValueError(limit)
-
-        # TODO: should I validate the market?
 
         endpoint_type = 'albums' if saved_type == const.ALBUMS else 'tracks'
         return_class = Album if saved_type == const.ALBUMS else Track
@@ -746,7 +722,6 @@ class User:
                 raise Exception('Oh no TODO!')
 
 
-    #@typechecked
     def save(self, other):
         """ Save one or more things to the user's library
 
@@ -755,9 +730,6 @@ class User:
                     Track
                     Album
                     List: can contain multiple of the above types
-
-        Note: if user already has other saved, will do nothing and return
-            a success code in response.status()
 
         Returns:
             None
@@ -772,7 +744,6 @@ class User:
         self._save_remove_help(other, const.REQUEST_PUT)
 
 
-    #@typechecked
     def remove(self, other):
         """ Remove one or more things from the user's library
 
@@ -781,9 +752,6 @@ class User:
                     Track
                     Album
                     List: can contain multiple of the above types
-
-        Note: if user already does not have other saved, will do nothing and
-            return a success code in response.status()
 
         Returns:
             None
