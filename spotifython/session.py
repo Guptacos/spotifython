@@ -18,6 +18,11 @@ class Session:
             TypeError:  if incorrectly typed parameters are given.
             ValueError: if parameters with illegal values are given.
         '''
+        if not isinstance(token, str):
+            raise TypeError(token)
+        if not isinstance(timeout, int):
+            raise TypeError(timeout)
+
         self._token = token
         self._timeout = timeout
     
@@ -28,6 +33,9 @@ class Session:
         Args:
             token: str, the new Spotify authentication token.
         '''
+        if not isinstance(token, str):
+            raise TypeError(token)
+
         self._token = token
 
     def token(self):
@@ -51,6 +59,9 @@ class Session:
             Args:
                 search_info: dictionary, contains known values about the user
             '''
+            if not isinstance(search_info, dict):
+                raise TypeError(search_info)
+
             self._raw = search_info
             self._albums_paging = self._raw.get('albums', dict()).get('items', list())
             self._artists_paging = self._raw.get('artists', dict()).get('items', list())
@@ -66,6 +77,7 @@ class Session:
             '''
             if not isinstance(albums, List[Album]):
                 raise TypeError(albums)
+
             self._albums_paging += albums
         
         def _add_artists(self, artists):
@@ -76,6 +88,7 @@ class Session:
             '''
             if not isinstance(artists, List[Artist]):
                 raise TypeError(artists)
+
             self._artists_paging += artists
         
         def _add_playlists(self, playlists):
@@ -86,6 +99,7 @@ class Session:
             '''
             if not isinstance(playlists, List[playlists]):
                 raise TypeError(playlists)
+
             self._playlists_paging += playlists
         
         def _add_tracks(self, tracks):
@@ -96,6 +110,7 @@ class Session:
             '''
             if not isinstance(tracks, List[Track]):
                 raise TypeError(tracks)
+
             self._tracks_paging += tracks
 
         # Field accessors
@@ -179,15 +194,15 @@ class Session:
         # Internally, include_external='audio' is the only valid argument.
 
         # Type validation
-        if (not isinstance(query, str)):
+        if not isinstance(query, str):
             raise TypeError(query)
-        if (not isinstance(types, str) and not isinstance(types, List[str])):
+        if not isinstance(types, Union[str, List[str]]):
             raise TypeError(types)
-        if (not isinstance(limit, int)):
+        if not isinstance(limit, int):
             raise TypeError(limit)
-        if (market is not None and not isinstance(market, str)):
+        if market is not None and not isinstance(market, str):
             raise TypeError(market)
-        if (not isinstance(include_external_audio, bool)):
+        if include_external_audio is not None and not isinstance(include_external_audio, bool):
             raise TypeError(include_external_audio)
 
         # Encode the spaces in strings! See 'Search -> Writing a Query - Guidelines'
@@ -200,16 +215,16 @@ class Session:
         for search_type_filter in types:
             if (search_type_filter not in valid_types):
                 raise ValueError(types)
-        if (limit > 2000):
+        if limit > 2000:
             raise ValueError("Spotify only supports up to 2000 search results.")
 
         # Construct params for API call
         endpoint = Endpoint.SEARCH
         uri_params = dict()
         uri_params['q'] = encoded_query
-        if (market is not None):
+        if market is not None:
             uri_params['market'] = market
-        if (include_external_audio):
+        if include_external_audio:
             uri_params['include_external'] = 'audio'
 
         # A maximum 50 search results per search type can be returned per API call
@@ -225,7 +240,7 @@ class Session:
         # We want the plural search types, while our constants are singular search types.
         remaining_types = [s + 's' for s in types]
 
-        while (num_requests > 0):
+        while num_requests > 0:
             uri_params['type'] = ','.join(remaining_types)
             uri_params['limit'] = limit
             uri_params['offset'] = offset
@@ -245,23 +260,23 @@ class Session:
                 # Add items to accumulator
                 # TODO: refactor these constants
                 for item in items:
-                    if (t is SEARCH_RESPONSE_TYPE_ALBUM):
+                    if t is SEARCH_RESPONSE_TYPE_ALBUM:
                         acc.append(Album(item))
-                    elif (t is SEARCH_RESPONSE_TYPE_ARTIST):
+                    elif t is SEARCH_RESPONSE_TYPE_ARTIST:
                         acc.append(Artist(item))
-                    elif (t is SEARCH_RESPONSE_TYPE_PLAYLIST):
+                    elif t is SEARCH_RESPONSE_TYPE_PLAYLIST:
                         acc.append(Playlist(item))
-                    elif (t is SEARCH_RESPONSE_TYPE_TRACK):
+                    elif t is SEARCH_RESPONSE_TYPE_TRACK:
                         acc.append(Track(item))
 
                 # Update accumulated results into search result
-                if (t is SEARCH_RESPONSE_TYPE_ALBUM):
+                if t is SEARCH_RESPONSE_TYPE_ALBUM:
                     result._add_albums(acc)
-                elif (t is SEARCH_RESPONSE_TYPE_ARTIST):
+                elif t is SEARCH_RESPONSE_TYPE_ARTIST:
                     result._add_artists(acc)
-                elif (t is SEARCH_RESPONSE_TYPE_PLAYLIST):
+                elif t is SEARCH_RESPONSE_TYPE_PLAYLIST:
                     result._add_playlists(acc)
-                elif (t is SEARCH_RESPONSE_TYPE_TRACK):
+                elif t is SEARCH_RESPONSE_TYPE_TRACK:
                     result._add_tracks(acc)
 
             offset += api_call_limit
@@ -308,13 +323,13 @@ class Session:
         ''' 
 
         # Type validation
-        if (not isinstance(album_ids, str) and not isinstance(album_ids, List[str])):
+        if not isinstance(album_ids, Union[str, List[str]]):
             raise TypeError(album_ids)
-        if (market is not None and not isinstance(market, str)):
+        if market is not None and not isinstance(market, str):
             raise TypeError(market)
 
         # Argument validation
-        if (market is None):
+        if market is None:
             raise ValueError(market)
         
         album_ids = album_ids if isinstance(album_ids, List[str]) else list(album_ids)
@@ -332,7 +347,7 @@ class Session:
         
         result = list()
 
-        while (num_requests > 0):
+        while num_requests > 0:
             uri_params['ids'] = ','.join(remaining_album_ids[:api_call_limit])
 
             # Execute requests
@@ -378,7 +393,7 @@ class Session:
         ''' 
         
         # Type validation
-        if (not isinstance(artist_ids, str) and not isinstance(artist_ids, List[str])):
+        if not isinstance(artist_ids, Union[str, List[str]]):
             raise TypeError(artist_ids)
 
         artist_ids = artist_ids if isinstance(artist_ids, List[str]) else list(artist_ids)
@@ -446,13 +461,13 @@ class Session:
         ''' 
 
         # Type validation
-        if (not isinstance(track_ids, str) and not isinstance(track_ids, List[str])):
+        if not isinstance(track_ids, Union[str, List[str]]):
             raise TypeError(track_ids)
-        if (market is not None and not isinstance(market, str)):
+        if market is not None and not isinstance(market, str):
             raise TypeError(market)
 
         # Argument validation
-        if (market is None):
+        if market is None:
             raise ValueError(market)
 
         track_ids = track_ids if isinstance(track_ids, List[str]) else list(track_ids)
@@ -513,7 +528,7 @@ class Session:
         '''
 
         # Type validation
-        if (not isinstance(user_ids, str) and not isinstance(user_ids, List[str])):
+        if not isinstance(user_ids, Union[str, List[str]]):
             raise TypeError(user_ids)
         
         user_ids = user_ids if isinstance(user_ids, List[str]) else list(user_ids)
@@ -572,7 +587,7 @@ class Session:
                 raise e
 
         # Impossible to initialize a user with no response_json
-        if (response_json is None):
+        if response_json is None:
             raise ValueError(response_json)
 
         return User(response_json)
@@ -614,15 +629,15 @@ class Session:
         # has been deprecated and therefore is removed from the API wrapper.
 
         # Type validation
-        if (not isinstance(playlist_ids, str) and not isinstance(playlist_ids, List[str])):
+        if not isinstance(playlist_ids, Union[str, List[str]]):
             raise TypeError(playlist_ids)
-        if (fields is not None and not isinstance(fields, str)):
+        if fields is not None and not isinstance(fields, str):
             raise TypeError(fields)
-        if (market is not None and not isinstance(market, str)):
+        if market is not None and not isinstance(market, str):
             raise TypeError(market)
 
         # Argument validation
-        if (market is None):
+        if market is None:
             raise ValueError(market)
 
         playlist_ids = playlist_ids if isinstance(playlist_ids, List[str]) else list(playlist_ids)
