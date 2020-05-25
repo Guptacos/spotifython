@@ -9,10 +9,7 @@ import math
 
 # Aliases to avoid circular dependencies
 Album = Any  # album.py imports this module.
-# Artist = Any  # artist.py imports this module.
-# Playlist = Any  # playlist.py imports this module.
 Track = Any  # track.py imports this module.
-# User = Any  # user.py imports this module.
 Session = Any # session.py imports this module
 
 # pylint: disable = pointless-string-statement, too-many-instance-attributes

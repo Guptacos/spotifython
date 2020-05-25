@@ -14,7 +14,7 @@ from spotifython.endpoints import Endpoints
 import spotifython.constants as const
 
 # Exceptions
-#pylint: disable=unnecessary-pass
+#pylint: disable=unnecessary-pass, line-too-long, protected-access
 class AuthenticationError(Exception):
     """ Used when the token fails to authenticate with Spotify
     """
@@ -48,10 +48,10 @@ def get_field(obj, field):
     if not isinstance(field, str):
         raise TypeError(field)
 
-    if field not in self._raw:
-        return utils.update_and_get_field(self, field)
+    if field not in obj._raw:
+        return update_and_get_field(obj, field)
 
-    return self._raw.get(field)
+    return obj._raw.get(field)
 
 def update_and_get_field(obj, field):
     """ Updates the field if not present in the Spotify object and checks
