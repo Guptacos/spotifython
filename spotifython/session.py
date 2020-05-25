@@ -244,12 +244,9 @@ class Session:
             GET   /v1/search
         """
 
-        # Search limit is internally represented using API calls with params:
-        #    limit: int = None,
-        #    offset: int = None,
-        # It is a required field due to the offset + limit being 2000, which
-        # would take 40 backend API calls.
-        # Throw an error if > 2000.
+        # Search limit is a required field due to the offset + limit being 2000,
+        # which would take 40 backend API calls. Throw an error if > the limit
+        # is 2000.
 
         # Internally, include_external='audio' is the only valid argument.
 
@@ -295,12 +292,8 @@ class Session:
 
         # A maximum of 50 search results per search type can be returned per API
         # call to the search backend
-        api_call_limit = 50
-        total_search_limit = 2000
-        num_requests = math.ceil(len(limit) / api_call_limit) \
-            if limit is not None else float('inf')
-        limit = min(total_search_limit, limit)
-        offset = 0
+        next_multiple = lambda num, mult: math.ceil(num / mult) * mult
+        num_to_request = next_multiple(limit, const.SPOTIFY_PAGE_SIZE)
 
         # Initialize SearchResult object
         result = self.SearchResult(dict())
@@ -317,7 +310,9 @@ class Session:
         }
         remaining_types = [type_mapping.get(s) for s in types]
 
-        while num_requests > 0:
+        # Unfortunately because each type can have a different amount of return
+        # values, utils.paginate_get() is not suited for this call.
+        for offset in range(0, num_to_request, const.SPOTIFY_PAGE_SIZE):
             uri_params['type'] = ','.join(remaining_types)
             uri_params['limit'] = limit
             uri_params['offset'] = offset
@@ -348,9 +343,6 @@ class Session:
 
                 # Update accumulated results into search result
                 result._add(acc)
-
-            offset += api_call_limit
-            num_requests -= 1
 
             # Only make necessary search queries
             new_remaining_types = list()
