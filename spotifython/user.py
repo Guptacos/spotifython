@@ -16,7 +16,7 @@ import spotifython.utils as utils
 # TODO: fix imports after integrating.
 # TODO: market as input?
 # TODO: what to do about partial success?
-# TODO: return success vs failure in docstring
+# TODO: checking return of tuple funcs means ret[0][1] for 1 elem...
 
 class User:
     """ Define behaviors related to a user, such as reading / modifying the
@@ -89,7 +89,6 @@ class User:
         return self._player
 
 
-    # TODO: can this return more than 50?
     def top(self,
             top_type,
             limit,
@@ -624,8 +623,6 @@ class User:
         return zipped_tracks + zipped_albums
 
 
-    # TODO: input arg order / labeling of required vs. optional?
-    # TODO: checking return means ret[0][1] for 1 elem...
     def get_saved(self,
                   saved_type,
                   limit=None,
