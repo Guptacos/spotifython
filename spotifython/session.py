@@ -219,7 +219,7 @@ class Session:
             raise ValueError("Spotify only supports up to 2000 search results.")
 
         # Construct params for API call
-        endpoint = Endpoint.SEARCH
+        endpoint = Endpoints.SEARCH
         uri_params = dict()
         uri_params['q'] = encoded_query
         if market is not None:
@@ -335,7 +335,7 @@ class Session:
         album_ids = album_ids if isinstance(album_ids, List[str]) else list(album_ids)
 
         # Construct params for API call
-        endpoint = Endpoint.SEARCH_GET_ALBUMS
+        endpoint = Endpoints.SEARCH_GET_ALBUMS
         uri_params = dict()
         if (market is not None):
             uri_params['market'] = market
@@ -399,7 +399,7 @@ class Session:
         artist_ids = artist_ids if isinstance(artist_ids, List[str]) else list(artist_ids)
 
         # Construct params for API call
-        endpoint = Endpoint.SEARCH_GET_ALBUMS
+        endpoint = Endpoints.SEARCH_GET_ALBUMS
         uri_params = dict()
 
         # A maximum of 50 artists can be returned per API call
@@ -473,7 +473,7 @@ class Session:
         track_ids = track_ids if isinstance(track_ids, List[str]) else list(track_ids)
 
         # Construct params for API call
-        endpoint = Endpoint.SEARCH_GET_TRACKS
+        endpoint = Endpoints.SEARCH_GET_TRACKS
         uri_params = dict()
         if (market is not None):
             uri_params['market'] = market
@@ -534,7 +534,7 @@ class Session:
         user_ids = user_ids if isinstance(user_ids, List[str]) else list(user_ids)
 
         # Construct params for API call
-        endpoint = Endpoint.SEARCH_GET_USER
+        endpoint = Endpoints.SEARCH_GET_USER
         uri_params = dict()
 
         # Each API call can return at most 1 user.
@@ -572,7 +572,7 @@ class Session:
         '''
 
         # Construct params for API call
-        endpoint = Endpoint.SEARCH_GET_CURRENT_USER
+        endpoint = Endpoints.SEARCH_GET_CURRENT_USER
 
         # Execute requests
         try:
@@ -651,7 +651,7 @@ class Session:
 
         results = list()
         for playlist_id in playlist_ids:
-            endpoint = Endpoint.SEARCH_GET_PLAYLIST.format(playlist_id)
+            endpoint = Endpoints.SEARCH_GET_PLAYLIST.format(playlist_id)
 
             # Execute requests
             response_json, status_code = self._request(
