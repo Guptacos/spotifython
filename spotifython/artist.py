@@ -13,6 +13,11 @@ class Artist:
             session: a Spotifython instance
             artist_info: a dictionary containing known values about the artist
         '''
+        if not isinstance(session, spotifython.Session):
+            raise TypeError(session)
+        if not isinstance(artist_info, dict):
+            raise TypeError(artist_info)
+
         self.session = session
         self._raw = artist_info
         # Lazily loaded fields from API calls
@@ -142,11 +147,11 @@ class Artist:
         '''
 
         # Type validation
-        if (search_limit is not None and not isinstance(search_limit, int)):
+        if search_limit is not None and not isinstance(search_limit, int):
             raise TypeError(search_limit)
-        if (include_groups is not None and not isinstance(include_groups, List[str])):
+        if include_groups is not None and not isinstance(include_groups, List[str]):
             raise TypeError(include_groups)
-        if (market is not None and not isinstance(market, str)):
+        if market is not None and not isinstance(market, str):
             raise TypeError(market)
 
         # Save params for lazy loading check
@@ -172,7 +177,7 @@ class Artist:
             search_query == self._albums_query_params else list()
 
         # Execute requests
-        while (num_requests > 0):
+        while num_requests > 0:
             if (search_limit is None):
                 search_limit = api_call_limit
             else:
@@ -230,15 +235,15 @@ class Artist:
         # Market query param is 'country' in the API but named marked for consistency
         
         # Type validation
-        if (search_limit is not None and not isinstance(search_limit, int)):
-            raise TypeError(search_limit)
-        if (market is not None and not isinstance(market, str)):
+        if not isinstance(market, str):
             raise TypeError(market)
+        if search_limit is not None and not isinstance(search_limit, int):
+            raise TypeError(search_limit)
 
         # Argument validation
-        if (market is None):
+        if market is None:
             raise ValueError(market)
-        if (search_limit > 10):
+        if search_limit > 10:
             raise ValueError(search_limit)
 
         # Save params for lazy loading check
@@ -248,8 +253,7 @@ class Artist:
         _artist_id = self.artist_id().contents()
         endpoint = Endpoint.ARTIST_TOP_TRACKS.format(_artist_id)
         uri_params = dict()
-        if (market is not None):
-            uri_params['country'] = market
+        uri_params['country'] = market
 
         # Initialize self.top_tracks if different query or never previously called
         self.top_tracks = self.top_tracks if self.top_tracks is not None and \
@@ -295,11 +299,11 @@ class Artist:
         # This search limit is not part of the API, Spotify always returns up to 20.
         
         # Type validation
-        if (search_limit is not None and not isinstance(search_limit, int)):
+        if search_limit is not None and not isinstance(search_limit, int):
             raise TypeError(search_limit)
 
         # Argument validation
-        if (search_limit > 20):
+        if search_limit > 20:
             raise ValueError(search_limit)
 
         # Save params for lazy loading check
