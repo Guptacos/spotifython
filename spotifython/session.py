@@ -1,23 +1,24 @@
 """ Session class
 
-This class represents an interactive Spotify session, tied to a Spotify API token.
-
+This class represents an interactive Spotify session, tied to a Spotify 
+API token.
 """
 
 class Session:
 
     def __init__(self, token, timeout = const.DEFAULT_REQUEST_TIMEOUT):
-        ''' This object should be constructed by the user to instantiate the 
+        """ This object should be constructed by the user to instantiate the 
         session of Spotify Web API usage.
 
         Args:
             token: str, Spotify API authentication token
-            timeout: (Optional) int, timeout value for each request made to Spotify's API
+            timeout: (Optional) int, timeout value for each request made to 
+                Spotify's API
 
         Raises:
             TypeError:  if incorrectly typed parameters are given.
             ValueError: if parameters with illegal values are given.
-        '''
+        """
         if not isinstance(token, str):
             raise TypeError(token)
         if not isinstance(timeout, int):
@@ -27,87 +28,94 @@ class Session:
         self._timeout = timeout
     
     def reauthenticate(self, token):
-        '''
+        """
         Updates the stored Spotify authentication token for this instance.
 
         Args:
             token: str, the new Spotify authentication token.
-        '''
+        """
         if not isinstance(token, str):
             raise TypeError(token)
 
         self._token = token
 
     def token(self):
-        ''' Getter for the token provided by the client. Returns a str.
-        '''
+        """ Getter for the token provided by the client. Returns a str.
+        """
         return self._token
 
     def timeout(self):
-        ''' Getter for the timeout provided by the client. Returns an int.
-        '''
+        """ Getter for the timeout provided by the client. Returns an int.
+        """
         return self._timeout
     
     class SearchResult:
 
         def __init__(self, search_info):
-            ''' User should never call this constructor. As a result, they should never
-            have access to the search_info structure prior to creating an SearchResult.
-            Internally, the search result will perform all necessary API calls to get the
-            desired number of search results (up to search limit).
+            """ User should never call this constructor. As a result, they 
+            should never have access to the search_info structure prior to 
+            creating an SearchResult. Internally, the search result will 
+            perform all necessary API calls to get the desired number of search 
+            results (up to search limit).
 
             Args:
                 search_info: dictionary, contains known values about the user
-            '''
+            """
             if not isinstance(search_info, dict):
                 raise TypeError(search_info)
 
             self._raw = search_info
-            self._albums_paging = self._raw.get('albums', dict()).get('items', list())
-            self._artists_paging = self._raw.get('artists', dict()).get('items', list())
-            self._playlists_paging = self._raw.get('playlists', dict()).get('items', list())
-            self._tracks_paging = self._raw.get('tracks', dict()).get('items', list())
+            self._albums_paging = self._raw.get('albums', dict())\
+                .get('items', list())
+            self._artists_paging = self._raw.get('artists', dict())\
+                .get('items', list())
+            self._playlists_paging = self._raw.get('playlists', dict())\
+                .get('items', list())
+            self._tracks_paging = self._raw.get('tracks', dict())\
+                .get('items', list())
 
         # Internal: Update search results via paginated searches
         def _add_albums(self, albums):
-            ''' Used to build the list of albums returned by the search query.
+            """ Used to build the list of albums returned by the search query.
 
             Args: 
-                albums: List[Album], the albums to be added to the search result.
-            '''
+                albums: List[Album], the albums to add to the search result.
+            """
             if not isinstance(albums, List[Album]):
                 raise TypeError(albums)
 
             self._albums_paging += albums
         
         def _add_artists(self, artists):
-            ''' Used to build the list of artists returned by the search query.
+            """ Used to build the list of artists returned by the search query.
 
             Args: 
-                artists: List[Artist], the artists to be added to the search result.
-            '''
+                artists: List[Artist], the artists to add to the search result.
+            """
             if not isinstance(artists, List[Artist]):
                 raise TypeError(artists)
 
             self._artists_paging += artists
         
         def _add_playlists(self, playlists):
-            ''' Used to build the list of playlists returned by the search query.
+            """ Used to build the list of playlists returned by the 
+            search query.
 
             Args: 
-                playlists: List[Playlist], the playlists to be added to the search result.
-            '''
+                playlists: List[Playlist], the playlists to add to the 
+                    search result.
+            """
             if not isinstance(playlists, List[playlists]):
                 raise TypeError(playlists)
 
             self._playlists_paging += playlists
         
         def _add_tracks(self, tracks):
-            ''' Used to build the list of tracks returned by the search query.
+            """ Used to build the list of tracks returned by the search query.
 
             Args: 
-                tracks: List[Track], the tracks to be added to the search result.
-            '''
+                tracks: List[Track], the tracks to add to the search result.
+            """
             if not isinstance(tracks, List[Track]):
                 raise TypeError(tracks)
 
@@ -115,23 +123,27 @@ class Session:
 
         # Field accessors
         def albums(self):
-            ''' Getter for the albums returned by the search query. Returns a List[Album].
-            '''
+            """ Getter for the albums returned by the search query. 
+            Returns a List[Album].
+            """
             return self._albums_paging.get('items', list())
 
         def artists(self):
-            ''' Getter for the artists returned by the search query. Returns a List[Artist].
-            '''
+            """ Getter for the artists returned by the search query. 
+            Returns a List[Artist].
+            """
             return self._artists_paging.get('items', list())
 
         def playlists(self):
-            ''' Getter for the playlist returned by the search query. Returns a List[Playlist].
-            '''
+            """ Getter for the playlist returned by the search query. 
+            Returns a List[Playlist].
+            """
             return self._playlists_paging.get('items', list())
         
         def tracks(self):
-            ''' Getter for the tracks returned by the search query. Returns a List[Track].
-            ''' 
+            """ Getter for the tracks returned by the search query. 
+            Returns a List[Track].
+            """ 
             return self._tracks_paging.get('items', list())
     
     ##################################
@@ -145,26 +157,30 @@ class Session:
         market = const.TOKEN_REGION,
         include_external_audio = False
     ) -> SearchResult:
-        '''
+        """
         Searches for content with the given query.
 
         Args:
-            query: str, search query keywords and optional field filters and operators.
-            types: str or List[str], singular search type or a list of the types of results to search for.
-                Valid arguments are const.SEARCH_TYPE_ALBUM, const.SEARCH_TYPE_ARTIST, 
-                const.SEARCH_TYPE_PLAYLIST, and const.SEARCH_TYPE_TRACK.
+            query: str, search query keywords and optional field filters and 
+                operators.
+            types: str or List[str], singular search type or a list of the types 
+                of results to search for.
+                Valid arguments are const.SEARCH_TYPE_ALBUM, 
+                const.SEARCH_TYPE_ARTIST, const.SEARCH_TYPE_PLAYLIST, and 
+                const.SEARCH_TYPE_TRACK.
                 Note: shows and episodes will be supported in a future release.
             limit: int, the maximum number of results to return.
-            market: (Optional) str, An ISO 3166-1 alpha-2 country code or the string 
-                const.TOKEN_REGION. If a country code is specified, only artists, albums,
-                and tracks with content that is playable in that market is returned.
+            market: (Optional) str, An ISO 3166-1 alpha-2 country code or the 
+                string const.TOKEN_REGION. If a country code is specified, 
+                only artists, albums, and tracks with content that is playable 
+                in that market is returned.
                 Note:
                 - Playlist results are not affected by the market parameter.
-                - If market is set to const.TOKEN_REGION, and a valid access token is 
-                specified in the request header, only content playable
+                - If market is set to const.TOKEN_REGION, and a valid access 
+                token is specified in the request header, only content playable
                 in the country associated with the user account, is returned.
-                - If market is set to None, no market is passed to Spotify's Web API, 
-                and its default behavior is invoked.
+                - If market is set to None, no market is passed to Spotify's Web
+                API, and its default behavior is invoked.
             include_external_audio: (Optional) bool, If true,
                 the response will include any relevant audio content that is 
                 hosted externally. By default external content is filtered out 
@@ -177,19 +193,21 @@ class Session:
 
         Exceptions:
             TypeError for invalid types in any argument.
-            ValueError if query type or market is invalid. TODO: how to validate?
-            ValueError if limit is > 2000: this is the Spotify API's search limit.
+            ValueError if query type or market is invalid. 
+                TODO: how to validate?
+            ValueError if limit is > 2000: this is the Spotify API's 
+                search limit.
             HTTPError if failure or partial failure.
 
         Calls endpoints: 
             GET   /v1/search
-        ''' 
+        """ 
         
         # Search limit is internally represented using API calls with params:
         #    limit: int = None,
         #    offset: int = None,
-        # It is a required field due to the offset + limit being 2000, which would take
-        # 40 backend API calls.
+        # It is a required field due to the offset + limit being 2000, which 
+        # would take 40 backend API calls.
         # Throw an error if > 2000.
 
         # Internally, include_external='audio' is the only valid argument.
@@ -203,16 +221,22 @@ class Session:
             raise TypeError(limit)
         if market is not None and not isinstance(market, str):
             raise TypeError(market)
-        if include_external_audio is not None and not isinstance(include_external_audio, bool):
+        if include_external_audio is not None and \
+            not isinstance(include_external_audio, bool):
             raise TypeError(include_external_audio)
 
-        # Encode the spaces in strings! See 'Search -> Writing a Query - Guidelines'
+        # Encode the spaces in strings! See 'Search -> Writing a Query'
         # in the Spotify Web API reference for more details.
         encoded_query = query.replace(' ', '+')
 
         # Argument validation
         types = types if isinstance(types, List[str]) else list(types)
-        valid_types = [const.ALBUMS, const.ARTISTS, const.PLAYLISTS, const.TRACKS]
+        valid_types = [
+            const.ALBUMS, 
+            const.ARTISTS, 
+            const.PLAYLISTS, 
+            const.TRACKS
+        ]
         for search_type_filter in types:
             if search_type_filter not in valid_types:
                 raise ValueError(types)
@@ -228,18 +252,20 @@ class Session:
         if include_external_audio:
             uri_params['include_external'] = 'audio'
 
-        # A maximum 50 search results per search type can be returned per API call
+        # A maximum of 50 search results per search type can be returned per API
+        # call to the search backend
         api_call_limit = 50
         total_search_limit = 2000
-        num_requests = math.ceil(len(limit) / api_call_limit) if limit is not None else float('inf')
+        num_requests = math.ceil(len(limit) / api_call_limit) \
+            if limit is not None else float('inf')
         limit = min(total_search_limit, limit)
         offset = 0
         
         # Initialize SearchResult object
         result = self.SearchResult()
         
-        # We want the singular search types, while our constants are plural search types 
-        # in the argument for uniformity.
+        # We want the singular search types, while our constants are plural
+        # search types in the argument for uniformity.
         type_mapping = {
             const.ALBUMS: const.SEARCH_TYPE_ALBUM,
             const.ARTISTS: const.SEARCH_TYPE_ARTIST,
@@ -305,15 +331,17 @@ class Session:
         album_ids,
         market = const.TOKEN_REGION
     ):
-        '''
+        """
         Gets the albums with the given Spotify album ids.
 
         Args:
-            album_ids: str or List[str], a string or list of strings of the Spotify album ids to search for.
-            market: (Optional) str, an ISO 3166-1 alpha-2 country code or the string const.TOKEN_REGION. 
+            album_ids: str or List[str], a string or list of strings of the 
+                Spotify album ids to search for.
+            market: (Optional) str, an ISO 3166-1 alpha-2 country code or the 
+                string const.TOKEN_REGION. 
                 Provide this parameter if you want to apply Track Relinking.
-                If market is set to None, no market is passed to Spotify's Web API, and its default
-                behavior is invoked.
+                If market is set to None, no market is passed to Spotify's Web 
+                API, and its default behavior is invoked.
 
         Returns:
             Returns an Album or List[Album] if the request succeeded.
@@ -330,7 +358,7 @@ class Session:
 
         Note: the following endpoint is not used.
             GET   /v1/albums/{id} 
-        ''' 
+        """ 
 
         # Type validation
         if not isinstance(album_ids, Union[str, List[str]]):
@@ -342,7 +370,8 @@ class Session:
         if market is None:
             raise ValueError(market)
         
-        album_ids = album_ids if isinstance(album_ids, List[str]) else list(album_ids)
+        album_ids = album_ids if isinstance(album_ids, List[str]) \
+            else list(album_ids)
 
         # Construct params for API call
         endpoint = Endpoints.SEARCH_GET_ALBUMS
@@ -380,7 +409,7 @@ class Session:
     def get_artists(self, 
         artist_ids
     ):
-        '''
+        """
         Gets the artists with the given Spotify artists ids.
 
         Args:
@@ -400,13 +429,14 @@ class Session:
 
         Note: the following endpoint is not used.
             GET   /v1/artists/{id}
-        ''' 
+        """ 
         
         # Type validation
         if not isinstance(artist_ids, Union[str, List[str]]):
             raise TypeError(artist_ids)
 
-        artist_ids = artist_ids if isinstance(artist_ids, List[str]) else list(artist_ids)
+        artist_ids = artist_ids if isinstance(artist_ids, List[str]) \
+            else list(artist_ids)
 
         # Construct params for API call
         endpoint = Endpoints.SEARCH_GET_ALBUMS
@@ -443,15 +473,16 @@ class Session:
         track_ids,
         market = const.TOKEN_REGION
     ):
-        '''
+        """
         Gets the tracks with the given Spotify track ids.
 
         Args:
             track_ids: str or List[str], the Spotify track ids to search for.
-            market: (Optional) An ISO 3166-1 alpha-2 country code or the string const.TOKEN_REGION. 
+            market: (Optional) An ISO 3166-1 alpha-2 country code or the string 
+                const.TOKEN_REGION. 
                 Provide this parameter if you want to apply Track Relinking.
-                If market is set to None, no market is passed to Spotify's Web API, and its default
-                behavior is invoked.
+                If market is set to None, no market is passed to Spotify's Web 
+                API, and its default behavior is invoked.
 
         Returns:
             Returns a Track or List[Track] if the request succeeded.
@@ -468,7 +499,7 @@ class Session:
 
         Note: the following endpoint is not used.
             GET   /v1/tracks/{id}
-        ''' 
+        """ 
 
         # Type validation
         if not isinstance(track_ids, Union[str, List[str]]):
@@ -480,7 +511,8 @@ class Session:
         if market is None:
             raise ValueError(market)
 
-        track_ids = track_ids if isinstance(track_ids, List[str]) else list(track_ids)
+        track_ids = track_ids if isinstance(track_ids, List[str]) \
+            else list(track_ids)
 
         # Construct params for API call
         endpoint = Endpoints.SEARCH_GET_TRACKS
@@ -518,7 +550,7 @@ class Session:
     def get_users(self, 
         user_ids
     ):
-        '''
+        """
         Gets the users with the given Spotify user ids.
 
         Args:
@@ -535,13 +567,14 @@ class Session:
         
         Calls endpoints:
             GET	/v1/users/{user_id}
-        '''
+        """
 
         # Type validation
         if not isinstance(user_ids, Union[str, List[str]]):
             raise TypeError(user_ids)
         
-        user_ids = user_ids if isinstance(user_ids, List[str]) else list(user_ids)
+        user_ids = user_ids if isinstance(user_ids, List[str]) \
+            else list(user_ids)
 
         # Construct params for API call
         endpoint = Endpoints.SEARCH_GET_USER
@@ -553,7 +586,8 @@ class Session:
             uri_params['ids'] = user_id
 
             # Execute requests
-            # TODO: Partial failure - if user with user_id does not exist, status_code is 404
+            # TODO: Partial failure - if user with user_id does not exist, 
+            # status_code is 404
             response_json, status_code = self._request(
                 request_type=const.REQUEST_GET, 
                 endpoint=endpoint, 
@@ -564,8 +598,8 @@ class Session:
         return result if len(result) != 1 else result[0]
     
     def get_current_user(self):
-        '''
-        Gets the user associated with the current Spotify API authentication key.
+        """ Gets the user associated with the current Spotify API 
+        authentication key.
         
         Returns: 
             Returns a User if the request succeeded.
@@ -579,7 +613,7 @@ class Session:
         
         Calls endpoints:
             GET	/v1/me
-        '''
+        """
 
         # Construct params for API call
         endpoint = Endpoints.SEARCH_GET_CURRENT_USER
@@ -607,19 +641,25 @@ class Session:
         fields = None,
         market = const.TOKEN_REGION
     ):
-        '''
+        """
         Gets the tracks with the given Spotify playlist ids.
 
         Args:
-            playlist_ids: str or List[str], the Spotify playlist ids to search for.
-            fields: (Optional) str, filters for the query: a comma-separated list of the fields to return. 
-                If omitted, all fields are returned. A dot separator can be used to specify 
-                non-reoccurring fields, while parentheses can be used to specify reoccurring 
-                fields within objects. Use multiple parentheses to drill down into nested objects. 
-                Fields can be excluded by prefixing them with an exclamation mark.
-            market: (Optional) str, an ISO 3166-1 alpha-2 country code or the string const.TOKEN_REGION. 
+            playlist_ids: str or List[str], the Spotify playlist ids to 
+                search for.
+            fields: (Optional) str, filters for the query: a comma-separated 
+                list of the fields to return. 
+                If omitted, all fields are returned. A dot separator can be used 
+                to specify non-reoccurring fields, while parentheses can be used 
+                to specify reoccurring fields within objects. Use multiple 
+                parentheses to drill down into nested objects. 
+                Fields can be excluded by prefixing them with an exclamation 
+                mark.
+            market: (Optional) str, an ISO 3166-1 alpha-2 country code or the 
+                string const.TOKEN_REGION. 
                 Provide this parameter if you want to apply Track Relinking.
-                If market is set to None, no market is passed to Spotify's Web API.
+                If market is set to None, no market is passed to Spotify's 
+                Web API.
 
         Returns:
             Returns a Playlist or List[Playlist] if the request succeeded.
@@ -633,7 +673,7 @@ class Session:
 
         Calls endpoints:
             GET	/v1/playlists/{playlist_id}
-        '''
+        """
 
         # Note: additional_types is also a valid request param - it 
         # has been deprecated and therefore is removed from the API wrapper.
@@ -650,7 +690,8 @@ class Session:
         if market is None:
             raise ValueError(market)
 
-        playlist_ids = playlist_ids if isinstance(playlist_ids, List[str]) else list(playlist_ids)
+        playlist_ids = playlist_ids if isinstance(playlist_ids, List[str]) \
+            else list(playlist_ids)
 
         # Construct params for API call
         uri_params = dict()
