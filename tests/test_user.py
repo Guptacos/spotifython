@@ -306,7 +306,6 @@ class TestUser(unittest.TestCase):
 
 
     # User.get_saved
-    @unittest.skip('not yet mocked')
     def test_get_saved(self):
         user = self.user
 
@@ -314,33 +313,47 @@ class TestUser(unittest.TestCase):
         self.assertRaises(TypeError, user.get_saved, const.PLAYLISTS)
         self.assertRaises(ValueError, user.get_saved, const.TRACKS, limit=-1)
 
-        # TODO: test the market?
+        # Test getting tracks
+        dummy_tracks = get_dummy_data(const.TRACKS, 101)
+        self.request_mock.side_effect = [
+            ({'items': dummy_tracks[:50]}, 200),
+            ({'items': dummy_tracks[50:100]}, 200),
+            ({'items': dummy_tracks[100:]}, 200),
+            ({'items': []}, 200)
+        ]
 
-        # Get all saved tracks
         tracks = user.get_saved(const.TRACKS)
-        total_tracks = len(tracks)
-        print('\n%s has %d tracks in their library. Does this look right?'
-              % (user, total_tracks))
-
+        self.assertEqual(101, len(tracks))
         for elem in tracks:
             self.assertIsInstance(elem, Track)
 
-        if total_tracks >= 2:
-            minus_one = user.get_saved(const.TRACKS, limit=total_tracks - 1)
-            self.assertEqual(len(minus_one), total_tracks - 1)
+        self.request_mock.side_effect = [
+            ({'items': dummy_tracks[:50]}, 200),
+            ({'items': dummy_tracks[51:100]}, 200),
+            ({'items': dummy_tracks[100]}, 200),
+            ({'items': []}, 200)
+        ]
+        self.assertEqual(99, len(user.get_saved(const.TRACKS, limit=99)))
 
-        # Get all saved albums
+        # Test getting tracks
+        dummy_albums = get_dummy_data(const.ALBUMS, 75)
+        self.request_mock.side_effect = [
+            ({'items': dummy_albums[:50]}, 200),
+            ({'items': dummy_albums[50:]}, 200),
+            ({'items': []}, 200)
+        ]
+
         albums = user.get_saved(const.ALBUMS)
-        total_albums = len(albums)
-        print('%s has %d albums in their library. Does this look right?'
-              % (user, total_albums))
-
+        self.assertEqual(75, len(albums))
         for elem in albums:
             self.assertIsInstance(elem, Album)
 
-        if total_albums >= 2:
-            minus_one = user.get_saved(const.ALBUMS, limit=total_albums - 1)
-            self.assertEqual(len(minus_one), total_albums - 1)
+        self.request_mock.side_effect = [
+            ({'items': dummy_albums[:50]}, 200),
+            ({'items': dummy_albums[51:]}, 200),
+            ({'items': []}, 200)
+        ]
+        self.assertEqual(73, len(user.get_saved(const.ALBUMS, limit=73)))
 
 
     def test_follow(self):
