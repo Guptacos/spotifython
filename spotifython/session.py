@@ -216,6 +216,9 @@ class Session:
                 search limit.
             HTTPError if failure or partial failure.
 
+        Required token scopes:
+            user-read-private
+
         Calls endpoints:
             GET   /v1/search
         """
@@ -370,6 +373,9 @@ class Session:
             ValueError if market type is invalid. TODO
             HTTPError if failure or partial failure.
 
+        Required token scopes:
+            N/A
+
         Calls endpoints:
             GET   /v1/albums
 
@@ -442,6 +448,9 @@ class Session:
             TypeError for invalid types in any argument.
             HTTPError if failure or partial failure.
 
+        Required token scopes:
+            N/A
+
         Calls endpoints:
             GET   /v1/artists
 
@@ -512,6 +521,9 @@ class Session:
             TypeError for invalid types in any argument.
             ValueError if market type is invalid. TODO
             HTTPError if failure or partial failure.
+
+        Required token scopes:
+            N/A
 
         Calls endpoints:
             GET   /v1/tracks
@@ -585,6 +597,9 @@ class Session:
             TypeError for invalid types in any argument.
             HTTPError if failure or partial failure.
 
+        Required token scopes:
+            N/A
+
         Calls endpoints:
             GET	/v1/users/{user_id}
         """
@@ -631,6 +646,10 @@ class Session:
             ValueError if the Spotify API key is not valid.
             ValueError if the response is empty.
             HTTPError if failure or partial failure.
+
+        Required token scopes:
+            user-read-private
+            user-read-email
 
         Calls endpoints:
             GET	/v1/me
@@ -691,6 +710,9 @@ class Session:
             TypeError for invalid types in any argument.
             ValueError if market type is invalid. TODO
             HTTPError if failure or partial failure.
+
+        Required token scopes:
+            N/A
 
         Calls endpoints:
             GET	/v1/playlists/{playlist_id}
