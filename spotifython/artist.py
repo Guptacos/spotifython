@@ -32,9 +32,9 @@ class Artist:
         self.session = session
         self._raw = artist_info
         # Lazily loaded fields from API calls
-        self.albums = None
-        self.top_tracks = None
-        self.related_artists = None
+        self._albums = None
+        self._top_tracks = None
+        self._related_artists = None
         # Params used to call each previous entry - determins whether to reload
         self._albums_query_params = None
         self._top_tracks_query_params = None
@@ -60,53 +60,35 @@ class Artist:
     def genres(self):
         """ Getter for the genre of an artist. Returns a List[str].
         """
-        if 'genres' not in self._raw:
-            self._update_fields()
-        return self._raw.get('genres')
+        return utils.get_field('genres')
 
     def href(self):
         """ Getter for the href for an artist. Returns a str.
         """
-        if 'href' not in self._raw:
-            self._update_fields()
-        return self._raw.get('href')
+        return utils.get_field('href')
 
     def spotify_id(self):
         """ Getter for the spotify id for an artist. Returns a str.
         """
-        if 'id' not in self._raw:
-            self._update_fields()
-        return self._raw.get('id')
+        return utils.get_field('id')
 
     def name(self):
         """ Getter for the name for an artist. Returns a str.
         """
-        if 'name' not in self._raw:
-            self._update_fields()
-        return self._raw.get('name')
+        return utils.get_field('name')
 
     def popularity(self):
         """ Getter for the popularity for an artist. Returns a str.
         """
-        if 'popularity' not in self._raw:
-            self._update_fields()
-        return self._raw.get('popularity')
+        return utils.get_field('popularity')
 
     def uri(self):
         """ Getter for the uri for an artist. Returns a str.
         """
-        if 'uri' not in self._raw:
-            self._update_fields()
-        return self._raw.get('uri')
+        return utils.get_field('uri')
 
     def _update_fields(self):
         """ If field is not present, update it using the object's artist id.
-
-        Args:
-            None
-
-        Returns:
-            None
 
         Raises:
             ValueError if artist id not present in the raw object data.
@@ -133,7 +115,7 @@ class Artist:
     # API Calls
     ##################################
 
-    def albums(self,
+    def _albums(self,
                search_limit=None,
                include_groups=None,
                market=const.TOKEN_REGION
@@ -198,12 +180,14 @@ class Artist:
         # Each API call can take 1-50 requests as "limit", or no limit.
         api_call_limit = 50
         offset = 0
-        num_requests = math.ceil(search_limit / api_call_limit) \
-            if search_limit else float('inf')
+        if search_limit:
+            num_requests = math.ceil(search_limit / api_call_limit)
+        else:
+            num_requests = float('inf')
 
         # Initialize self.albums if different query or never previously called
-        self.albums = self.albums if self.albums is not None and \
-            search_query == self._albums_query_params else list()
+        if self._albums is None or search_query != self._albums_query_params):
+            self._albums = list()
 
         # Execute requests
         while num_requests > 0:
@@ -222,7 +206,7 @@ class Artist:
 
             items = response_json['items']
             for item in items:
-                self.albums.append(Album(item))
+                self._albums.append(Album(item))
 
             # Last page reached
             if response_json['next'] == 'null':
@@ -234,10 +218,10 @@ class Artist:
         # Update stored params for lazy loading
         self._albums_query_params = search_query
 
-        return self.albums
+        return self._albums
 
 
-    def top_tracks(self,
+    def _top_tracks(self,
                    market=const.TOKEN_REGION,
                    search_limit=10,
                    ):
@@ -246,8 +230,7 @@ class Artist:
         Args:
             market: str, an ISO 3166-1 alpha-2 country code or the string
                 const.TOKEN_REGION.
-            search_limit: (Optional) int, the maximum number of results
-                to return.
+            search_limit: int, the maximum number of results to return.
 
         Returns:
             A List[Track] if the request succeeded.
@@ -275,7 +258,7 @@ class Artist:
         # Type validation
         if not isinstance(market, str):
             raise TypeError(market)
-        if search_limit is not None and not isinstance(search_limit, int):
+        if not isinstance(search_limit, int):
             raise TypeError(search_limit)
 
         # Argument validation
@@ -295,7 +278,7 @@ class Artist:
 
         # Initialize self.top_tracks if different query or never previously
         # called
-        self.top_tracks = self.top_tracks if self.top_tracks is not None and \
+        self._top_tracks = self._top_tracks if self._top_tracks is not None and \
             search_query == self._top_tracks_query_params else list()
 
         # Execute requests
@@ -308,14 +291,14 @@ class Artist:
 
         items = response_json['items']
         for item in items:
-            self.top_tracks.append(Track(item))
+            self._top_tracks.append(Track(item))
 
         # Update stored params for lazy loading
         self._albums_query_params = search_query
 
-        return self.albums[:search_limit]
+        return self._albums[:search_limit]
 
-    def related_artists(self,
+    def _related_artists(self,
                         search_limit=20,
                         ):
         """ Gets Spotify catalog information about artists similar to a
@@ -362,8 +345,8 @@ class Artist:
 
         # Initialize self.top_tracks if different query or never previously
         # called
-        self.related_artists = self.related_artists \
-            if self.related_artists is not None \
+        self._related_artists = self._related_artists \
+            if self._related_artists is not None \
                 and search_query == self._related_artists_query_params \
                 else list()
 
@@ -376,12 +359,12 @@ class Artist:
 
         items = response_json['items']
         for item in items:
-            self.related_artists.append(Artist(self, item))
+            self._related_artists.append(Artist(self, item))
 
         # Update stored params for lazy loading
         self._related_artists_query_params = search_query
 
-        return self.related_artists[:search_limit]
+        return self._related_artists[:search_limit]
 
 # Local imports
 import spotifython.constants as const
