@@ -21,6 +21,10 @@ FORCE_PLAY = 'force_play'
 PUBLIC = 'public'
 PRIVATE = 'private'
 PRIVATE_COLLAB = 'private_collab'
+ARTIST_ALBUM = 'album'
+ARTIST_SINGLE = 'single'
+ARTIST_APPEARS_ON = 'appears_on'
+ARTIST_COMPILATION = 'compilation'
 
 # Constants
 DEFAULT_REQUEST_TIMEOUT = 10 # in seconds
