@@ -5,12 +5,21 @@ API token.
 """
 
 # Standard library imports
-from typing import Union, List
+from typing import Union, List, Any
 import math
+import requests
+
+# Aliases to avoid circular dependencies
+Album = Any  # album.py imports this module.
+Artist = Any  # artist.py imports this module.
+Playlist = Any  # playlist.py imports this module.
+Track = Any  # track.py imports this module.
+User = Any  # user.py imports this module.
 
 # pylint: disable=pointless-string-statement, too-many-instance-attributes
 # pylint: disable=too-many-arguments, too-many-locals, protected-access
 # pylint: disable=too-many-branches, too-many-statements, too-many-function-args
+# pylint: disable=wrong-import-position
 
 class Session:
     """ Session class
@@ -406,14 +415,11 @@ class Session:
             uri_params['market'] = market
 
         # A maximum 20 albums can be returned per API call
-        api_call_limit = 20
-        num_requests = math.ceil(len(album_ids) / api_call_limit)
-        remaining_album_ids = album_ids
+        batches = utils.create_batches(album_ids, 20)
 
         result = list()
-
-        while num_requests > 0:
-            uri_params['ids'] = ','.join(remaining_album_ids[:api_call_limit])
+        for batch in batches:
+            uri_params['ids'] = ','.join(batch)
 
             # Execute requests
             response_json, _ = utils.request(
@@ -427,9 +433,6 @@ class Session:
 
             for item in items:
                 result.append(Album(item))
-
-            num_requests -= 1
-            remaining_album_ids = remaining_album_ids[api_call_limit:]
 
         return result if len(result) != 1 else result[0]
 
@@ -473,14 +476,11 @@ class Session:
         uri_params = dict()
 
         # A maximum of 50 artists can be returned per API call
-        api_call_limit = 50
-        num_requests = math.ceil(len(artist_ids) / api_call_limit)
-        remaining_artist_ids = artist_ids
+        batches = utils.create_batches(artist_ids, 50)
 
         result = list()
-
-        while num_requests > 0:
-            uri_params['ids'] = ','.join(remaining_artist_ids[:api_call_limit])
+        for batch in batches:
+            uri_params['ids'] = ','.join(batch)
 
             # Execute requests
             response_json, _ = utils.request(
@@ -494,9 +494,6 @@ class Session:
 
             for item in items:
                 result.append(Artist(item))
-
-            num_requests -= 1
-            remaining_artist_ids = remaining_artist_ids[api_call_limit:]
 
         return result if len(result) != 1 else result[0]
 
@@ -555,14 +552,11 @@ class Session:
             uri_params['market'] = market
 
         # A maximum of 50 tracks can be returned per API call
-        api_call_limit = 50
-        num_requests = math.ceil(len(track_ids) / api_call_limit)
-        remaining_track_ids = track_ids
+        batches = utils.create_batches(track_ids, 50)
 
         result = list()
-
-        while num_requests > 0:
-            uri_params['ids'] = ','.join(remaining_track_ids[:api_call_limit])
+        for batch in batches:
+            uri_params['ids'] = ','.join(batch)
 
             # Execute requests
             response_json, _ = utils.request(
@@ -576,9 +570,6 @@ class Session:
 
             for item in items:
                 result.append(Track(item))
-
-            num_requests -= 1
-            remaining_track_ids = remaining_track_ids[api_call_limit:]
 
         return result if len(result) != 1 else result[0]
 
@@ -618,7 +609,8 @@ class Session:
         endpoint = Endpoints.SEARCH_GET_USER
         uri_params = dict()
 
-        # Each API call can return at most 1 user.
+        # Each API call can return at most 1 user. Therefore there is no need
+        # to batch this query.
         result = list()
         for user_id in user_ids:
             uri_params['ids'] = user_id
@@ -669,7 +661,7 @@ class Session:
                 endpoint=endpoint
             )
         except requests.exceptions.HTTPError as exception:
-            if exception.request.status_code is requests.codes.forbidden:
+            if exception.request.status_code == 403:
                 raise ValueError('Spotify API key is not valid')
             raise exception
 
@@ -744,6 +736,8 @@ class Session:
         if fields is not None:
             uri_params['fields'] = fields
 
+        # Each API call can return at most 1 playlist. Therefore there is no
+        # need to batch this query.
         result = list()
         for playlist_id in playlist_ids:
             endpoint = Endpoints.SEARCH_GET_PLAYLIST.format(playlist_id)
