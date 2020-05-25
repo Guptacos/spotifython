@@ -30,6 +30,53 @@ class SpotifyError(Exception):
     """
     pass
 
+def get_field(obj, field):
+    """ Gets the field if present in the Spotify object. If the field is not
+    present, then the object is updated using the object's Spotify id. Will
+    raise SpotifyError if the field is still invalid post-update.
+    Args:
+        obj: Union[Album, Artist, Player, Playlist, Session, Track, User], the
+            instance of the object that the update call is meant for. The object
+            should implement a obj._update_fields() method that updates the
+            object based on its Spotify ID.
+        field: str, the name of the field that is to be updated based on the
+            object's Spotify id.
+    """
+    # TODO: add type checking for obj after we figure out the circular
+    # dependency problem out.
+
+    if not isinstance(field, str):
+        raise TypeError(field)
+
+    if field not in self._raw:
+        return utils.update_and_get_field(self, field)
+
+    return self._raw.get(field)
+
+def update_and_get_field(obj, field):
+    """ Updates the field if not present in the Spotify object and checks
+    if the field is present afterwards. If it is not present, then raise
+    SpotifyError.
+    Args:
+        obj: Union[Album, Artist, Player, Playlist, Session, Track, User], the
+            instance of the object that the update call is meant for. The object
+            should implement a obj._update_fields() method that updates the
+            object based on its Spotify ID.
+        field: str, the name of the field that is to be updated based on the
+            object's Spotify id.
+    """
+    # TODO: add type checking for obj after we figure out the circular
+    # dependency problem out.
+
+    if not isinstance(field, str):
+        raise TypeError(field)
+
+    obj._update_fields()
+    if field not in obj._raw:
+        raise SpotifyError(field)
+
+    return obj._raw.get(field)
+
 ##################################
 # HTTP REQUEST
 ##################################

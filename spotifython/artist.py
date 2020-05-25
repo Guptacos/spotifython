@@ -4,11 +4,19 @@ This class represents an Artist object, tied to a Spotify user id.
 """
 
 # Standard library imports
-from typing import List
+from typing import List, Any
 import math
 
+# Aliases to avoid circular dependencies
+Album = Any  # album.py imports this module.
+# Artist = Any  # artist.py imports this module.
+# Playlist = Any  # playlist.py imports this module.
+Track = Any  # track.py imports this module.
+# User = Any  # user.py imports this module.
+Session = Any # session.py imports this module
+
 # pylint: disable = pointless-string-statement, too-many-instance-attributes
-# pylint: disable = too-many-branches
+# pylint: disable = too-many-branches, wrong-import-position
 
 class Artist:
     """ Artist class
@@ -22,11 +30,10 @@ class Artist:
         Artist.
 
         Args:
-            session: a Spotifython instance
+            session: a Spotifython session instance
             artist_info: a dictionary containing known values about the artist
         """
-        if not isinstance(session, spotifython.Session):
-            raise TypeError(session)
+        # TODO: add type checking for session
         if not isinstance(artist_info, dict):
             raise TypeError(artist_info)
 
@@ -116,11 +123,11 @@ class Artist:
     # API Calls
     ##################################
 
-    def _albums(self,
-                search_limit=None,
-                include_groups=None,
-                market=const.TOKEN_REGION
-                ):
+    def albums(self,
+               search_limit=None,
+               include_groups=None,
+               market=const.TOKEN_REGION
+               ):
         """ Gets the albums associated with the current Spotify artist.
 
         Args:
@@ -222,10 +229,10 @@ class Artist:
         return self._albums
 
 
-    def _top_tracks(self,
-                    market=const.TOKEN_REGION,
-                    search_limit=10,
-                    ):
+    def top_tracks(self,
+                   market=const.TOKEN_REGION,
+                   search_limit=10,
+                   ):
         """ Gets the top tracks associated with the current Spotify artist.
 
         Args:
@@ -300,9 +307,9 @@ class Artist:
 
         return self._albums[:search_limit]
 
-    def _related_artists(self,
-                         search_limit=20,
-                         ):
+    def related_artists(self,
+                        search_limit=20,
+                        ):
         """ Gets Spotify catalog information about artists similar to a
         given artist.
 
