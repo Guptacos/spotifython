@@ -51,37 +51,37 @@ class Artist:
         ''' Getter for the genre of an artist. Returns a List[str].
         '''
         if 'genres' not in self._raw: self._update_fields()
-        return Response(status=Response.OK, contents=self._raw.get('genres'))
+        return self._raw.get('genres')
 
     def href(self):
         ''' Getter for the href for an artist. Returns a str.
         '''
         if 'href' not in self._raw: self._update_fields()
-        return Response(status=Response.OK, contents=self._raw.get('href'))
+        return self._raw.get('href')
     
     def spotify_id(self):
         ''' Getter for the spotify id for an artist. Returns a str.
         '''
         if 'id' not in self._raw: self._update_fields()
-        return Response(status=Response.OK, contents=self._raw.get('id'))
+        return self._raw.get('id')
     
     def name(self):
         ''' Getter for the name for an artist. Returns a str.
         '''
         if 'name' not in self._raw: self._update_fields()
-        return Response(status=Response.OK, contents=self._raw.get('name'))
+        return self._raw.get('name')
     
     def popularity(self):
         ''' Getter for the popularity for an artist. Returns a str.
         ''' 
         if 'popularity' not in self._raw: self._update_fields()
-        return Response(status=Response.OK, contents=self._raw.get('popularity'))
+        return self._raw.get('popularity')
     
     def uri(self):
         ''' Getter for the uri for an artist. Returns a str.
         '''
         if 'uri' not in self._raw: self._update_fields()
-        return Response(status=Response.OK, contents=self._raw.get('uri'))
+        return self._raw.get('uri')
     
     def _update_fields(self):
         ''' If field is not present, update it using the object's artist id.
