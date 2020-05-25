@@ -159,7 +159,7 @@ class Artist:
 
         # Construct params for API call
         _artist_id = self.artist_id().contents()
-        endpoint = Endpoint.ARTIST_GET_ALBUMS.format(artist_id)
+        endpoint = Endpoints.ARTIST_GET_ALBUMS.format(artist_id)
         uri_params = dict()
         # TODO: when testing, double check the valid values (and if the constants exist)
         if (include_groups is not None and len(include_groups) > 0):
@@ -251,7 +251,7 @@ class Artist:
 
         # Construct params for API call
         _artist_id = self.artist_id().contents()
-        endpoint = Endpoint.ARTIST_TOP_TRACKS.format(_artist_id)
+        endpoint = Endpoints.ARTIST_TOP_TRACKS.format(_artist_id)
         uri_params = dict()
         uri_params['country'] = market
 
@@ -311,7 +311,7 @@ class Artist:
 
         # Construct params for API call
         _artist_id = self.artist_id().contents()
-        endpoint = Endpoint.ARTIST_RELATED_ARTISTS.format(_artist_id)
+        endpoint = Endpoints.ARTIST_RELATED_ARTISTS.format(_artist_id)
 
         # Initialize self.top_tracks if different query or never previously called
         self.related_artists = self.related_artists if self.related_artists is not None and \
