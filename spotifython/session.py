@@ -151,8 +151,9 @@ class Session:
         Args:
             query: str, search query keywords and optional field filters and operators.
             types: str or List[str], singular search type or a list of the types of results to search for.
-                Valid arguments are ALBUM, ARTIST, PLAYLIST, and TRACK.
-                Note: shows and episodes are not supported in this version.
+                Valid arguments are const.SEARCH_TYPE_ALBUM, const.SEARCH_TYPE_ARTIST, 
+                const.SEARCH_TYPE_PLAYLIST, and const.SEARCH_TYPE_TRACK.
+                Note: shows and episodes will be supported in a future release.
             limit: int, the maximum number of results to return.
             market: (Optional) str, An ISO 3166-1 alpha-2 country code or the string 
                 TOKEN_REGION. If a country code is specified, only artists, albums,
@@ -211,9 +212,9 @@ class Session:
 
         # Argument validation
         types = types if isinstance(types, List[str]) else list(types)
-        valid_types = [const.ALBUM, const.ARTIST, const.PLAYLIST, const.TRACK]
+        valid_types = [const.ALBUMS, const.ARTISTS, const.PLAYLISTS, const.TRACKS]
         for search_type_filter in types:
-            if (search_type_filter not in valid_types):
+            if search_type_filter not in valid_types:
                 raise ValueError(types)
         if limit > 2000:
             raise ValueError("Spotify only supports up to 2000 search results.")
@@ -237,8 +238,17 @@ class Session:
         # Initialize SearchResult object
         result = self.SearchResult()
         
-        # We want the plural search types, while our constants are singular search types.
-        remaining_types = [s + 's' for s in types]
+        # We want the singular search types, while our constants are plural search types 
+        # in the argument for uniformity.
+        type_mapping = {
+            const.ALBUMS: const.SEARCH_TYPE_ALBUM,
+            const.ARTISTS: const.SEARCH_TYPE_ARTIST,
+            const.PLAYLISTS: const.SEARCH_TYPE_PLAYLIST,
+            const.TRACKS: const.SEARCH_TYPE_TRACK,
+            const.SHOWS: const.SEARCH_TYPE_SHOW,
+            const.EPISODES: const.SEARCH_TYPE_EPISODE,
+        }
+        remaining_types = [type_mapping.get(s) for s in types]
 
         while num_requests > 0:
             uri_params['type'] = ','.join(remaining_types)
@@ -260,23 +270,23 @@ class Session:
                 # Add items to accumulator
                 # TODO: refactor these constants
                 for item in items:
-                    if t is SEARCH_RESPONSE_TYPE_ALBUM:
+                    if t is const.SEARCH_TYPE_ALBUM:
                         acc.append(Album(item))
-                    elif t is SEARCH_RESPONSE_TYPE_ARTIST:
+                    elif t is const.SEARCH_TYPE_ARTIST:
                         acc.append(Artist(item))
-                    elif t is SEARCH_RESPONSE_TYPE_PLAYLIST:
+                    elif t is const.SEARCH_TYPE_PLAYLIST:
                         acc.append(Playlist(item))
-                    elif t is SEARCH_RESPONSE_TYPE_TRACK:
+                    elif t is const.SEARCH_TYPE_TRACK:
                         acc.append(Track(item))
 
                 # Update accumulated results into search result
-                if t is SEARCH_RESPONSE_TYPE_ALBUM:
+                if t is const.SEARCH_TYPE_ALBUM:
                     result._add_albums(acc)
-                elif t is SEARCH_RESPONSE_TYPE_ARTIST:
+                elif t is const.SEARCH_TYPE_ARTIST:
                     result._add_artists(acc)
-                elif t is SEARCH_RESPONSE_TYPE_PLAYLIST:
+                elif t is const.SEARCH_TYPE_PLAYLIST:
                     result._add_playlists(acc)
-                elif t is SEARCH_RESPONSE_TYPE_TRACK:
+                elif t is const.SEARCH_TYPE_TRACK:
                     result._add_tracks(acc)
 
             offset += api_call_limit
@@ -337,7 +347,7 @@ class Session:
         # Construct params for API call
         endpoint = Endpoints.SEARCH_GET_ALBUMS
         uri_params = dict()
-        if (market is not None):
+        if market is not None:
             uri_params['market'] = market
 
         # A maximum 20 albums can be returned per API call
@@ -409,12 +419,12 @@ class Session:
         
         result = list()
         
-        while (num_requests > 0):
+        while num_requests > 0:
             uri_params['ids'] = ','.join(remaining_artist_ids[:api_call_limit])
 
             # Execute requests
             response_json, status_code = self._request(
-                request_type=REQUEST_GET, 
+                request_type=const.REQUEST_GET, 
                 endpoint=endpoint, 
                 uri_params=uri_params
             )
@@ -475,7 +485,7 @@ class Session:
         # Construct params for API call
         endpoint = Endpoints.SEARCH_GET_TRACKS
         uri_params = dict()
-        if (market is not None):
+        if market is not None:
             uri_params['market'] = market
 
         # A maximum of 50 tracks can be returned per API call
@@ -485,12 +495,12 @@ class Session:
         
         result = list()
 
-        while (num_requests > 0):
+        while num_requests > 0:
             uri_params['ids'] = ','.join(remaining_track_ids[:api_call_limit])
 
             # Execute requests
             response_json, status_code = self._request(
-                request_type=REQUEST_GET, 
+                request_type=const.REQUEST_GET, 
                 endpoint=endpoint, 
                 uri_params=uri_params
             )
@@ -545,7 +555,7 @@ class Session:
             # Execute requests
             # TODO: Partial failure - if user with user_id does not exist, status_code is 404
             response_json, status_code = self._request(
-                request_type=REQUEST_GET, 
+                request_type=const.REQUEST_GET, 
                 endpoint=endpoint, 
                 uri_params=uri_params
             )
@@ -577,7 +587,7 @@ class Session:
         # Execute requests
         try:
             response_json, status_code = self._request(
-                request_type=REQUEST_GET, 
+                request_type=const.REQUEST_GET, 
                 endpoint=endpoint
             )
         except requests.exceptions.HTTPError as e:
@@ -655,7 +665,7 @@ class Session:
 
             # Execute requests
             response_json, status_code = self._request(
-                request_type=REQUEST_GET, 
+                request_type=const.REQUEST_GET, 
                 endpoint=endpoint, 
                 uri_params=uri_params
             )
