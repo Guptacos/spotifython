@@ -3,14 +3,14 @@ import spotifython.constants as const
 from spotifython.endpoint import Endpoint
 from spotifython.response import Response
 
-# This object should be constructed by the user to instantiate the 
+# This object should be constructed by the user to instantiate the
 # session of Spotify Web API usage.
 class Session:
 
     def __init__(self, token: str, timeout: int = DEFAULT_REQUEST_TIMEOUT):
         self._token = token
         self._timeout = timeout
-    
+
     def reauthenticate(self, token: str):
         """
         Updates the stored Spotify authentication token for this instance.
@@ -32,7 +32,7 @@ class Session:
         """ Getter for the timeout provided by the client
         """
         return self._timeout
-    
+
     # User should never call this constructor. As a result, they should never
     # have access to the search_info structure prior to creating an SearchResult.
     # Internally, the search result will perform all necessary API calls to get the
@@ -42,7 +42,7 @@ class Session:
         # Each category of search result from a query is kept within a paging object
         # User should never call this constructor. As a result, they should never
         # have access to the paging_info structure prior to creating an SearchPage.
-        # This class is for internal representation of sesarch results used to execute 
+        # This class is for internal representation of sesarch results used to execute
         # API calls and aggregate data.
         class SearchPage:
             def __init__(self, paging_info: dict):
@@ -70,16 +70,16 @@ class Session:
 
         def playlists(self) -> Response: # List[Playlist]
             return self._playlists_paging.get('items', list())
-        
+
         def tracks(self) -> Response: # List[Track]
             return self._tracks_paging.get('items', list())
-    
+
     ##################################
     # API Calls
     ##################################
 
-    def search(self, 
-        query: str, 
+    def search(self,
+        query: str,
         type: Union[str, List[str]],
         search_limit: int,
         market: str = TOKEN_REGION,
@@ -94,19 +94,19 @@ class Session:
                 Valid arguments are ALBUM, ARTIST, PLAYLIST, and TRACK.
                 Note: shows and episodes are not supported in this version.
             search_limit: the maximum number of results to return.
-            market: (Optional) An ISO 3166-1 alpha-2 country code or the string 
+            market: (Optional) An ISO 3166-1 alpha-2 country code or the string
                 TOKEN_REGION. If a country code is specified, only artists, albums,
                 and tracks with content that is playable in that market is returned.
                 Note:
                 - Playlist results are not affected by the market parameter.
-                - If market is set to TOKEN_REGION, and a valid access token is 
+                - If market is set to TOKEN_REGION, and a valid access token is
                 specified in the request header, only content playable
                 in the country associated with the user account, is returned.
-                - If market is set to None, no market is passed to Spotify's Web API, 
+                - If market is set to None, no market is passed to Spotify's Web API,
                 and its default behavior is invoked.
             include_external_audio: (Optional) If true,
-                the response will include any relevant audio content that is 
-                hosted externally. By default external content is filtered out 
+                the response will include any relevant audio content that is
+                hosted externally. By default external content is filtered out
                 from responses.
 
         Returns:
@@ -119,14 +119,14 @@ class Session:
             ValueError if query type, market, or include_external is invalid.
             ValueError if search_limit is > 2000: this is the Spotify API's search limit.
 
-        Calls endpoints: 
+        Calls endpoints:
             GET   /v1/search
-        """ 
+        """
 
         # Don't forget to encode the spaces in strings!
-        # See guidelines in Search -> 'Writing a Query - Guidelines' 
+        # See guidelines in Search -> 'Writing a Query - Guidelines'
         # for more specification details that need to be implemented.
-        
+
         # Search limit is internally represented using API calls with params:
         #    limit: int = None,
         #    offset: int = None,
@@ -135,10 +135,10 @@ class Session:
         # Throw an error if > 2000.
 
         # Internally, include_external='audio' is the only valid argument.
-        
+
         return Response(status=Response.OK, contents=SearchResult(dict()))
 
-    def get_albums(self, 
+    def get_albums(self,
         album_ids: Union[str, List[str]],
         market: str = TOKEN_REGION
     ) -> Response: # Union[Album, List[Album]]
@@ -147,7 +147,7 @@ class Session:
 
         Args:
             album_ids: a string or list of strings of the Spotify album ids to search for.
-            market: (Optional) An ISO 3166-1 alpha-2 country code or the string sp.TOKEN_REGION. 
+            market: (Optional) An ISO 3166-1 alpha-2 country code or the string sp.TOKEN_REGION.
                 Provide this parameter if you want to apply Track Relinking.
                 If market is set to None, no market is passed to Spotify's Web API, and its default
                 behavior is invoked.
@@ -161,13 +161,13 @@ class Session:
             TypeError for invalid types in any argument.
             ValueError if market type is invalid.
 
-        Calls endpoints: 
+        Calls endpoints:
             GET   /v1/albums/{id}
             GET   /v1/albums
-        """ 
+        """
         return None
 
-    def get_artists(self, 
+    def get_artists(self,
         artist_ids: Union[str, List[str]]
     ) -> Response: # Union[Artist, List[Artist]]
         """
@@ -184,14 +184,14 @@ class Session:
         Exceptions:
             TypeError for invalid types in any argument.
 
-        Calls endpoints: 
+        Calls endpoints:
             GET   /v1/artists/{id}
             GET   /v1/artists
-        """ 
+        """
         return None
 
-    def get_tracks(self, 
-        track_ids: Union[str, List[str]], 
+    def get_tracks(self,
+        track_ids: Union[str, List[str]],
         market: str = TOKEN_REGION
     ) -> Response: # Union[Track, List[Track]]
         """
@@ -199,7 +199,7 @@ class Session:
 
         Args:
             track_ids: a string or list of strings of the Spotify track ids to search for.
-            market: (Optional) An ISO 3166-1 alpha-2 country code or the string sp.TOKEN_REGION. 
+            market: (Optional) An ISO 3166-1 alpha-2 country code or the string sp.TOKEN_REGION.
                 Provide this parameter if you want to apply Track Relinking.
                 If market is set to None, no market is passed to Spotify's Web API, and its default
                 behavior is invoked.
@@ -213,13 +213,13 @@ class Session:
             TypeError for invalid types in any argument.
             ValueError if market type is invalid.
 
-        Calls endpoints: 
+        Calls endpoints:
             GET   /v1/tracks/{id}
             GET   /v1/tracks
-        """ 
+        """
         return None
-    
-    def get_users(self, 
+
+    def get_users(self,
         user_ids: Union[str, List[str]]
     ) -> Response: # Union[User, List[User]]
         """
@@ -227,36 +227,36 @@ class Session:
 
         Args:
             user_ids: a string or list of strings of the Spotify user id to search for.
-        
+
         Returns: A response object containing a User or List[User] if the request succeeded.
             On failure, returns a response object containing the raw Spotify Web API
             JSON and a corresponding status code defined in the Response class.
 
         Exceptions:
             TypeError for invalid types in any argument.
-        
+
         Calls endpoints:
             GET	/v1/users/{user_id}
         """
         return None
-    
+
     def get_current_user(self) -> Response: # User
         """
         Gets the user associated with the current Spotify API authentication key.
-        
-        Returns: 
+
+        Returns:
             A response object containing a User if the request succeeded.
             On failure, returns a response object containing the raw Spotify Web API
             JSON and a corresponding status code defined in the Response class.
 
         Exceptions:
             ValueError if the Spotify API key is not valid. TODO: is this ok
-        
+
         Calls endpoints:
             GET	/v1/me
         """
         return None
-    
+
     def get_playlists(self,
         playlist_ids: Union[str, List[str]],
         fields: str = None,
@@ -267,12 +267,12 @@ class Session:
 
         Args:
             playlist_ids: a string or list of strings of the Spotify playlist ids to search for.
-            fields: (Optional) Filters for the query: a comma-separated list of the fields to return. 
-                If omitted, all fields are returned. A dot separator can be used to specify 
-                non-reoccurring fields, while parentheses can be used to specify reoccurring 
-                fields within objects. Use multiple parentheses to drill down into nested objects. 
+            fields: (Optional) Filters for the query: a comma-separated list of the fields to return.
+                If omitted, all fields are returned. A dot separator can be used to specify
+                non-reoccurring fields, while parentheses can be used to specify reoccurring
+                fields within objects. Use multiple parentheses to drill down into nested objects.
                 Fields can be excluded by prefixing them with an exclamation mark.
-            market: (Optional) An ISO 3166-1 alpha-2 country code or the string sp.TOKEN_REGION. 
+            market: (Optional) An ISO 3166-1 alpha-2 country code or the string sp.TOKEN_REGION.
                 Provide this parameter if you want to apply Track Relinking.
                 If market is set to None, no market is passed to Spotify's Web API.
 
@@ -289,7 +289,7 @@ class Session:
             GET	/v1/playlists/{playlist_id}
         """
 
-        # Note: additional_types is also a valid request param - it 
+        # Note: additional_types is also a valid request param - it
         # has been deprecated and therefore is removed from the API wrapper.
 
         return None

@@ -111,6 +111,9 @@ class Artist:
         Raises:
             ValueError if artist id not present in the raw object data.
 
+        Required token scopes:
+            N/A
+
         Calls endpoints:
             GET     /v1/artists/{id}
         """
@@ -161,6 +164,9 @@ class Artist:
             ValueError for invalid market.
                 TODO: is this even necessary, will raise ex
             HTTPError for web request errors or partial failures.
+
+        Required token scopes:
+            N/A
 
         Calls endpoints:
             GET	/v1/artists/{id}/albums
@@ -255,6 +261,9 @@ class Artist:
                 limit.
             HTTPError for web request errors.
 
+        Required token scopes:
+            N/A
+
         Calls endpoints:
             GET	/v1/artists/{id}/top-tracks
         """
@@ -325,6 +334,9 @@ class Artist:
             ValueError if search_limit is > 20: this is the Spotify API's
                 search limit.
             HTTPError for web request errors.
+
+        Required token scopes:
+            N/A
 
         Calls endpoints:
             GET	/v1/artists/{id}/related-artists
