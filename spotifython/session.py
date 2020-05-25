@@ -12,7 +12,7 @@ class Session:
         self._timeout = timeout
     
     def reauthenticate(self, token: str):
-        '''
+        """
         Updates the stored Spotify authentication token for this instance.
 
         Args:
@@ -20,17 +20,17 @@ class Session:
 
         Exceptions:
             TypeError for invalid types in any argument.
-        '''
+        """
         self._token = token
 
     def token(self):
-        ''' Getter for the token provided by the client
-        '''
+        """ Getter for the token provided by the client
+        """
         return self._token
 
     def timeout(self):
-        ''' Getter for the timeout provided by the client
-        '''
+        """ Getter for the timeout provided by the client
+        """
         return self._timeout
     
     # User should never call this constructor. As a result, they should never
@@ -85,7 +85,7 @@ class Session:
         market: str = TOKEN_REGION,
         include_external_audio: bool = False
     ) -> Response: # SearchResult
-        '''
+        """
         Searches for content with the given query.
 
         Args:
@@ -121,7 +121,7 @@ class Session:
 
         Calls endpoints: 
             GET   /v1/search
-        ''' 
+        """ 
 
         # Don't forget to encode the spaces in strings!
         # See guidelines in Search -> 'Writing a Query - Guidelines' 
@@ -142,7 +142,7 @@ class Session:
         album_ids: Union[str, List[str]],
         market: str = TOKEN_REGION
     ) -> Response: # Union[Album, List[Album]]
-        '''
+        """
         Gets the albums with the given Spotify album ids.
 
         Args:
@@ -164,13 +164,13 @@ class Session:
         Calls endpoints: 
             GET   /v1/albums/{id}
             GET   /v1/albums
-        ''' 
+        """ 
         return None
 
     def get_artists(self, 
         artist_ids: Union[str, List[str]]
     ) -> Response: # Union[Artist, List[Artist]]
-        '''
+        """
         Gets the artists with the given Spotify artists ids.
 
         Args:
@@ -187,14 +187,14 @@ class Session:
         Calls endpoints: 
             GET   /v1/artists/{id}
             GET   /v1/artists
-        ''' 
+        """ 
         return None
 
     def get_tracks(self, 
         track_ids: Union[str, List[str]], 
         market: str = TOKEN_REGION
     ) -> Response: # Union[Track, List[Track]]
-        '''
+        """
         Gets the tracks with the given Spotify track ids.
 
         Args:
@@ -216,13 +216,13 @@ class Session:
         Calls endpoints: 
             GET   /v1/tracks/{id}
             GET   /v1/tracks
-        ''' 
+        """ 
         return None
     
     def get_users(self, 
         user_ids: Union[str, List[str]]
     ) -> Response: # Union[User, List[User]]
-        '''
+        """
         Gets the users with the given Spotify user ids.
 
         Args:
@@ -237,11 +237,11 @@ class Session:
         
         Calls endpoints:
             GET	/v1/users/{user_id}
-        '''
+        """
         return None
     
     def get_current_user(self) -> Response: # User
-        '''
+        """
         Gets the user associated with the current Spotify API authentication key.
         
         Returns: 
@@ -254,7 +254,7 @@ class Session:
         
         Calls endpoints:
             GET	/v1/me
-        '''
+        """
         return None
     
     def get_playlists(self,
@@ -262,7 +262,7 @@ class Session:
         fields: str = None,
         market: str = TOKEN_REGION
     ) -> Response: # Union[Playlist, List[Playlist]]
-        '''
+        """
         Gets the tracks with the given Spotify playlist ids.
 
         Args:
@@ -287,7 +287,7 @@ class Session:
 
         Calls endpoints:
             GET	/v1/playlists/{playlist_id}
-        '''
+        """
 
         # Note: additional_types is also a valid request param - it 
         # has been deprecated and therefore is removed from the API wrapper.
