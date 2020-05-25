@@ -5,7 +5,6 @@ This class represents an Artist object, tied to a Spotify user id.
 
 # Standard library imports
 from typing import List, Any
-import math
 
 # Aliases to avoid circular dependencies
 Album = Any  # album.py imports this module.
@@ -168,63 +167,30 @@ class Artist:
         if market is not None and not isinstance(market, str):
             raise TypeError(market)
 
-        # Save params for lazy loading check
+        # Lazy loading check
         search_query = (search_limit, include_groups, market)
+        if search_query == self._albums_query_params:
+            return self._albums
 
         # Construct params for API call
         _artist_id = self.spotify_id()
         endpoint = Endpoints.ARTIST_GET_ALBUMS.format(_artist_id)
         uri_params = dict()
-        # TODO: when testing, double check the valid values (and if the
-        # constants exist)
         if include_groups is not None and len(include_groups) > 0:
             uri_params['include_groups'] = ','.join(include_groups)
         if market is not None:
             uri_params['market'] = market
 
-        # Each API call can take 1-50 requests as "limit", or no limit.
-        api_call_limit = 50
-        offset = 0
-        if search_limit:
-            num_requests = math.ceil(search_limit / api_call_limit)
-        else:
-            num_requests = float('inf')
-
-        # Initialize self.albums if different query or never previously called
-        if self._albums is None or search_query != self._albums_query_params:
-            self._albums = list()
-
-        # Execute requests
-        while num_requests > 0:
-            if search_limit is None:
-                search_limit = api_call_limit
-            else:
-                search_limit = min(search_limit, api_call_limit)
-            uri_params['limit'] = search_limit
-            uri_params['offset'] = offset
-            response_json, _ = utils.request(
-                session=self.session,
-                request_type=const.REQUEST_GET,
-                endpoint=endpoint,
-                uri_params=uri_params
-            )
-
-            items = response_json['items']
-            for item in items:
-                self._albums.append(Album(item))
-
-            # Last page reached
-            if response_json['next'] == 'null':
-                break
-
-            num_requests -= 1
-            offset += api_call_limit
-
         # Update stored params for lazy loading
+        self._albums = utils.paginate_get(session=self.session,
+                                          limit=search_limit,
+                                          return_class=Album,
+                                          endpoint=endpoint,
+                                          uri_params=uri_params
+                                          )
         self._albums_query_params = search_query
 
         return self._albums
-
 
     def top_tracks(self,
                    market=const.TOKEN_REGION,
@@ -281,28 +247,20 @@ class Artist:
         uri_params = dict()
         uri_params['country'] = market
 
-        # Initialize self.top_tracks if different query or never previously
-        # called
-        if self._top_tracks is None or \
-            self._top_tracks != self._top_tracks_query_params:
-            self._top_tracks = list()
-
-        # Execute requests
-        response_json, _ = utils.request(
-            session=self.session,
-            request_type=const.REQUEST_GET,
-            endpoint=endpoint,
-            uri_params=uri_params
-        )
-
-        items = response_json['items']
-        for item in items:
-            self._top_tracks.append(Track(item))
+        # Lazy loading check
+        if search_query == self._top_tracks_query_params:
+            return self._top_tracks
 
         # Update stored params for lazy loading
-        self._albums_query_params = search_query
+        self._top_tracks = utils.paginate_get(session=self.session,
+                                              limit=search_limit,
+                                              return_class=Track,
+                                              endpoint=endpoint,
+                                              uri_params=uri_params
+                                              )
+        self._top_tracks_query_params = search_query
 
-        return self._albums[:search_limit]
+        return self._top_tracks
 
     def related_artists(self,
                         search_limit=20,
@@ -349,28 +307,19 @@ class Artist:
         _artist_id = self.spotify_id()
         endpoint = Endpoints.ARTIST_RELATED_ARTISTS.format(_artist_id)
 
-        # Initialize self.top_tracks if different query or never previously
-        # called
-        self._related_artists = self._related_artists \
-            if self._related_artists is not None \
-                and search_query == self._related_artists_query_params \
-                else list()
-
-        # Execute requests
-        response_json, _ = utils.request(
-            session=self.session,
-            request_type=const.REQUEST_GET,
-            endpoint=endpoint,
-        )
-
-        items = response_json['items']
-        for item in items:
-            self._related_artists.append(Artist(self, item))
+        # Lazy loading check
+        if search_query == self._related_artists_query_params:
+            return self._related_artists
 
         # Update stored params for lazy loading
+        self._related_artists = utils.paginate_get(session=self.session,
+                                                   limit=search_limit,
+                                                   return_class=Artist,
+                                                   endpoint=endpoint
+                                                   )
         self._related_artists_query_params = search_query
 
-        return self._related_artists[:search_limit]
+        return self._related_artists
 
 # Local imports
 import spotifython.constants as const
