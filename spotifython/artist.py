@@ -35,7 +35,7 @@ class Artist:
 
     def __str__(self):
         c = self.name()
-        return c.contents() if c else 'ERROR'
+        return c if c else raise ValueError("Something is wrong!")
 
     ##################################
     # Field accessors
@@ -98,7 +98,7 @@ class Artist:
         Calls endpoints: 
             GET     /v1/artists/{id}
         '''
-        _artist_id = self.artist_id().contents()
+        _artist_id = self.artist_id()
         endpoint = f'/v1/artists/{artist_id}'
         response_json, status_code = self.session._request(
             request_type=const.REQUEST_GET,
@@ -158,13 +158,13 @@ class Artist:
         search_query = (search_limit, include_groups, market)
 
         # Construct params for API call
-        _artist_id = self.artist_id().contents()
+        _artist_id = self.artist_id()
         endpoint = Endpoints.ARTIST_GET_ALBUMS.format(artist_id)
         uri_params = dict()
         # TODO: when testing, double check the valid values (and if the constants exist)
-        if (include_groups is not None and len(include_groups) > 0):
+        if include_groups is not None and len(include_groups) > 0:
             uri_params['include_groups'] = ",".join()
-        if (market is not None):
+        if market is not None:
             uri_params['market'] = market
         
         # Each API call can take 1-50 requests as "limit", or no limit.
@@ -178,7 +178,7 @@ class Artist:
 
         # Execute requests
         while num_requests > 0:
-            if (search_limit is None):
+            if search_limit is None:
                 search_limit = api_call_limit
             else:
                 search_limit = min(search_limit, api_call_limit)
@@ -195,7 +195,7 @@ class Artist:
                 self.albums.append(Album(item))
 
             # Last page reached
-            if (response_json['next'] == 'null'):
+            if response_json['next'] == 'null':
                 break
 
             num_requests -= 1
@@ -250,7 +250,7 @@ class Artist:
         search_query = (country, search_limit)
 
         # Construct params for API call
-        _artist_id = self.artist_id().contents()
+        _artist_id = self.artist_id()
         endpoint = Endpoints.ARTIST_TOP_TRACKS.format(_artist_id)
         uri_params = dict()
         uri_params['country'] = market
@@ -310,7 +310,7 @@ class Artist:
         search_query = (search_limit)
 
         # Construct params for API call
-        _artist_id = self.artist_id().contents()
+        _artist_id = self.artist_id()
         endpoint = Endpoints.ARTIST_RELATED_ARTISTS.format(_artist_id)
 
         # Initialize self.top_tracks if different query or never previously called
