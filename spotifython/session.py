@@ -10,7 +10,7 @@ import math
 
 # pylint: disable=pointless-string-statement, too-many-instance-attributes
 # pylint: disable=too-many-arguments, too-many-locals, protected-access
-# pylint: disable=too-many-branches, too-many-statements
+# pylint: disable=too-many-branches, too-many-statements, too-many-function-args
 
 class Session:
     """ Session class
@@ -92,6 +92,18 @@ class Session:
                 .get('items', list())
 
         # Internal: Update search results via paginated searches
+        def _add(self, iterable):
+            if isinstance(iterable, List[Album]):
+                self._add_albums(self, iterable)
+            elif isinstance(iterable, List[Artist]):
+                self._add_artists(self, iterable)
+            elif isinstance(iterable, List[Playlist]):
+                self._add_playlists(self, iterable)
+            elif isinstance(iterable, List[Track]):
+                self._add_tracks(self, iterable)
+            else:
+                raise TypeError(iterable)
+
         def _add_albums(self, albums):
             """ Used to build the list of albums returned by the search query.
 
@@ -122,7 +134,7 @@ class Session:
                 playlists: List[Playlist], the playlists to add to the
                     search result.
             """
-            if not isinstance(playlists, List[playlists]):
+            if not isinstance(playlists, List[Playlist]):
                 raise TypeError(playlists)
 
             self._playlists_paging += playlists
@@ -326,14 +338,7 @@ class Session:
                         acc.append(Track(item))
 
                 # Update accumulated results into search result
-                if curr_type is const.SEARCH_TYPE_ALBUM:
-                    result._add_albums(acc)
-                elif curr_type is const.SEARCH_TYPE_ARTIST:
-                    result._add_artists(acc)
-                elif curr_type is const.SEARCH_TYPE_PLAYLIST:
-                    result._add_playlists(acc)
-                elif curr_type is const.SEARCH_TYPE_TRACK:
-                    result._add_tracks(acc)
+                result._add(acc)
 
             offset += api_call_limit
             num_requests -= 1
