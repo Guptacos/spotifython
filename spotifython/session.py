@@ -156,11 +156,11 @@ class Session:
                 Note: shows and episodes will be supported in a future release.
             limit: int, the maximum number of results to return.
             market: (Optional) str, An ISO 3166-1 alpha-2 country code or the string 
-                TOKEN_REGION. If a country code is specified, only artists, albums,
+                const.TOKEN_REGION. If a country code is specified, only artists, albums,
                 and tracks with content that is playable in that market is returned.
                 Note:
                 - Playlist results are not affected by the market parameter.
-                - If market is set to TOKEN_REGION, and a valid access token is 
+                - If market is set to const.TOKEN_REGION, and a valid access token is 
                 specified in the request header, only content playable
                 in the country associated with the user account, is returned.
                 - If market is set to None, no market is passed to Spotify's Web API, 
@@ -303,7 +303,7 @@ class Session:
 
     def get_albums(self, 
         album_ids,
-        market = TOKEN_REGION
+        market = const.TOKEN_REGION
     ):
         '''
         Gets the albums with the given Spotify album ids.
@@ -441,7 +441,7 @@ class Session:
 
     def get_tracks(self, 
         track_ids,
-        market = TOKEN_REGION
+        market = const.TOKEN_REGION
     ):
         '''
         Gets the tracks with the given Spotify track ids.
@@ -605,7 +605,7 @@ class Session:
     def get_playlists(self,
         playlist_ids,
         fields = None,
-        market = TOKEN_REGION
+        market = const.TOKEN_REGION
     ):
         '''
         Gets the tracks with the given Spotify playlist ids.
