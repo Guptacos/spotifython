@@ -245,8 +245,8 @@ class Session:
             not isinstance(include_external_audio, bool):
             raise TypeError(include_external_audio)
 
-        # Encode the spaces in strings! See 'Search -> Writing a Query'
-        # in the Spotify Web API reference for more details.
+        # Encode the spaces in strings! See the following link for more details.
+        # https://developer.spotify.com/documentation/web-api/reference/search/search/
         encoded_query = query.replace(' ', '+')
 
         # Argument validation
@@ -383,18 +383,16 @@ class Session:
             GET   /v1/albums/{id}
         """
 
-        # Type validation
+        # Type/Argument validation
         if not isinstance(album_ids, Union[str, List[str]]):
             raise TypeError(album_ids)
-        if market is not None and not isinstance(market, str):
-            raise TypeError(market)
-
-        # Argument validation
         if market is None:
             raise ValueError(market)
+        if not isinstance(market, str):
+            raise TypeError(market)
 
-        album_ids = album_ids if isinstance(album_ids, List[str]) \
-            else list(album_ids)
+        if isinstance(album_ids, str):
+            album_ids = list(album_ids)
 
         # Construct params for API call
         endpoint = Endpoints.SEARCH_GET_ALBUMS
@@ -608,8 +606,8 @@ class Session:
         if not isinstance(user_ids, Union[str, List[str]]):
             raise TypeError(user_ids)
 
-        user_ids = user_ids if isinstance(user_ids, List[str]) \
-            else list(user_ids)
+        if isinstance(user_ids, str):
+            user_ids = list(user_ids)
 
         # Construct params for API call
         endpoint = Endpoints.SEARCH_GET_USER
@@ -721,20 +719,18 @@ class Session:
         # Note: additional_types is also a valid request param - it
         # has been deprecated and therefore is removed from the API wrapper.
 
-        # Type validation
+        # Type/Argument validation
         if not isinstance(playlist_ids, Union[str, List[str]]):
             raise TypeError(playlist_ids)
         if fields is not None and not isinstance(fields, str):
             raise TypeError(fields)
-        if market is not None and not isinstance(market, str):
-            raise TypeError(market)
-
-        # Argument validation
         if market is None:
             raise ValueError(market)
+        if not isinstance(market, str):
+            raise TypeError(market)
 
-        playlist_ids = playlist_ids if isinstance(playlist_ids, List[str]) \
-            else list(playlist_ids)
+        if isinstance(playlist_ids, str):
+            playlist_ids = list(playlist_ids)
 
         # Construct params for API call
         uri_params = dict()
