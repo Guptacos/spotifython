@@ -7,7 +7,8 @@ This class represents an Artist object, tied to a Spotify user id.
 from typing import List
 import math
 
-# pylint: disable=pointless-string-statement, too-many-instance-attributes
+# pylint: disable = pointless-string-statement, too-many-instance-attributes
+# pylint: disable = too-many-branches
 
 class Artist:
     """ Artist class
@@ -60,32 +61,32 @@ class Artist:
     def genres(self):
         """ Getter for the genre of an artist. Returns a List[str].
         """
-        return utils.get_field('genres')
+        return utils.get_field(self, 'genres')
 
     def href(self):
         """ Getter for the href for an artist. Returns a str.
         """
-        return utils.get_field('href')
+        return utils.get_field(self, 'href')
 
     def spotify_id(self):
         """ Getter for the spotify id for an artist. Returns a str.
         """
-        return utils.get_field('id')
+        return utils.get_field(self, 'id')
 
     def name(self):
         """ Getter for the name for an artist. Returns a str.
         """
-        return utils.get_field('name')
+        return utils.get_field(self, 'name')
 
     def popularity(self):
         """ Getter for the popularity for an artist. Returns a str.
         """
-        return utils.get_field('popularity')
+        return utils.get_field(self, 'popularity')
 
     def uri(self):
         """ Getter for the uri for an artist. Returns a str.
         """
-        return utils.get_field('uri')
+        return utils.get_field(self, 'uri')
 
     def _update_fields(self):
         """ If field is not present, update it using the object's artist id.
@@ -116,10 +117,10 @@ class Artist:
     ##################################
 
     def _albums(self,
-               search_limit=None,
-               include_groups=None,
-               market=const.TOKEN_REGION
-               ):
+                search_limit=None,
+                include_groups=None,
+                market=const.TOKEN_REGION
+                ):
         """ Gets the albums associated with the current Spotify artist.
 
         Args:
@@ -186,7 +187,7 @@ class Artist:
             num_requests = float('inf')
 
         # Initialize self.albums if different query or never previously called
-        if self._albums is None or search_query != self._albums_query_params):
+        if self._albums is None or search_query != self._albums_query_params:
             self._albums = list()
 
         # Execute requests
@@ -222,9 +223,9 @@ class Artist:
 
 
     def _top_tracks(self,
-                   market=const.TOKEN_REGION,
-                   search_limit=10,
-                   ):
+                    market=const.TOKEN_REGION,
+                    search_limit=10,
+                    ):
         """ Gets the top tracks associated with the current Spotify artist.
 
         Args:
@@ -278,8 +279,9 @@ class Artist:
 
         # Initialize self.top_tracks if different query or never previously
         # called
-        self._top_tracks = self._top_tracks if self._top_tracks is not None and \
-            search_query == self._top_tracks_query_params else list()
+        if self._top_tracks is None or \
+            self._top_tracks != self._top_tracks_query_params:
+            self._top_tracks = list()
 
         # Execute requests
         response_json, _ = utils.request(
@@ -299,8 +301,8 @@ class Artist:
         return self._albums[:search_limit]
 
     def _related_artists(self,
-                        search_limit=20,
-                        ):
+                         search_limit=20,
+                         ):
         """ Gets Spotify catalog information about artists similar to a
         given artist.
 
