@@ -1,13 +1,15 @@
 from typing import Union, List
+
+# Local imports
 import spotifython.constants as const
-from spotifython.endpoint import Endpoint
-from spotifython.response import Response
+from spotifython.endpoints import Endpoints
+import spotifython.utils as utils
 
 # This object should be constructed by the user to instantiate the
 # session of Spotify Web API usage.
 class Session:
 
-    def __init__(self, token: str, timeout: int = DEFAULT_REQUEST_TIMEOUT):
+    def __init__(self, token: str, timeout: int = const.DEFAULT_REQUEST_TIMEOUT):
         self._token = token
         self._timeout = timeout
 
@@ -62,16 +64,16 @@ class Session:
             self._playlists_paging = SearchPage(self._raw.get('playlists', dict()))
             self._tracks_paging = SearchPage(self._raw.get('tracks', dict()))
 
-        def albums(self) -> Response: # List[Album]
+        def albums(self):
             return self._albums_paging.get('items', list())
 
-        def artists(self) -> Response: # List[Artist]
+        def artists(self):
             return self._artists_paging.get('items', list())
 
-        def playlists(self) -> Response: # List[Playlist]
+        def playlists(self):
             return self._playlists_paging.get('items', list())
 
-        def tracks(self) -> Response: # List[Track]
+        def tracks(self):
             return self._tracks_paging.get('items', list())
 
     ##################################
@@ -82,9 +84,9 @@ class Session:
         query: str,
         type: Union[str, List[str]],
         search_limit: int,
-        market: str = TOKEN_REGION,
+        market: str = const.TOKEN_REGION,
         include_external_audio: bool = False
-    ) -> Response: # SearchResult
+    ):
         """
         Searches for content with the given query.
 
@@ -139,9 +141,9 @@ class Session:
         return Response(status=Response.OK, contents=SearchResult(dict()))
 
     def get_albums(self,
-        album_ids: Union[str, List[str]],
-        market: str = TOKEN_REGION
-    ) -> Response: # Union[Album, List[Album]]
+        album_ids,
+        market: str = const.TOKEN_REGION
+    ):
         """
         Gets the albums with the given Spotify album ids.
 
@@ -169,7 +171,7 @@ class Session:
 
     def get_artists(self,
         artist_ids: Union[str, List[str]]
-    ) -> Response: # Union[Artist, List[Artist]]
+    ):
         """
         Gets the artists with the given Spotify artists ids.
 
@@ -192,8 +194,8 @@ class Session:
 
     def get_tracks(self,
         track_ids: Union[str, List[str]],
-        market: str = TOKEN_REGION
-    ) -> Response: # Union[Track, List[Track]]
+        market: str = const.TOKEN_REGION
+    ):
         """
         Gets the tracks with the given Spotify track ids.
 
@@ -221,7 +223,7 @@ class Session:
 
     def get_users(self,
         user_ids: Union[str, List[str]]
-    ) -> Response: # Union[User, List[User]]
+    ):
         """
         Gets the users with the given Spotify user ids.
 
@@ -240,7 +242,7 @@ class Session:
         """
         return None
 
-    def get_current_user(self) -> Response: # User
+    def get_current_user(self):
         """
         Gets the user associated with the current Spotify API authentication key.
 
@@ -260,8 +262,8 @@ class Session:
     def get_playlists(self,
         playlist_ids: Union[str, List[str]],
         fields: str = None,
-        market: str = TOKEN_REGION
-    ) -> Response: # Union[Playlist, List[Playlist]]
+        market: str = const.TOKEN_REGION
+    ):
         """
         Gets the tracks with the given Spotify playlist ids.
 

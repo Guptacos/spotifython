@@ -1,14 +1,11 @@
-from album import Album
-from artist import Artist
-from playlist import Playlist
-from track import Track
-from user import User
-from spotifython import Spotifython as sp
-
-from response import Response
 from typing import Union
 
-class Player():
+# Local imports
+import spotifython.constants as const
+from spotifython.endpoints import Endpoints
+import spotifython.utils as utils
+
+class Player:
     ''' Interact with a user's playback, such as pausing / playing the current
         song, modifying the queue, etc.
 
@@ -40,12 +37,12 @@ class Player():
         handled correctly by the player.
     '''
 
-    
+
     def __init__(self,
-                 user: User
-    ) -> Player:
+                 user
+    ):
         ''' Should only be called from within the User class
-        
+
         Keyword arguments:
             user: the User object that created the Player. For example, User can
                 say self._player = Player(self)
@@ -60,10 +57,10 @@ class Player():
     def __str__(self) -> str:
         return ''
 
-    
+
     def next(self,
              device_id: str=None
-    ) -> Response: # None
+    ):
         ''' Skip the current song in the playback
 
         response.contents():
@@ -75,7 +72,7 @@ class Player():
 
     def previous(self,
                  device_id: str=None
-    ) -> Response: # None
+    ):
         ''' Skip to the previous song in the playback, regardless of where in
             the current song playback is.
 
@@ -88,7 +85,7 @@ class Player():
     # Note for me: if nothing playing and pause, raises 403 restriction violated
     def pause(self,
               device_id: str=None
-    ) -> Response: # None
+    ):
         ''' Pause the current playback
 
         response.contents():
@@ -101,7 +98,7 @@ class Player():
     # Note for me: if playing and resume, raises 403 restriction violated
     def resume(self,
                device_id: str=None
-    ) -> Response: # None
+    ):
         ''' Resume the current playback
 
         response.contents():
@@ -115,9 +112,9 @@ class Player():
     # Future support: offsetting into context
     # Future support: position in track
     def play(self,
-             item: Union[Track, Album, Playlist, Artist],
+             item,
              device_id: str=None
-    ) -> Response: # None
+    ):
         ''' Change the current track and context for the player
 
         Uses the currently active device, if one exists.
@@ -138,7 +135,7 @@ class Player():
         pass
 
 
-    def is_paused(self) -> Response: # bool
+    def is_paused(self):
         ''' Check if the current playback is paused
 
         Uses the currently active device, if one exists.
@@ -151,7 +148,7 @@ class Player():
         pass
 
 
-    def is_playing(self) -> Response: # bool
+    def is_playing(self):
         ''' Check if the current playback is playing (not paused)
 
         Uses the currently active device, if one exists.
@@ -171,8 +168,8 @@ class Player():
     # Note for me: in the future, add 'additional_types' to support episodes.
     # Note for me: in the future support returning a context object
     def get_currently_playing(self,
-                              market: str=sp.TOKEN_REGION
-    ) -> Response: # Track
+                              market: str=const.TOKEN_REGION
+    ):
         ''' Get the currently playing track in the playback
 
         Uses the currently active device, if one exists.
@@ -195,7 +192,7 @@ class Player():
 
 
     # Note for me: in the future add a separate device abstraction
-    def available_devices(self) -> Response: # List[str]
+    def available_devices(self):
         ''' Get all devices currently available
 
         response.contents():
@@ -206,7 +203,7 @@ class Player():
         pass
 
 
-    def get_active_device(self) -> Response: # str
+    def get_active_device(self):
         ''' Get the currently active device
 
         response.contents():
@@ -219,8 +216,8 @@ class Player():
 
     def set_active_device(self,
                           device_id: str,
-                          force_play: str=sp.KEEP_PLAY_STATE
-    ) -> Response: # None
+                          force_play: str=const.KEEP_PLAY_STATE
+    ):
         ''' Transfer playback to a different available device
 
         Keyword arguments:
@@ -236,7 +233,7 @@ class Player():
         pass
 
 
-    def get_shuffle(self) -> Response: # bool
+    def get_shuffle(self):
         ''' Get the current shuffle state of the playback
 
         Uses the currently active device, if one exists.
@@ -252,7 +249,7 @@ class Player():
     def set_shuffle(self,
                     shuffle_state: bool,
                     device_id: str=None
-    ) -> Response: # None
+    ):
         ''' Set the shuffle state of the active device
 
         Keyword arguments:
@@ -265,7 +262,7 @@ class Player():
         pass
 
 
-    def get_playback_position(self) -> Response: # int
+    def get_playback_position(self):
         ''' Get the current position in the currently playing track in ms
 
         Uses the currently active device, if one exists.
@@ -281,7 +278,7 @@ class Player():
     def set_playback_position(self,
                  position: int,
                  device_id: str=None
-    ) -> Response: # None
+    ):
         ''' Set the current position in the currently playing track in ms
 
         Keyword arguments:
@@ -295,7 +292,7 @@ class Player():
         pass
 
 
-    def get_volume(self) -> Response: # int
+    def get_volume(self):
         ''' Get the current volume for the playback
 
         Uses the currently active device, if one exists.
@@ -311,7 +308,7 @@ class Player():
     def set_volume(self,
                    volume: int,
                    device_id: str=None
-    ) -> Response: # None
+    ):
         ''' Set the current volume for the playback
 
         Keyword arguments:
@@ -324,7 +321,7 @@ class Player():
         pass
 
 
-    def get_repeat(self) -> Response: # Union[sp.TRACK, sp.CONTEXT, sp.OFF]
+    def get_repeat(self):
         ''' Get the repeat state for the current playback
 
         Uses the currently active device, if one exists.
@@ -340,7 +337,7 @@ class Player():
     def set_repeat(self,
                    mode: str,
                    device_id: str=None
-    ) -> Response: # None
+    ):
         ''' Set the repeat state for the current playback
 
         Keyword arguments:
@@ -358,11 +355,11 @@ class Player():
 
     # Note for me: add episodes at some point
     def enqueue(self,
-                item: Union[Album, Track],
+                item,
                 device_id: str=None
-    ) -> Response: # None
+    ):
         ''' Add an item to the end of the queue
-        
+
         Keyword arguments:
             item: the item to add to the queue. Must be an instance of sp.Album
                 or sp.Track. Adding playlists to the queue is not currently
@@ -373,3 +370,11 @@ class Player():
         '''
         # POST /v1/me/player/queue
         pass
+
+# Local imports
+from spotifython.album import Album
+from spotifython.artist import Artist
+from spotifython.playlist import Playlist
+from spotifython.track import Track
+from spotifython.user import User
+from spotifython.session import Session as sp

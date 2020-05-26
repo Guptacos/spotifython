@@ -6,6 +6,11 @@ This class represents an Artist object, tied to a Spotify user id.
 # Standard library imports
 from typing import List, Any
 
+# Local imports
+import spotifython.constants as const
+from spotifython.endpoints import Endpoints
+import spotifython.utils as utils
+
 # Aliases to avoid circular dependencies
 Album = Any  # album.py imports this module.
 Track = Any  # track.py imports this module.
@@ -335,8 +340,3 @@ class Artist:
         self._related_artists_query_params = search_query
 
         return self._related_artists
-
-# Local imports
-import spotifython.constants as const
-from spotifython.endpoints import Endpoints
-import spotifython.utils as utils

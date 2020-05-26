@@ -1,12 +1,9 @@
-from album import Album
-from artist import Artist
-from player import Player
-from playlist import Playlist
-from spotifython import Spotifython
-from track import Track
-
-from response import Response
 from typing import Union, List, Dict
+
+# Local imports
+import spotifython.constants as const
+from spotifython.endpoints import Endpoints
+import spotifython.utils as utils
 
 # TODO: auth required for each param
 # TODO: what to do about partial success?
@@ -23,14 +20,14 @@ class User():
 
 
     def __init__(self,
-                 sp_obj: Spotifython,
+                 sp_obj,
                  user_id: str,
                  known_vals: Dict=None
-    ) -> User:
+    ):
         # note to self: init self.player
         pass
 
-        
+
     # Format should be 'User <%s>' % user_id
     def __str__(self) -> str:
         pass
@@ -52,7 +49,7 @@ class User():
         pass
 
 
-    def player(self) -> Player:
+    def player(self):
         ''' Get the player object for this user
 
         This is how client code should access a player. For example:
@@ -68,8 +65,8 @@ class User():
     def top(self,
             top_type: str,
             limit: int,
-            time_range: str=sp.MEDIUM
-    ) -> Response: # Union[List[Artist], List[Track]]
+            time_range: str=const.MEDIUM
+    ):
         ''' Get the top artists or tracks for the user over a time range.
 
         Keyword arguments:
@@ -95,7 +92,7 @@ class User():
 
     def recently_played(self,
                         limit: int=50
-    ) -> Response: # List[Track]
+    ):
         ''' Get the user's recently played tracks
 
         Keyword arguments:
@@ -117,7 +114,7 @@ class User():
 
     def get_playlists(self,
                       limit: int=None
-    ) -> Response: # List[Playlist]
+    ):
         ''' Get all playlists that this user has in their library
 
         Keyword arguments:
@@ -139,9 +136,9 @@ class User():
 
     def create_playlist(self,
                         name: str,
-                        visibility: str=sp.PUBLIC,
+                        visibility: str=const.PUBLIC,
                         description: str=""
-    ) -> Response: # None
+    ):
         ''' Create a new playlist owned by the current user
 
         Keyword arguments:
@@ -166,9 +163,8 @@ class User():
 
 
     def is_following(self,
-                     other: Union[Artist, User, Playlist,
-                                  List[Union[Artist, User, Playlist]]]
-    ) -> Response: # List[Tuple[Union[Artist, User, Playlist], bool]]
+                     other
+    ):
         ''' Check if the current user is following something
 
         Keyword arguments:
@@ -195,7 +191,7 @@ class User():
     def get_following(self,
                       follow_type: str,
                       limit: int=None
-    ) -> Response: # Union[List[Artist], List[Playlist]]
+    ):
         ''' Get all follow_type objects the current user is following
 
         Keyword arguments:
@@ -218,9 +214,8 @@ class User():
 
 
     def follow(self,
-               other: Union[Artist, User, Playlist,
-                            List[Union[Artist, User, Playlist]]]
-    ) -> Response: # None
+               other
+    ):
         ''' Follow one or more things
 
         Keyword arguments:
@@ -245,9 +240,8 @@ class User():
 
 
     def unfollow(self,
-                 other: Union[Artist, User, Playlist,
-                              List[Union[Artist, User, Playlist]]]
-    ) -> Response: # None
+                 other
+    ):
         ''' Unfollow one or more things
 
         Keyword arguments:
@@ -272,9 +266,8 @@ class User():
 
 
     def has_saved(self,
-                  other: Union[Track, Album,
-                               List[Union[Track, Album]]]
-    ) -> Response: # List[Tuple[Union[Track, Album], bool]]
+                  other
+    ):
         ''' Check if the user has one or more things saved to their library
 
         Keyword arguments:
@@ -300,7 +293,7 @@ class User():
     def get_saved(self,
                   saved_type: str,
                   limit: int=None
-    ) -> Response: # Union[List[Album], List[Track]]
+    ):
         ''' Get all saved_type objects the user has saved to their library
 
         Keyword arguments:
@@ -318,9 +311,8 @@ class User():
 
 
     def save(self,
-             other: Union[Track, Album,
-                          List[Union[Track, Album]]]
-    ) -> Response: # None
+             other
+             ):
         ''' Save one or more things to the user's library
 
         Keyword arguments:
@@ -345,9 +337,7 @@ class User():
 
 
     def remove(self,
-               other: Union[Track, Album,
-                            List[Union[Track, Album]]]
-    ) -> Response: # None
+               other):
         ''' Remove one or more things from the user's library
 
         Keyword arguments:
@@ -369,3 +359,10 @@ class User():
         # DELETE /v1/me/albums
         # DELETE /v1/me/tracks
         pass
+
+from spotifython.album import Album
+from spotifython.artist import Artist
+from spotifython.player import Player
+from spotifython.playlist import Playlist
+from spotifython.track import Track
+from spotifython.session import Session as sp
