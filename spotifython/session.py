@@ -71,6 +71,18 @@ class Session:
         """
         return self._timeout
 
+    def __repr__(self):
+        return self.__str__()
+
+    def __eq__(self, other):
+        return utils.spotifython_eq(self, other)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return utils.spotifython_hash(self)
+
     class SearchResult:
         """ SearchResult class
 
