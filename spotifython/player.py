@@ -9,7 +9,7 @@ import spotifython.constants as const
 from spotifython.endpoints import Endpoints
 import spotifython.utils as utils
 
-class Player():
+class Player:
     """ Interact with a user's playback, such as pausing / playing the current
         song, modifying the queue, etc.
 
@@ -355,3 +355,144 @@ class Player():
         """
         # POST /v1/me/player/queue
         pass
+
+
+class Context:
+    """ A container class used by the Player
+
+    Allows you to set a context (such as an album, playlist, or artist) when
+    modifying playback.
+
+    This class is immutable.
+    """
+
+
+    def __init__(self, item, offset=0):
+        """ Create a Context for playback
+
+        Args:
+            item: one of:
+                Artist
+                Playlist
+                Album
+                List[Tracks]
+            offset: 0 indexed start index item. Ignored if item is an Artist.
+                One of:
+                int: must be >= 0 and < len(item). Position into item where
+                    playback should start.
+                Track: must be a Track object in item.
+        """
+        # Validate item
+        if type(item) not in [Artist, Playlist, Album, list]:
+            raise TypeError(item)
+
+        if isinstance(item, list):
+            for elem in item:
+                if not isinstance(elem, Track):
+                    raise TypeError(elem)
+
+        self._item = item
+
+        # Validate offset, ignore if item is an artist
+        if isinstance(item, Artist):
+            self._offset = None
+            return
+
+        if isinstance(offset, int):
+            if offset < 0 or offset >= len(item):
+                raise ValueError(offset)
+
+            self._offset = offset
+
+        elif isinstance(offset, Track):
+            if offset not in item:
+                raise ValueError(offset)
+
+            # Get the index for offset
+            counter = 0
+            while counter < len(item):
+                if item[counter] == offset:
+                    self._offset = counter
+                    break # Make sure to return first occurrence of offset
+                counter += 1
+
+        else:
+            raise TypeError(offset)
+
+
+    def __str__(self):
+        format_str = 'Context obj with item <%s> and offset <%s>'
+        return format_str % (str(self._item), str(self._offset))
+
+
+    def __repr__(self):
+        return str(self)
+
+
+    # TODO: can I check if the hash codes are the same?
+    def __eq__(self, other):
+        """
+        for self == other,
+        if both items are playlists or albums, then:
+            self.item() == other.item() and self.offset() == other.offset()
+        if both are artists, then:
+            self.item() == other.item()
+        if both are lists, then:
+            each elem in the lists must be equivalent and
+            self.offset() == other.offset()
+        """
+        #pylint: disable=unidiomatic-typecheck
+        # Check type equivalence
+        if type(self) != type(other) or type(self._item) != type(other._item):
+            return False
+
+        # Check item equivalence
+        if isinstance(self._item, list):
+            if len(self._item) != len(other._item):
+                return False
+            for counter in range(len(self._item)):
+                if self._item[counter] != other._item[counter]:
+                    return False
+
+        elif self._item != other._item:
+            return False
+
+        # Check offset equivalence
+        if not isinstance(self, Artist) and self._offset != other._offset:
+            return False
+
+        return True
+
+
+    def __ne__(self, other):
+        return not self == other
+
+
+    def item(self):
+        """ Get the item for this context
+
+        Returns:
+            The item passed into the constructor. One of:
+                Artist
+                Playlist
+                Album
+                List[Tracks]
+        """
+        return self._item
+
+
+    def offset(self):
+        """ The offset into item where the current playback is.
+
+        Returns:
+            None if item is an Artist object
+            A non-negative integer < len(item) otherwise
+        """
+        return self._offset
+
+#pylint: disable=wrong-import-position
+#pylint: disable=wrong-import-order
+from spotifython.album import Album
+from spotifython.artist import Artist
+from spotifython.playlist import Playlist
+from spotifython.track import Track
