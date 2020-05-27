@@ -35,8 +35,13 @@ class TestPlayer(unittest.TestCase):
         self.request_mock = self.patcher.start()
 
 
-    @unittest.skip('Not yet implemented')
     def test_user(self):
+        self.assertEqual(self.user, self.player.user())
+
+
+    @unittest.skip('Not yet implemented')
+    def test__player_data(self):
+        # Should also test the SpotifyError
         pass
 
 
