@@ -5,15 +5,21 @@ code.
 
 # Standard library imports
 import math
+import time
 
 # Third party imports
 import requests
+from requests.adapters import HTTPAdapter
+from requests.packages.urllib3.util.retry import Retry
 
 # Local imports
-from spotifython.endpoints import Endpoints
 import spotifython.constants as const
+from spotifython.endpoints import Endpoints
 
-# Exceptions
+##################################
+# EXCEPTIONS
+##################################
+
 #pylint: disable=unnecessary-pass
 class AuthenticationError(Exception):
     """ Used when the token fails to authenticate with Spotify
@@ -31,9 +37,8 @@ class SpotifyError(Exception):
     pass
 
 ##################################
-# HTTP REQUEST
+# HTTP REQUESTS
 ##################################
-# TODO: https://stackoverflow.com/questions/23267409/how-to-implement-retry-mechanism-into-python-requests-library
 
 def request(session,
             request_type,
@@ -43,6 +48,8 @@ def request(session,
     """ Does HTTP request with retry to a Spotify endpoint.
     This method should return a tuple (response_json, status_code) if the
     request is executed, and raises an Exception if the request type is invalid.
+
+    See https://developer.spotify.com/documentation/web-api/ for error codes
 
     Args:
         request_type: one of sp.REQUEST_GET, sp.REQUEST_POST, sp.REQUEST_PUT,
@@ -65,25 +72,66 @@ def request(session,
         'Content-Type': 'application/json',
         'Accept': 'application/json'
     }
-    response = requests.request(request_type,
+
+    # total: max number of retries
+    # backoff_factor: for exponential backoff. will wait 0.5,1,2,4,8,16,32 etc.
+    # with total = 7 and backoff = 1, will wait 32 sec for last retry, 64 total
+    retry_strategy = Retry(total=7,
+                           backoff_factor=1)
+
+    # Apply the retry strategy
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    http = requests.Session()
+    http.mount('https://', adapter)
+    http.mount('http://', adapter)
+
+    while True:
+        response = http.request(request_type,
                                 request_uri,
                                 json=body,
                                 params=uri_params,
                                 headers=headers,
                                 timeout=session.timeout())
 
-    # Raises HTTPError if request unsuccessful
-    response.raise_for_status()
+        status_code = response.status_code
 
-    # TODO: spotify response header 'retry-after'
+        # 429: rate limiting applied
+        if status_code == 429:
+            time.sleep(response.headers['Retry-After'])
+        else:
+            break
 
-    # r.json() raises ValueError if no content - this is not an error
+    # ValueError if no content; not an error
     try:
         content = response.json()
     except ValueError:
         content = None
 
-    return content, response.status_code
+    # Get error message if it exists
+    try:
+        message = content['error']['message']
+    except:
+        messge = str(content)
+
+    # 400: bad request, 404: not found
+    if status_code in [400, 404]:
+        raise SpotifyError('%d, %s' % (status_code, message))
+
+    # 401: unauthorized
+    if status_code == 401:
+        raise AuthenticationError('Unauthorized: %s' % message)
+
+    # 500, 502, 503: internal spotify errors, shouldn't get normally
+    if status_code in [500, 502, 503]:
+        raise SpotifyError('%d, %s' % (status_code, message))
+
+    # Success codes and 403 (forbidden)
+    # Our library functions should case on 403 and deal with it accordingly.
+    if status_code in [200, 201, 202, 204, 304, 403]:
+        return content, status_code
+
+    # Request failed
+    raise NetworkError('%d, %s' % (status_code, message))
 
 
 # TODO: partial failure?
@@ -152,6 +200,9 @@ def paginate_get(session,
 
     return results[:limit]
 
+##################################
+# HELPERS
+##################################
 
 def create_batches(elems, batch_size=const.SPOTIFY_PAGE_SIZE):
     """ Break list into batches of max len 'batch_size'
