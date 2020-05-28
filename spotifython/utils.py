@@ -113,21 +113,21 @@ def request(session,
     except:
         messge = str(content)
 
-    # 400: bad request, 404: not found
-    if status_code in [400, 404]:
+    # 400: bad request
+    if status_code in [400]:
         raise SpotifyError('%d, %s' % (status_code, message))
 
     # 401: unauthorized
-    if status_code == 401:
+    if status_code in [401]:
         raise AuthenticationError('Unauthorized: %s' % message)
 
     # 500, 502, 503: internal spotify errors, shouldn't get normally
     if status_code in [500, 502, 503]:
         raise SpotifyError('%d, %s' % (status_code, message))
 
-    # Success codes and 403 (forbidden)
-    # Our library functions should case on 403 and deal with it accordingly.
-    if status_code in [200, 201, 202, 204, 304, 403]:
+    # Success codes, 403 (forbidden), 404 (not found)
+    # Our functions should case on 403/404 and deal with them accordingly.
+    if status_code in [200, 201, 202, 204, 304, 403, 404]:
         return content, status_code
 
     # Request failed
