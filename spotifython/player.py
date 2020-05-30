@@ -10,6 +10,9 @@ from spotifython.endpoints import Endpoints
 import spotifython.utils as utils
 
 # TODO: return codes and erroring out
+# TODO: asking for bug reports?
+# TODO: standardize 'missing key error'
+# TODO: make sure 'no active device' returned for all such errors
 class Player:
     """ Interact with a user's playback, such as pausing / playing the current
         song, modifying the queue, etc.
@@ -30,7 +33,15 @@ class Player:
     Raises:
         TypeError:  if incorrectly typed parameters are given.
         ValueError: if parameters with illegal values are given.
-        SpotifyError: if there is no active or available device.
+        SpotifyError: if there is no active or available device and no device_id
+            is given.
+        SpotifyError: if the action is disallowed.
+            Note that some actions that should be allowed are difficult to
+            implement because the Spotify player API is in beta. For example,
+            according to the docs, pausing while paused should return a 403 with
+            reason string 'ALREADY_PAUSED', however the reason string actually
+            given is 'UNKNOWN', forcing Player.pause() to raise an exception if
+            playback is already paused.
 
     Note:
         Due to the asynchronous nature of many Player commands, you should use
@@ -77,13 +88,18 @@ class Player:
     # TODO: https://github.com/spotify/web-api/issues/1588
     # Returns 204 when no active device, docs say it should be 200 or 404
     # TODO: everything that calls this should check for None
-    def _player_data(self, key, market=const.TOKEN_REGION):
+    def _player_data(self,
+                     key,
+                     market=const.TOKEN_REGION,
+                     return_none=False):
         """ Helper function for the getter methods.
         Wraps calling the player endpoint and handling a missing key.
 
         Args:
             key: the key to get from the currently playing context
             market: used in track relinking TODO: describe
+            return_none: if True: returns None when no device available
+                         if False: raises SpotifyError when no device available
 
         Returns:
             None if there is no active device
@@ -109,16 +125,19 @@ class Player:
 
         # No active device
         if status_code == 204:
-            return None
+            if return_none:
+                return None
+            raise utils.SpotifyError('No active device',
+                                     status_code,
+                                     response_json)
 
         # Valid Player errors
-        # TODO: test that this raises as expected
         if status_code in [403, 404]:
-            raise utils.SpotifyError(response_json)
+            raise utils.SpotifyError(status_code, response_json)
 
         # Misc other failure
         if status_code != 200:
-            raise utils.NetworkError(response_json)
+            raise utils.NetworkError(status_code, response_json)
 
         if key not in response_json:
             raise utils.SpotifyError('Key <%s> not found in player data' % key)
@@ -146,7 +165,7 @@ class Player:
         """
         uri_params = None if device_id is None else {'device_id': device_id}
 
-        _, status_code = utils.request(
+        response_json, status_code = utils.request(
             self._session,
             request_type=const.REQUEST_POST,
             endpoint=Endpoints.PLAYER_NEXT,
@@ -155,7 +174,7 @@ class Player:
         )
 
         if status_code != 204:
-            raise Exception('Oh no TODO!')
+            raise utils.SpotifyError(status_code, response_json)
 
 
     def previous(self, device_id=None):
@@ -175,7 +194,7 @@ class Player:
         """
         uri_params = None if device_id is None else {'device_id': device_id}
 
-        _, status_code = utils.request(
+        response_json, status_code = utils.request(
             self._session,
             request_type=const.REQUEST_POST,
             endpoint=Endpoints.PLAYER_PREVIOUS,
@@ -184,7 +203,7 @@ class Player:
         )
 
         if status_code != 204:
-            raise Exception('Oh no TODO!')
+            raise utils.SpotifyError(status_code, response_json)
 
 
     def pause(self, device_id=None):
@@ -200,11 +219,11 @@ class Player:
             user-modify-playback-state
 
         Raises:
-            SpotifyError: if playback is not playing
+            SpotifyError: if playback is not playing (or already paused)
         """
         uri_params = None if device_id is None else {'device_id': device_id}
 
-        _, status_code = utils.request(
+        response_json, status_code = utils.request(
             self._session,
             request_type=const.REQUEST_PUT,
             endpoint=Endpoints.PLAYER_PAUSE,
@@ -213,7 +232,7 @@ class Player:
         )
 
         if status_code != 204:
-            raise Exception('Oh no TODO!')
+            raise utils.SpotifyError(status_code, response_json)
 
 
     def resume(self, device_id=None):
@@ -233,7 +252,7 @@ class Player:
         """
         uri_params = None if device_id is None else {'device_id': device_id}
 
-        _, status_code = utils.request(
+        response_json, status_code = utils.request(
             self._session,
             request_type=const.REQUEST_PUT,
             endpoint=Endpoints.PLAYER_PLAY,
@@ -242,7 +261,7 @@ class Player:
         )
 
         if status_code != 204:
-            raise Exception('Oh no TODO!')
+            raise utils.SpotifyError(status_code, response_json)
 
 
     # TODO: Future support: position in track
@@ -251,7 +270,7 @@ class Player:
     def play(self, item=None, context=None, device_id=None):
         """ Change the current track and context for the player
 
-        Uses the currently active device, if one exists.
+        If device_id is None and no active device exists, raises SpotifyError
 
         Args:
             item: an instance of sp.Track, sp.Album, sp.Playlist, or sp.Artist.
@@ -294,7 +313,7 @@ class Player:
 
             body['offset'] = {'position': context.offset()}
 
-        _, status_code = utils.request(
+        response_json, status_code = utils.request(
             self._session,
             request_type=const.REQUEST_PUT,
             endpoint=Endpoints.PLAYER_PLAY,
@@ -303,7 +322,7 @@ class Player:
         )
 
         if status_code != 204:
-            raise Exception('Oh no TODO!')
+            raise utils.SpotifyError(status_code, response_json)
 
 
     def is_playing(self):
@@ -400,19 +419,17 @@ class Player:
         )
 
         if status_code != 200:
-            raise Exception('Oh no TODO!')
+            raise utils.SpotifyError(status_code, response_json)
 
-        if 'devices' not in response_json:
-            raise utils.SpotifyError('Key \'devices\' not in spotify response')
-        devices = response_json['devices']
+        try:
+            devices = response_json['devices']
+            result = list(map(lambda elem: elem['id'], devices))
+        except KeyError:
+            raise utils.SpotifyError('Spotify response missing data')
 
-        if len(devices) > 0 and 'id' not in devices[0]:
-            raise utils.SpotifyError('Key \'id\' not in spotify response')
-
-        return list(map(lambda elem: elem['id'], devices))
+        return result
 
 
-    #TODO: should return None, not error when no active device
     def get_active_device(self):
         """ Get the currently active device
 
@@ -423,13 +440,13 @@ class Player:
         Calls endpoints:
             GET     /v1/me/player
 
-            Does NOT use GET /v1/me/player/currently-playing
-            The data returned at that endpoint is a subset of /v1/me/player
-
         Required token scopes:
             user-read-playback-state
         """
-        device = self._player_data('device')
+        device = self._player_data('device', return_none=True)
+        if device is None:
+            return None
+
         if 'id' not in device:
             raise utils.SpotifyError('Key \'id\' not in spotify response')
 
@@ -460,7 +477,7 @@ class Player:
         body = {'device_ids': [device_id],
                 'play': force_play == const.FORCE_PLAY}
 
-        _, status_code = utils.request(
+        response_json, status_code = utils.request(
             self._session,
             request_type=const.REQUEST_PUT,
             endpoint=Endpoints.PLAYER_TRANSFER,
@@ -469,7 +486,7 @@ class Player:
         )
 
         if status_code != 204:
-            raise Exception('Oh no TODO!')
+            raise utils.SpotifyError(status_code, response_json)
 
 
     def get_shuffle(self):
@@ -510,7 +527,7 @@ class Player:
         if device_id is not None:
             uri_params['device_id'] = device_id
 
-        _, status_code = utils.request(
+        response_json, status_code = utils.request(
             self._session,
             request_type=const.REQUEST_PUT,
             endpoint=Endpoints.PLAYER_SHUFFLE,
@@ -519,7 +536,7 @@ class Player:
         )
 
         if status_code != 204:
-            raise Exception('Oh no TODO!')
+            raise utils.SpotifyError(status_code, response_json)
 
 
     def get_playback_position(self):
@@ -528,8 +545,7 @@ class Player:
         Uses the currently active device, if one exists.
 
         Returns:
-            The position (in ms) as an int if there is an active playback.
-            None if there is no active playback. TODO: is this possible?
+            The position (in ms) as an int.
 
         Calls endpoints:
             GET    /v1/me/player
@@ -565,7 +581,7 @@ class Player:
         if device_id is not None:
             uri_params['device_id'] = device_id
 
-        _, status_code = utils.request(
+        response_json, status_code = utils.request(
             self._session,
             request_type=const.REQUEST_PUT,
             endpoint=Endpoints.PLAYER_SEEK,
@@ -574,17 +590,14 @@ class Player:
         )
 
         if status_code != 204:
-            raise Exception('Oh no TODO!')
+            raise utils.SpotifyError(status_code, response_json)
 
 
     def get_volume(self):
         """ Get the current volume for the playback
 
-        Uses the currently active device, if one exists.
-
         Returns:
             The volume (in percent) as an int from 0 to 100 inclusive.
-            TODO: What if there is no active playback?
 
         Calls endpoints:
             GET    /v1/me/player
@@ -621,7 +634,7 @@ class Player:
         if device_id is not None:
             uri_params['device_id'] = device_id
 
-        _, status_code = utils.request(
+        response_json, status_code = utils.request(
             self._session,
             request_type=const.REQUEST_PUT,
             endpoint=Endpoints.PLAYER_VOLUME,
@@ -630,7 +643,7 @@ class Player:
         )
 
         if status_code != 204:
-            raise Exception('Oh no TODO!')
+            raise utils.SpotifyError(status_code, response_json)
 
 
     def get_repeat(self):
@@ -649,16 +662,15 @@ class Player:
         """
         result = self._player_data('repeat_state')
 
-        if result == 'off':
-            return const.OFF
+        states = {
+            const.TRACKS: 'track',
+            const.CONTEXT: 'context',
+            const.OFF: 'off'
+        }
+        if result not in states:
+            raise utils.SpotifyError('Repeat state <%s> not defined' % result)
 
-        if result == 'context':
-            return const.CONTEXT
-
-        if result == 'track':
-            return const.TRACKS
-
-        raise utils.SpotifyError('Repeat state <%s> not defined' % result)
+        return states[result]
 
 
     def set_repeat(self, mode, device_id=None):
@@ -691,7 +703,7 @@ class Player:
         if device_id is not None:
             uri_params['device_id'] = device_id
 
-        _, status_code = utils.request(
+        response_json, status_code = utils.request(
             self._session,
             request_type=const.REQUEST_PUT,
             endpoint=Endpoints.PLAYER_REPEAT,
@@ -700,7 +712,7 @@ class Player:
         )
 
         if status_code != 204:
-            raise Exception('Oh no TODO!')
+            raise utils.SpotifyError(status_code, response_json)
 
 
     # Note for me: add episodes at some point
@@ -719,6 +731,9 @@ class Player:
         Returns:
             None
 
+        Note: when adding an Album or Playlist, this method can fail partway
+            through, resulting in only some Tracks being added to the queue.
+
         Calls endpoints:
             POST    /v1/me/player/queue
 
@@ -733,10 +748,12 @@ class Player:
             item = [item]
 
         uri_params = {} if device_id is None else {'device_id': device_id}
+
+        # Can only enqueue one item at a time
         for track in item:
             uri_params['uri'] = track.uri()
 
-            _, status_code = utils.request(
+            response_json, status_code = utils.request(
                 self._session,
                 request_type=const.REQUEST_POST,
                 endpoint=Endpoints.PLAYER_QUEUE,
@@ -745,7 +762,7 @@ class Player:
             )
 
             if status_code != 204:
-                raise Exception('Oh no TODO!')
+                raise utils.SpotifyError(status_code, response_json)
 
 
 # Used by: play, get_currently_playing. Maybe add get/set context?
@@ -821,7 +838,6 @@ class Context:
         return str(self)
 
 
-    # TODO: can I check if the hash codes are the same?
     def __eq__(self, other):
         """
         for self == other,
@@ -842,8 +858,8 @@ class Context:
         if isinstance(self._item, list):
             if len(self._item) != len(other._item):
                 return False
-            for counter in range(len(self._item)):
-                if self._item[counter] != other._item[counter]:
+            for i in range(len(self._item)):
+                if self._item[i] != other._item[i]:
                     return False
 
         elif self._item != other._item:

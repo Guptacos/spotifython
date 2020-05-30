@@ -35,6 +35,20 @@ class TestPlayer(unittest.TestCase):
         self.request_mock = self.patcher.start()
 
 
+    def test_dunder(self):
+        other = User(self.session, {'id': USER_ID}).player()
+
+        # Not the same object
+        self.assertIsNot(self.player, other)
+
+        # eq and ne
+        self.assertEqual(self.player, other)
+        self.assertNotEqual(self.player, User(self.session, {'id': USER_ID*2}))
+
+        # hash
+        self.assertEqual(hash(self.player), hash(other))
+
+
     def test_user(self):
         self.assertEqual(self.user, self.player.user())
 
