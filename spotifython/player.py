@@ -9,6 +9,7 @@ import spotifython.constants as const
 from spotifython.endpoints import Endpoints
 import spotifython.utils as utils
 
+# TODO: return codes and erroring out
 class Player:
     """ Interact with a user's playback, such as pausing / playing the current
         song, modifying the queue, etc.
@@ -51,7 +52,7 @@ class Player:
 
     # Format should be 'Player for user <%s>' with user_id
     def __str__(self):
-        return 'Player for <%s>' % str(self._user)
+        return 'Player for %s' % str(self._user)
 
 
     def __repr__(self):
@@ -59,6 +60,7 @@ class Player:
 
 
     def __eq__(self, other):
+        #pylint: disable=unidiomatic-typecheck
         return type(self) == type(other) and self._user == other._user
 
 
@@ -72,6 +74,9 @@ class Player:
         return hash(hash_str)
 
 
+    # TODO: https://github.com/spotify/web-api/issues/1588
+    # Returns 204 when no active device, docs say it should be 200 or 404
+    # TODO: everything that calls this should check for None
     def _player_data(self, key, market=const.TOKEN_REGION):
         """ Helper function for the getter methods.
         Wraps calling the player endpoint and handling a missing key.
@@ -79,6 +84,14 @@ class Player:
         Args:
             key: the key to get from the currently playing context
             market: used in track relinking TODO: describe
+
+        Returns:
+            None if there is no active device
+            The result of player_data[key] otherwise
+
+        Raises:
+            SpotifyError: if spotify returns an error or the key isn't found
+            NetworkError: for misc network failures
 
         Calls endpoints:
             GET    /v1/me/player
@@ -94,14 +107,23 @@ class Player:
             uri_params={'market': market}
         )
 
-        if status_code != 200:
-            raise Exception('Oh no TODO!')
+        # No active device
+        if status_code == 204:
+            return None
 
-        result = response_json.get(key, None)
-        if result is None:
+        # Valid Player errors
+        # TODO: test that this raises as expected
+        if status_code in [403, 404]:
+            raise utils.SpotifyError(response_json)
+
+        # Misc other failure
+        if status_code != 200:
+            raise utils.NetworkError(response_json)
+
+        if key not in response_json:
             raise utils.SpotifyError('Key <%s> not found in player data' % key)
 
-        return result
+        return response_json[key]
 
 
     def user(self):
@@ -390,6 +412,7 @@ class Player:
         return list(map(lambda elem: elem['id'], devices))
 
 
+    #TODO: should return None, not error when no active device
     def get_active_device(self):
         """ Get the currently active device
 
@@ -398,7 +421,7 @@ class Player:
             None if there is no active device.
 
         Calls endpoints:
-            GET    /v1/me/player
+            GET     /v1/me/player
 
             Does NOT use GET /v1/me/player/currently-playing
             The data returned at that endpoint is a subset of /v1/me/player
@@ -413,6 +436,7 @@ class Player:
         return device['id']
 
 
+    # TODO: maybe rename transfer_playback?
     def set_active_device(self, device_id, force_play=const.KEEP_PLAY_STATE):
         """ Transfer playback to a different available device
 
@@ -423,9 +447,29 @@ class Player:
 
         Returns:
             None
+
+        Calls endpoints:
+            PUT     /v1/me/player
+
+        Required token scopes:
+            user-modify-playback-state
         """
-        # PUT /v1/me/player
-        pass
+        if force_play not in [const.FORCE_PLAY, const.KEEP_PLAY_STATE]:
+            raise ValueError(force_play)
+
+        body = {'device_ids': [device_id],
+                'play': force_play == const.FORCE_PLAY}
+
+        _, status_code = utils.request(
+            self._session,
+            request_type=const.REQUEST_PUT,
+            endpoint=Endpoints.PLAYER_TRANSFER,
+            body=body,
+            uri_params=None
+        )
+
+        if status_code != 204:
+            raise Exception('Oh no TODO!')
 
 
     def get_shuffle(self):
