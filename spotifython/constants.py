@@ -1,3 +1,6 @@
+""" Constants and enums used by the spotifython library.
+"""
+
 # Enums
 ALBUMS = 'albums'
 ARTISTS = 'artists'
@@ -25,5 +28,6 @@ PRIVATE_COLLAB = 'private_collab'
 # Constants
 DEFAULT_REQUEST_TIMEOUT = 10 # in seconds
 SPOTIFY_PAGE_SIZE = 50
-SPOTIFY_MAX_PLAYLISTS = 100000
-SPOTIFY_MAX_LIB_SIZE = 10000
+#pylint: disable=line-too-long
+# See https://developer.spotify.com/documentation/web-api/reference/playlists/get-list-users-playlists/
+MAX_PLAYLISTS = 100000

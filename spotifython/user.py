@@ -4,6 +4,9 @@ This class represents a User object, tied to a Spotify user id.
 
 """
 
+# Standard library imports
+import sys
+
 # Local imports
 import spotifython.constants as const
 from spotifython.endpoints import Endpoints
@@ -26,7 +29,7 @@ class User:
     def __init__(self, session, info):
         """
         Args:
-            session: a Spotifython instance
+            session: an instance of sp.Session
             info: (dict) known values about the user. Must contain 'id'.
         """
         # Validate inputs
@@ -39,7 +42,7 @@ class User:
 
 
     def __str__(self):
-        return 'User <%s>' % self._id
+        return f'User <{self._id}>'
 
 
     def __repr__(self):
@@ -97,8 +100,8 @@ class User:
                 sp.SHORT (about 4 weeks)
 
         Returns:
-            A list of artists or a list of tracks, depending on top_type. Could
-            be empty.
+            A list of artists or a list of tracks, depending on top_type
+            Could return an empty list.
 
         Required token scopes:
             user-top-read
@@ -181,7 +184,7 @@ class User:
         return results
 
 
-    def get_playlists(self, limit=const.SPOTIFY_MAX_PLAYLISTS):
+    def get_playlists(self, limit=const.MAX_PLAYLISTS):
         """ Get the playlists the user has in their library
 
         Args:
@@ -204,7 +207,7 @@ class User:
         To get only playlists this user follows, use get_following(sp.PLAYLISTS)
         """
         # Validate inputs
-        if limit <= 0 or limit > const.SPOTIFY_MAX_PLAYLISTS:
+        if limit <= 0 or limit > const.MAX_PLAYLISTS:
             raise ValueError(limit)
 
         endpoint = Endpoints.USER_GET_PLAYLISTS % self.spotify_id()
@@ -356,7 +359,8 @@ class User:
 
     def get_following(self,
                       follow_type,
-                      limit=const.SPOTIFY_MAX_LIB_SIZE):
+                      limit=None):
+        #pylint: disable=line-too-long
         """ Get all follow_type objects the current user is following
 
         Args:
@@ -364,7 +368,9 @@ class User:
                 sp.ARTISTS
                 sp.PLAYLISTS
             limit: (int) the max number of items to return. If None,
-                will return all. Must be between 1 and 100,000 inclusive.
+                will return all. Must be positive.
+                If follow_type == sp.PLAYLISTS, must be <= 100,000
+                See here: https://developer.spotify.com/documentation/web-api/reference/playlists/get-list-users-playlists/
 
         Returns:
             List of follow_type objects. Could be empty.
@@ -386,21 +392,34 @@ class User:
                 currently allow you to access this information.
                 For more info: https://github.com/spotify/web-api/issues/4
         """
-        # Validate inputs
+        # Validate follow_type
         if follow_type not in [const.ARTISTS, const.PLAYLISTS]:
             raise TypeError(follow_type)
-        if limit <= 0 or limit > const.SPOTIFY_MAX_LIB_SIZE:
-            raise ValueError(limit)
 
+        # Validate limit
+        if limit is not None:
+            if limit <= 0:
+                raise ValueError(limit)
+            if follow_type == const.PLAYLISTS and limit > const.MAX_PLAYLISTS:
+                raise ValueError(limit)
+
+        # Set limit if not set
+        elif follow_type == const.ARTISTS:
+            limit = sys.maxsize
+        else:
+            limit = const.MAX_PLAYLISTS
+
+        # Deal with followed playlists
         if follow_type == const.PLAYLISTS:
-            results = []
-            for playlist in self.get_playlists():
-                if playlist.owner().spotify_id() != self.spotify_id():
-                    results.append(playlist)
+            results = self.get_playlists()
+
+            def filter_func(playlist):
+                return playlist.owner().spotify_id() != self.spotify_id()
+            results = list(filter(filter_func, results))
 
             return results[:limit]
 
-        # assert(follow_type == const.ARTISTS)
+        # Deal with followed artists assert(follow_type == const.ARTISTS)
         uri_params = {
             'type': 'artist',
             'limit': const.SPOTIFY_PAGE_SIZE
@@ -433,7 +452,8 @@ class User:
             for elem in response_json['artists']['items']:
                 results.append(Artist(self._session, elem))
 
-        return results[:limit]
+        results = results[:limit] if limit is not None else results
+        return results
 
 
     def _follow_unfollow_help(self, other, request_type):
@@ -650,11 +670,14 @@ class User:
         # Validate inputs
         if saved_type not in [const.ALBUMS, const.TRACKS]:
             raise TypeError(saved_type)
-        if limit is None:
-            limit = const.SPOTIFY_MAX_LIB_SIZE
-        if limit <= 0 or limit > const.SPOTIFY_MAX_LIB_SIZE:
+
+        if limit is None: # Lists can't be longer than sys.maxsize in python
+            limit = sys.maxsize
+
+        if limit <= 0:
             raise ValueError(limit)
 
+        # Make request
         endpoint_type = 'albums' if saved_type == const.ALBUMS else 'tracks'
         return_class = Album if saved_type == const.ALBUMS else Track
         uri_params = {'market': market}
