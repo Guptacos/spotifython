@@ -9,10 +9,9 @@ import spotifython.constants as const
 from spotifython.endpoints import Endpoints
 import spotifython.utils as utils
 
+KEYSTRING = 'Spotify response missing data'
+
 # TODO: return codes and erroring out
-# TODO: asking for bug reports?
-# TODO: standardize 'missing key error'
-# TODO: make sure 'no active device' returned for all such errors
 class Player:
     """ Interact with a user's playback, such as pausing / playing the current
         song, modifying the queue, etc.
@@ -140,7 +139,7 @@ class Player:
             raise utils.NetworkError(status_code, response_json)
 
         if key not in response_json:
-            raise utils.SpotifyError('Key <%s> not found in player data' % key)
+            raise utils.SpotifyError(KEYSTRING + ': key <%s> not found' % key)
 
         return response_json[key]
 
@@ -265,29 +264,25 @@ class Player:
 
 
     # TODO: Future support: position in track
-    # TODO: may be worth removing Context and moving offset to this function
     # TODO: manual testing
-    def play(self, item=None, context=None, device_id=None):
+    def play(self, item, offset=0, device_id=None):
         """ Change the current track and context for the player
 
         If device_id is None and no active device exists, raises SpotifyError
 
         Args:
             item: an instance of sp.Track, sp.Album, sp.Playlist, or sp.Artist.
-                to begin playing. Will only play the 1 item with no other
-                context.
-            context: a context object.
+            offset: a non-negative integer representing the position in item to
+                start playback.
+                Ignored if item is not an Album or Playlist.
+                0 <= offset < len(item)
 
-        Note: playback will start at the beginning of the track by default.
-            Use in combination with Player.set_playback_position to start
-            elsewhere in the item.
+        Note: playback will start at the beginning of the track.  Use in
+            combination with Player.set_playback_position to start elsewhere in
+            the item.
 
         Returns:
             None
-
-        Raises:
-            ValueError: only supports using item OR context. If both (or
-                neither) are given, will raise ValueError.
 
         Calls endpoints:
             PUT     /v1/me/player/play
@@ -295,23 +290,22 @@ class Player:
         Required token scopes:
             user-modify-playback-state
         """
-        if item is None and context is None:
-            raise ValueError('Must provide one of \'item\' or \'context\'')
+        if type(item) not in [Track, Album, Playlist, Artist]:
+            raise TypeError(item)
 
-        if item is not None and context is not None:
-            raise ValueError('Can only provide one of \'item\' or \'context\'')
+        if type(item) in [Album, Playlist]:
+            if offset < 0 or offset >= len(item):
+                raise ValueError(offset)
 
         uri_params = None if device_id is None else {'device_id': device_id}
 
-        if item is not None:
+        if isinstance(item, Track):
+            body = {'uris': [item.uri()]}
+        else:
             body = {'context_uri': item.uri()}
-        else:   # context is not None
-            if isinstance(context.item(), list):
-                body = {'uris': context.item()}
-            else:
-                body = {'context_uri': context.item()}
 
-            body['offset'] = {'position': context.offset()}
+        if type(item) in [Album, Playlist]:
+            body['offset'] = {'position': offset}
 
         response_json, status_code = utils.request(
             self._session,
@@ -359,14 +353,8 @@ class Player:
         return not self.is_playing()
 
 
-    # TODO: This method name is not final. Here are alternatives we considered:
-    # get_currently_playing
-    # now_playing
-    # get_active_audio
     # Note for me: in the future, add 'additional_types' to support episodes.
-    # Note for me: in the future support returning a context object
-    # Maybe remove 'get' prefix?
-    def get_currently_playing(self, market=const.TOKEN_REGION):
+    def currently_playing(self, market=const.TOKEN_REGION):
         """ Get the currently playing track in the playback
 
         Uses the currently active device, if one exists.
@@ -397,6 +385,33 @@ class Player:
         return Track(self._session, item)
 
 
+    # TODO: rename context?
+    def current_context(self, market=const.TOKEN_REGION):
+        # TODO: document
+        # TODO: integration testing
+        context = self._player_data('context', market)
+        if context is None:
+            print('No context!')
+            return None
+
+        # Validate context
+        if 'uri' not in context or 'type' not in context:
+            raise SpotifyError(KEYSTRING)
+
+        # uri of form 'spotify:type:id'
+        context_id = context['uri'].split(':')[-1]
+
+        # Context can only be one of Artist, Album, or Playlist
+        if context['type'] == 'album':
+            return self._session.get_albums(context_id)
+        if context['type'] == 'artist':
+            return self._session.get_artists(context_id)
+        if context['type'] == 'playlist':
+            return self._session.get_playlists(context_id)
+
+        raise utils.SpotifyError('Unrecognized context: %s' % str(context))
+
+
     # Note for me: in the future add a separate device abstraction
     def available_devices(self):
         """ Get all devices currently available
@@ -425,7 +440,7 @@ class Player:
             devices = response_json['devices']
             result = list(map(lambda elem: elem['id'], devices))
         except KeyError:
-            raise utils.SpotifyError('Spotify response missing data')
+            raise utils.SpotifyError(KEYSTRING)
 
         return result
 
@@ -448,7 +463,7 @@ class Player:
             return None
 
         if 'id' not in device:
-            raise utils.SpotifyError('Key \'id\' not in spotify response')
+            raise utils.SpotifyError(KEYSTRING + ': key \'id\' not found')
 
         return device['id']
 
@@ -607,7 +622,7 @@ class Player:
         """
         device = self._player_data('device')
         if 'volume_percent' not in device:
-            raise utils.SpotifyError('Device missing volume_percent key')
+            raise utils.SpotifyError(KEYSTRING+': key volume_percent not found')
 
         return device['volume_percent']
 
@@ -764,139 +779,6 @@ class Player:
             if status_code != 204:
                 raise utils.SpotifyError(status_code, response_json)
 
-
-# Used by: play, get_currently_playing. Maybe add get/set context?
-class Context:
-    """ A container class used by the Player
-
-    Allows you to set a context (such as an album, playlist, or artist) when
-    modifying playback.
-
-    This class is immutable.
-    """
-
-
-    def __init__(self, item, offset=0):
-        """ Create a Context for playback
-
-        Args:
-            item: one of:
-                Artist
-                Playlist
-                Album
-                List[Tracks]
-            offset: 0 indexed start index item. Ignored if item is an Artist.
-                One of:
-                int: must be >= 0 and < len(item). Position into item where
-                    playback should start.
-                Track: must be a Track object in item.
-        """
-        # Validate item
-        if type(item) not in [Artist, Playlist, Album, list]:
-            raise TypeError(item)
-
-        if isinstance(item, list):
-            for elem in item:
-                if not isinstance(elem, Track):
-                    raise TypeError(elem)
-
-        self._item = item
-
-        # Validate offset, ignore if item is an artist
-        if isinstance(item, Artist):
-            self._offset = None
-            return
-
-        if isinstance(offset, int):
-            if offset < 0 or offset >= len(item):
-                raise ValueError(offset)
-
-            self._offset = offset
-
-        elif isinstance(offset, Track):
-            if offset not in item:
-                raise ValueError(offset)
-
-            # Get the index for offset
-            counter = 0
-            while counter < len(item):
-                if item[counter] == offset:
-                    self._offset = counter
-                    break # Make sure to return first occurrence of offset
-                counter += 1
-
-        else:
-            raise TypeError(offset)
-
-
-    def __str__(self):
-        format_str = 'Context obj with item <%s> and offset <%s>'
-        return format_str % (str(self._item), str(self._offset))
-
-
-    def __repr__(self):
-        return str(self)
-
-
-    def __eq__(self, other):
-        """
-        for self == other,
-        if both items are playlists or albums, then:
-            self.item() == other.item() and self.offset() == other.offset()
-        if both are artists, then:
-            self.item() == other.item()
-        if both are lists, then:
-            each elem in the lists must be equivalent and
-            self.offset() == other.offset()
-        """
-        #pylint: disable=unidiomatic-typecheck
-        # Check type equivalence
-        if type(self) != type(other) or type(self._item) != type(other._item):
-            return False
-
-        # Check item equivalence
-        if isinstance(self._item, list):
-            if len(self._item) != len(other._item):
-                return False
-            for i in range(len(self._item)):
-                if self._item[i] != other._item[i]:
-                    return False
-
-        elif self._item != other._item:
-            return False
-
-        # Check offset equivalence
-        if not isinstance(self, Artist) and self._offset != other._offset:
-            return False
-
-        return True
-
-
-    def __ne__(self, other):
-        return not self == other
-
-
-    def item(self):
-        """ Get the item for this context
-
-        Returns:
-            The item passed into the constructor. One of:
-                Artist
-                Playlist
-                Album
-                List[Tracks]
-        """
-        return self._item
-
-
-    def offset(self):
-        """ The offset into item where the current playback is.
-
-        Returns:
-            None if item is an Artist object
-            A non-negative integer < len(item) otherwise
-        """
-        return self._offset
 
 #pylint: disable=wrong-import-position
 #pylint: disable=wrong-import-order
