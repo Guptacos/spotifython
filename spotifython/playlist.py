@@ -1,5 +1,8 @@
-from user import User
-from track import Track
+from spotifython.response import Response # Deprecated
+# Local imports
+from tests.help_lib import get_dummy_data
+import spotifython.constants as const
+
 from copy import deepcopy
 from typing import Union, List
 
@@ -24,10 +27,10 @@ class Playlist:
         if tracks:
             for item in tracks.get('items', []):
                 self._tracks.append(Track(item.get('track', {})))
-        
+
 
     # POST https://api.spotify.com/v1/playlists/{playlist_id}/tracks
-    def add_tracks(self, track: Union[Track, List[Track]], position: int=None):
+    def add_tracks(self, track, position: int=None):
         """
         Add one or more tracks to the playlist.
 
@@ -120,8 +123,7 @@ class Playlist:
 
     # TODO test this in practice, what does it actually mean? Nobody knows.
     # DELETE https://api.spotify.com/v1/playlists/{playlist_id}/tracks
-    def remove_tracks(self, tracks: Union[Track, List[Track]]=None, positions:
-                      Union[int, List[int]]=None):
+    def remove_tracks(self, tracks=None, positions=None):
         """
         Remove one or more tracks from the playlist.
 
@@ -155,7 +157,7 @@ class Playlist:
 
         Parameters:
         source_index:      An integer specifying the 0-indexed position of the first
-                           track to be moved. A negative integer will be evaluated 
+                           track to be moved. A negative integer will be evaluated
                            from the end of the playlist as negative indices behave in
                            lists. This must be a valid index into a list of length
                            len(playlist).
@@ -214,7 +216,7 @@ class Playlist:
         """Return the number of tracks in the playlist."""
         return len(self._raw['tracks']['items'])
 
-    class Visibility(Enum):
+    class Visibility:
         """
         An Enum to describe the three possible playlist visibilities.
 
@@ -226,3 +228,6 @@ class Playlist:
         PUBLIC = 1
         PRIVATE = 2
         COLLABORATIVE = 3
+
+from spotifython.user import User
+from spotifython.track import Track

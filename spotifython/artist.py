@@ -1,13 +1,14 @@
-from album import Album
-from track import Track
+from spotifython.response import Response # Deprecated
+# Local imports
+from tests.help_lib import get_dummy_data
+import spotifython.constants as const
+
 from copy import deepcopy
-from response import Response
-import spotifython as sp
 
 class Artist:
     # User should never call this constructor. As a result, they should never
     # have access to the artist_info structure prior to creating an Artist.
-    def __init__(self, artist_info: dict, top: Spotifython):
+    def __init__(self, artist_info: dict, top):
         self._top = top
         self._raw = artist_info
         self.albums = None # Lazily load
@@ -57,7 +58,7 @@ class Artist:
     def albums(self,
         search_limit: int = None,
         include_groups: str = None,
-        country: str = sp.TOKEN_REGION,
+        country: str = const.TOKEN_REGION,
     ) -> Response: # List[Album]
         '''
         Gets the albums associated with the current Spotify artist.
@@ -91,7 +92,7 @@ class Artist:
 
 
     def top_tracks(self,
-        country: str = sp.TOKEN_REGION,
+        country: str = const.TOKEN_REGION,
         search_limit: int = 10,
     ) -> Response: # List[Track]
         '''
@@ -139,3 +140,6 @@ class Artist:
 
         # This search limit is not part of the API, spotify always returns up to 20.
         return self.related_artists
+
+from spotifython.album import Album
+from spotifython.track import Track

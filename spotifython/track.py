@@ -1,5 +1,7 @@
-from album import Album
-from artist import Artist
+# Local imports
+from tests.help_lib import get_dummy_data
+import spotifython.constants as const
+
 from copy import deepcopy
 
 AUDIO_FEATURES = 'GET https://api.spotify.com/v1/audio-features/%s'
@@ -69,3 +71,6 @@ class Track:
         request = AUDIO_ANALYSIS % (track_id)
         # TODO: send the actual request
         return
+
+from spotifython.album import Album
+from spotifython.artist import Artist

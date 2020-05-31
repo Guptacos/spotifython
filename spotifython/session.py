@@ -9,6 +9,11 @@ from typing import Union, List, Any
 import math
 import requests
 
+# Local imports
+import spotifython.constants as const
+from spotifython.endpoints import Endpoints
+import spotifython.utils as utils
+
 # Aliases to avoid circular dependencies
 Album = Any  # album.py imports this module.
 Artist = Any  # artist.py imports this module.
@@ -71,17 +76,25 @@ class Session:
         """
         return self._timeout
 
+    def __str__(self):
+        # Guarantee that the IDs of different objects in memory are different
+        # Avoids exposing the token as plaintext for no reason, since that is
+        # the other possible indicator of object identity.
+        return f"Session(${id(self)})"
+
     def __repr__(self):
         return self.__str__()
 
     def __eq__(self, other):
-        return utils.spotifython_eq(self, other)
+        # TODO: A session is the same if its token is the same? Or do we want
+        # this to be done using memory addresses (id)?
+        return self._token == other._token
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def __hash__(self):
-        return utils.spotifython_hash(self)
+        return hash(self.token)
 
     class SearchResult:
         """ SearchResult class
@@ -757,8 +770,3 @@ class Session:
             result.append(Playlist(response_json))
 
         return result if len(result) != 1 else result[0]
-
-# Local imports
-import spotifython.constants as const
-from spotifython.endpoints import Endpoints
-import spotifython.utils as utils

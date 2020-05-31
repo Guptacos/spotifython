@@ -1,14 +1,11 @@
-from album import Album
-from artist import Artist
-from playlist import Playlist
-from track import Track
-from user import User
-from spotifython import Spotifython as sp
+from spotifython.response import Response # Deprecated
+# Local imports
+from tests.help_lib import get_dummy_data
+import spotifython.constants as const
 
-from response import Response
 from typing import Union
 
-class Player():
+class Player:
     ''' Interact with a user's playback, such as pausing / playing the current
         song, modifying the queue, etc.
 
@@ -40,12 +37,12 @@ class Player():
         handled correctly by the player.
     '''
 
-    
+
     def __init__(self,
-                 user: User
-    ) -> Player:
+                 user
+    ):
         ''' Should only be called from within the User class
-        
+
         Keyword arguments:
             user: the User object that created the Player. For example, User can
                 say self._player = Player(self)
@@ -60,7 +57,7 @@ class Player():
     def __str__(self) -> str:
         return ''
 
-    
+
     def next(self,
              device_id: str=None
     ) -> Response: # None
@@ -115,7 +112,7 @@ class Player():
     # Future support: offsetting into context
     # Future support: position in track
     def play(self,
-             item: Union[Track, Album, Playlist, Artist],
+             item,
              device_id: str=None
     ) -> Response: # None
         ''' Change the current track and context for the player
@@ -171,7 +168,7 @@ class Player():
     # Note for me: in the future, add 'additional_types' to support episodes.
     # Note for me: in the future support returning a context object
     def get_currently_playing(self,
-                              market: str=sp.TOKEN_REGION
+                              market: str=const.TOKEN_REGION
     ) -> Response: # Track
         ''' Get the currently playing track in the playback
 
@@ -219,7 +216,7 @@ class Player():
 
     def set_active_device(self,
                           device_id: str,
-                          force_play: str=sp.KEEP_PLAY_STATE
+                          force_play: str=const.KEEP_PLAY_STATE
     ) -> Response: # None
         ''' Transfer playback to a different available device
 
@@ -358,11 +355,11 @@ class Player():
 
     # Note for me: add episodes at some point
     def enqueue(self,
-                item: Union[Album, Track],
+                item,
                 device_id: str=None
     ) -> Response: # None
         ''' Add an item to the end of the queue
-        
+
         Keyword arguments:
             item: the item to add to the queue. Must be an instance of sp.Album
                 or sp.Track. Adding playlists to the queue is not currently
@@ -373,3 +370,10 @@ class Player():
         '''
         # POST /v1/me/player/queue
         pass
+
+from spotifython.album import Album
+from spotifython.artist import Artist
+from spotifython.playlist import Playlist
+from spotifython.track import Track
+from spotifython.user import User
+from spotifython.session import Session as sp
