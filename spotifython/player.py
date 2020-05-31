@@ -9,9 +9,12 @@ import spotifython.constants as const
 from spotifython.endpoints import Endpoints
 import spotifython.utils as utils
 
+
+# GLobal variables
 KEYSTRING = 'Spotify response missing data'
 
-# TODO: return codes and erroring out
+
+#pylint: disable=too-many-public-methods
 class Player:
     """ Interact with a user's playback, such as pausing / playing the current
         song, modifying the queue, etc.
@@ -35,11 +38,12 @@ class Player:
         SpotifyError: if there is no active or available device and no device_id
             is given.
         SpotifyError: if the action is disallowed.
-            Note that some actions that should be allowed are difficult to
-            implement because the Spotify player API is in beta. For example,
-            according to the docs, pausing while paused should return a 403 with
-            reason string 'ALREADY_PAUSED', however the reason string actually
-            given is 'UNKNOWN', forcing Player.pause() to raise an exception if
+            Note that some actions that should be allowed (such as pausing while
+            paused) are difficult to implement because the Spotify player API is
+            in beta. For example, according to the docs, pausing while paused
+            should return a 403 with reason string 'ALREADY_PAUSED', however the
+            reason string actually given is 'UNKNOWN'. Player.pause() can't case
+            on the reason string, and is forced to raise an exception if
             playback is already paused.
 
     Note:
@@ -84,9 +88,8 @@ class Player:
         return hash(hash_str)
 
 
-    # TODO: https://github.com/spotify/web-api/issues/1588
-    # Returns 204 when no active device, docs say it should be 200 or 404
-    # TODO: everything that calls this should check for None
+    # Behavior inconsistent with documentation when no active device. See:
+    #   https://github.com/spotify/web-api/issues/1588
     def _player_data(self,
                      key,
                      market=const.TOKEN_REGION,
@@ -96,12 +99,12 @@ class Player:
 
         Args:
             key: the key to get from the currently playing context
-            market: used in track relinking TODO: describe
+            market: used in track relinking
             return_none: if True: returns None when no device available
                          if False: raises SpotifyError when no device available
 
         Returns:
-            None if there is no active device
+            None if there is no active device and return_none is True
             The result of player_data[key] otherwise
 
         Raises:
@@ -123,6 +126,7 @@ class Player:
         )
 
         # No active device
+        # TODO: update when bug report is resolved
         if status_code == 204:
             if return_none:
                 return None
@@ -264,7 +268,7 @@ class Player:
 
 
     # TODO: Future support: position in track
-    # TODO: manual testing
+    # TODO: manual testing once Session is merged / can easily get Artist etc.
     def play(self, item, offset=0, device_id=None):
         """ Change the current track and context for the player
 
@@ -290,6 +294,7 @@ class Player:
         Required token scopes:
             user-modify-playback-state
         """
+        # Validate inputs
         if type(item) not in [Track, Album, Playlist, Artist]:
             raise TypeError(item)
 
@@ -297,8 +302,8 @@ class Player:
             if offset < 0 or offset >= len(item):
                 raise ValueError(offset)
 
+        # Build up the request
         uri_params = None if device_id is None else {'device_id': device_id}
-
         if isinstance(item, Track):
             body = {'uris': [item.uri()]}
         else:
@@ -385,18 +390,37 @@ class Player:
         return Track(self._session, item)
 
 
-    # TODO: rename context?
-    def current_context(self, market=const.TOKEN_REGION):
-        # TODO: document
-        # TODO: integration testing
+    def context(self, market=const.TOKEN_REGION):
+        """ Get the currently playing context for the playback
+
+        Uses the currently active device, if one exists.
+
+        Args:
+            market: (str) a 2 letter country code as defined here:
+                https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
+                Used for track relinking:
+                https://developer.spotify.com/documentation/general/guides/track-relinking-guide/
+
+                if sp.TOKEN_REGION (default) is given, will use appropriate
+                country code for user based on their auth token and location.
+
+        Returns:
+            An Album, Artist, or Playlist if there is a context for the playback
+            None if there is no context
+
+        Calls endpoints:
+            GET    /v1/me/player
+
+        Required token scopes:
+            user-read-playback-state
+        """
         context = self._player_data('context', market)
         if context is None:
-            print('No context!')
             return None
 
         # Validate context
         if 'uri' not in context or 'type' not in context:
-            raise SpotifyError(KEYSTRING)
+            raise utils.SpotifyError(KEYSTRING)
 
         # uri of form 'spotify:type:id'
         context_id = context['uri'].split(':')[-1]
@@ -468,7 +492,6 @@ class Player:
         return device['id']
 
 
-    # TODO: maybe rename transfer_playback?
     def set_active_device(self, device_id, force_play=const.KEEP_PLAY_STATE):
         """ Transfer playback to a different available device
 
