@@ -10,6 +10,10 @@ import time
 # Third party imports
 import requests
 from requests.adapters import HTTPAdapter
+
+# Known pylint problem with certain libraries, this import should work.
+# See: https://github.com/PyCQA/pylint/issues/2603
+#pylint: disable=import-error
 from requests.packages.urllib3.util.retry import Retry
 
 # Local imports
