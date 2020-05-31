@@ -114,11 +114,11 @@ def request(session,
         messge = str(content)
 
     # 400: bad request
-    if status_code in [400]:
+    if status_code = 400:
         raise SpotifyError('%d, %s' % (status_code, message))
 
     # 401: unauthorized
-    if status_code in [401]:
+    if status_code == 401:
         raise AuthenticationError('Unauthorized: %s' % message)
 
     # 500, 502, 503: internal spotify errors, shouldn't get normally
