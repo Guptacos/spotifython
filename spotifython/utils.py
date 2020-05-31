@@ -110,8 +110,8 @@ def request(session,
     # Get error message if it exists
     try:
         message = content['error']['message']
-    except:
-        messge = str(content)
+    except (KeyError, TypeError):
+        message = str(content)
 
     # 400: bad request
     if status_code == 400:

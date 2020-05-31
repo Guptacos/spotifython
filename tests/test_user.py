@@ -63,7 +63,7 @@ class TestUser(unittest.TestCase):
         self.assertIsInstance(user.player(), Player)
 
 
-    # User.user_id
+    # User.spotify_id
     def test_spotify_id(self):
         user = self.user
         uid = user.spotify_id()
