@@ -35,7 +35,7 @@ class TestArtist(unittest.TestCase):
         # Note: since we're mocking Spotify and never actually using the token,
         # we can put any string here for the token.
         self.session = sp(TOKEN)
-        self.artist = Artist(get_dummy_data(const.ARTISTS, 1))
+        self.artist = Artist(self.session, get_dummy_data(const.ARTISTS, 1))
 
         # Mock the sp._request method so that we never actually reach Spotify
         self.patcher = patch.object(sp, '_request', autospec=True)
@@ -55,8 +55,8 @@ class TestArtist(unittest.TestCase):
         pass
 
     # Test __str__, __repr__
-    @unittest.skip('Not yet implemented')
     def test_str_overloads(self):
+        self.assertTrue(self.artist == self.artist)
         self.assertTrue(False)
 
     # Test __eq__, __ne__, __hash__
@@ -94,44 +94,6 @@ class TestArtist(unittest.TestCase):
     @unittest.skip('Not yet implemented')
     def test_related_artists(self):
         self.assertTrue(False)
-
-    #########################
-    ### TEMPLATE IGNORE THIS
-    #########################
-
-    # This shows how to skip tests so they don't execute when running
-    @unittest.skip('Not yet implemented')
-    def test_beyond_beef(self):
-        self.assertTrue(False)
-
-
-    # This method shows how to actually mock
-    # Here we will test the following imaginary function:
-    # def mince(self, method: str, quantity: int)
-    #
-    # Note that the test function name doesn't have to mirror the function it's
-    # testing; you can test any number of function within a test, as long as the
-    # test function is prefixed by test_
-    @unittest.skip('Sample Test')
-    def test_mock_beef(self):
-        beef = self.deadbeef
-
-        # Input checking: can't mince beef with a spoon, and True isn't an int!
-        self.assertRaises(TypeError, beef.mince, const.SPOON, True)
-
-        # Now we mock the _request method. The next time _request is called (and
-        # every time afterwards that it's called in this test until it's
-        # changed) it will return ({}, 200) to the DeadBeef library.
-        self.request_mock.return_value = {}, 200
-
-        minced = beef.mince(const.KNIFE, quantity=10)
-        self.assertIsInstance(minced, DeadBeef)
-        self.assertEqual(minced.weight, 100)
-
-    #########################
-    ### END TEMPLATE
-    #########################
-
 
 # This allows the tests to be executed
 if __name__ == '__main__':
