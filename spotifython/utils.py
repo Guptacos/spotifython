@@ -160,7 +160,7 @@ def paginate_get(session,
         uri_params: (dict) the uri parameters for the request
         body: (dict) the body of the call
 
-    Return:
+    Returns:
         A list of objects of type return_class
     """
     # Init params

@@ -4,20 +4,13 @@ This class represents a User object, tied to a Spotify user id.
 
 """
 
-# Standard library imports
-from __future__ import annotations # Allow type hinting a class within the class
-
 # Local imports
 import spotifython.constants as const
 from spotifython.endpoints import Endpoints
 import spotifython.utils as utils
 
 
-# TODO: fix imports after integrating.
-# TODO: market as input?
-# TODO: what to do about partial success?
-# TODO: checking return of tuple funcs means ret[0][1] for 1 elem...
-
+# TODO: what to do about partial success on batch operations?
 class User:
     """ Define behaviors related to a user, such as reading / modifying the
         library and following artists.
@@ -30,9 +23,7 @@ class User:
     """
 
 
-    def __init__(self,
-                 session,
-                 info):
+    def __init__(self, session, info):
         """
         Args:
             session: a Spotifython instance
@@ -52,7 +43,7 @@ class User:
 
 
     def __repr__(self):
-        return self.__str__()
+        return str(self)
 
 
     def __eq__(self, other):
@@ -181,7 +172,7 @@ class User:
         )
 
         if status_code != 200:
-            raise Exception('Oh no TODO!')
+            raise utils.SpotifyError(status_code, response_json)
 
         results = []
         for elem in response_json['items']:
@@ -277,11 +268,12 @@ class User:
         )
 
         if status_code != 201:
-            raise Exception('Oh no TODO!')
+            raise utils.SpotifyError(status_code, response_json)
 
         return Playlist(self._session, response_json)
 
 
+    # TODO: checking return of tuple funcs means ret[0][1] for 1 elem...
     def is_following(self, other):
         """ Check if the current user is following something
 
@@ -332,7 +324,7 @@ class User:
             )
 
             if status_code != 200:
-                raise Exception('Oh no TODO!')
+                raise utils.SpotifyError(status_code, response_json)
 
             artist_bools.append(response_json)
 
@@ -347,7 +339,7 @@ class User:
             )
 
             if status_code != 200:
-                raise Exception('Oh no TODO!')
+                raise utils.SpotifyError(status_code, response_json)
 
             user_bools.append(response_json)
 
@@ -416,7 +408,7 @@ class User:
         results = []
 
         # Loop until we get 'limit' many items or run out
-        # Can't use _paginate because the artist endpoint does it differently...
+        # Can't use _paginate_get because artist endpoint does it differently...
         while len(results) < limit:
 
             # Paginate
@@ -432,7 +424,7 @@ class User:
             )
 
             if status_code != 200:
-                raise Exception('Oh no TODO!')
+                raise utils.SpotifyError(status_code, response_json)
 
             # No more results to grab from spotify
             if len(response_json['artists']['items']) == 0:
@@ -462,7 +454,7 @@ class User:
         playlists = utils. separate(other, Playlist)
 
         for batch in utils.create_batches(utils.map_ids(artists)):
-            _, status_code = utils.request(
+            response_json, status_code = utils.request(
                 self._session,
                 request_type=request_type,
                 endpoint=Endpoints.USER_FOLLOW_ARTIST_USER,
@@ -471,10 +463,10 @@ class User:
             )
 
             if status_code != 204:
-                raise Exception('Oh no TODO!')
+                raise utils.SpotifyError(status_code, response_json)
 
         for batch in utils.create_batches(utils.map_ids(users)):
-            _, status_code = utils.request(
+            response_json, status_code = utils.request(
                 self._session,
                 request_type=request_type,
                 endpoint=Endpoints.USER_FOLLOW_ARTIST_USER,
@@ -483,10 +475,10 @@ class User:
             )
 
             if status_code != 204:
-                raise Exception('Oh no TODO!')
+                raise utils.SpotifyError(status_code, response_json)
 
         for playlist in playlists:
-            _, status_code = utils.request(
+            response_json, status_code = utils.request(
                 self._session,
                 request_type=request_type,
                 endpoint=Endpoints.USER_FOLLOW_PLAYLIST % playlist,
@@ -495,7 +487,7 @@ class User:
             )
 
             if status_code != 200:
-                raise Exception('Oh no TODO!')
+                raise utils.SpotifyError(status_code, response_json)
 
     def follow(self, other):
         """ Follow one or more things
@@ -551,6 +543,7 @@ class User:
         self._follow_unfollow_help(other, const.REQUEST_DELETE)
 
 
+    # TODO: checking return of tuple funcs means ret[0][1] for 1 elem...
     def has_saved(self, other):
         """ Check if the user has one or more things saved to their library
 
@@ -598,7 +591,7 @@ class User:
             )
 
             if status_code != 200:
-                raise Exception('Oh no TODO!')
+                raise utils.SpotifyError(status_code, response_json)
 
             track_bools.append(response_json)
 
@@ -613,7 +606,7 @@ class User:
             )
 
             if status_code != 200:
-                raise Exception('Oh no TODO!')
+                raise utils.SpotifyError(status_code, response_json)
 
             album_bools.append(response_json)
 
@@ -693,7 +686,7 @@ class User:
         tracks = utils.separate(other, Track)
 
         for batch in utils.create_batches(utils.map_ids(albums)):
-            _, status_code = utils.request(
+            response_json, status_code = utils.request(
                 self._session,
                 request_type=request_type,
                 endpoint=Endpoints.USER_SAVE_ALBUMS,
@@ -704,10 +697,10 @@ class User:
             # All success codes are 200, except saving an album
             success = 201 if request_type == const.REQUEST_PUT else 200
             if status_code != success:
-                raise Exception('Oh no TODO!')
+                raise utils.SpotifyError(status_code, response_json)
 
         for batch in utils.create_batches(utils.map_ids(tracks)):
-            _, status_code = utils.request(
+            response_json, status_code = utils.request(
                 self._session,
                 request_type=request_type,
                 endpoint=Endpoints.USER_SAVE_TRACKS,
@@ -716,7 +709,7 @@ class User:
             )
 
             if status_code != 200:
-                raise Exception('Oh no TODO!')
+                raise utils.SpotifyError(status_code, response_json)
 
 
     def save(self, other):
