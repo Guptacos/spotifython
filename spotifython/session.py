@@ -6,17 +6,15 @@ API token.
 
 # Standard library imports
 import math
-import requests
 
 # Local imports
 import spotifython.constants as const
 from spotifython.endpoints import Endpoints
 import spotifython.utils as utils
 
-# pylint: disable=pointless-string-statement, too-many-instance-attributes
-# pylint: disable=too-many-arguments, too-many-locals, protected-access
-# pylint: disable=too-many-branches, too-many-statements, too-many-function-args
-# pylint: disable=wrong-import-position
+# pylint: disable=wrong-import-position, protected-access
+# TODO: This is necessary until we find a better way to handle type importing
+# pylint: disable=undefined-variable
 
 class Session:
     """ Session class
@@ -41,7 +39,7 @@ class Session:
         if not isinstance(token, str):
             raise TypeError('token should be str')
         if not isinstance(timeout, int):
-            raise TypeError(f'timeout should be int')
+            raise TypeError('timeout should be int')
         if timeout < 0:
             raise ValueError(f'timeout {timeout} is < 0')
 
@@ -56,7 +54,7 @@ class Session:
             token: str, the new Spotify authentication token.
         """
         if not isinstance(token, str):
-            raise TypeError("token should be string")
+            raise TypeError('token should be string')
 
         self._token = token
 
@@ -117,13 +115,13 @@ class Session:
 
         # Internal: Update search results via paginated searches
         def _add(self, iterable):
-            if all(type(x) is Album for x in iterable):
+            if all(isinstance(x, Album) for x in iterable):
                 self._albums_paging += iterable
-            elif all(type(x) is Artist for x in iterable):
+            elif all(isinstance(x, Artist) for x in iterable):
                 self._artists_paging += iterable
-            elif all(type(x) is Playlist for x in iterable):
+            elif all(isinstance(x, Playlist) for x in iterable):
                 self._playlists_paging += iterable
-            elif all(type(x) is Track for x in iterable):
+            elif all(isinstance(x, Track) for x in iterable):
                 self._tracks_paging += iterable
             else:
                 raise TypeError('iterable is not of a valid type')
@@ -165,6 +163,9 @@ class Session:
     # API Calls
     ##################################
 
+    # pylint: disable=too-many-arguments, too-many-locals, too-many-branches
+    # TODO: unfortunately this function has to be kind of long to accomodate the
+    # logic required. Refactor this in the future.
     def search(self,
                query,
                types,
@@ -227,10 +228,10 @@ class Session:
         # Internally, include_external='audio' is the only valid argument.
 
         # Type validation
-        if not all(type(x) is str for x in query):
+        if not all(isinstance(x, str) for x in query):
             raise TypeError('query should be str')
         if not isinstance(types, str) and \
-            not all(type(x) is str for x in types):
+            not all(isinstance(x, str) for x in types):
             raise TypeError('types should be str or a list of str')
         if not isinstance(limit, int):
             raise TypeError('limit should be int')
@@ -239,10 +240,6 @@ class Session:
         if include_external_audio is not None and \
             not isinstance(include_external_audio, bool):
             raise TypeError('include_external_audio should be None or bool')
-
-        # Encode the spaces in strings! See the following link for more details.
-        # https://developer.spotify.com/documentation/web-api/reference/search/search/
-        encoded_query = query.replace(' ', '+')
 
         # Argument validation
         if isinstance(types, str):
@@ -260,9 +257,10 @@ class Session:
             raise ValueError('Spotify only supports up to 2000 search results.')
 
         # Construct params for API call
-        endpoint = Endpoints.SEARCH
         uri_params = dict()
-        uri_params['q'] = encoded_query
+        # Encode the spaces in strings! See the following link for more details.
+        # https://developer.spotify.com/documentation/web-api/reference/search/search/
+        uri_params['q'] = query.replace(' ', '+')
         if market is not None:
             uri_params['market'] = market
         if include_external_audio:
@@ -299,7 +297,7 @@ class Session:
             response_json, status_code = utils.request(
                 session=self,
                 request_type=const.REQUEST_GET,
-                endpoint=endpoint,
+                endpoint=Endpoints.SEARCH,
                 uri_params=uri_params
             )
 
@@ -315,13 +313,13 @@ class Session:
 
                 # Add items to accumulator
                 for item in items:
-                    if curr_type is const.SEARCH_TYPE_ALBUM:
+                    if curr_type is type_mapping[const.ALBUMS]:
                         acc.append(Album(item))
-                    elif curr_type is const.SEARCH_TYPE_ARTIST:
+                    elif curr_type is type_mapping[const.ARTISTS]:
                         acc.append(Artist(item))
-                    elif curr_type is const.SEARCH_TYPE_PLAYLIST:
+                    elif curr_type is type_mapping[const.PLAYLISTS]:
                         acc.append(Playlist(item))
-                    elif curr_type is const.SEARCH_TYPE_TRACK:
+                    elif curr_type is type_mapping[const.TRACKS]:
                         acc.append(Track(item))
 
                 # Update accumulated results into search result
@@ -373,7 +371,7 @@ class Session:
 
         # Type/Argument validation
         if not isinstance(album_ids, str) and\
-            not all(type(x) is str for x in album_ids):
+            not all(isinstance(x, str) for x in album_ids):
             raise TypeError('album_ids should be str or list of str')
         if market is None:
             raise ValueError('market is a required argument')
@@ -442,7 +440,7 @@ class Session:
 
         # Type validation
         if not isinstance(artist_ids, str) and\
-            not all(type(x) is str for x in artist_ids):
+            not all(isinstance(x, str) for x in artist_ids):
             raise TypeError('artist_ids should be str or list of str')
 
         if isinstance(artist_ids, str):
@@ -512,7 +510,7 @@ class Session:
 
         # Type validation
         if not isinstance(track_ids, str) and\
-            not all(type(x) is str for x in track_ids):
+            not all(isinstance(x, str) for x in track_ids):
             raise TypeError('track_ids should be str or list of str')
         if market is not None and not isinstance(market, str):
             raise TypeError('market should be None or str')
@@ -577,7 +575,7 @@ class Session:
 
         # Type validation
         if not isinstance(user_ids, str) and\
-            not all(type(x) is str for x in user_ids):
+            not all(isinstance(x, str) for x in user_ids):
             raise TypeError('user_ids should be str or list of str')
 
         if isinstance(user_ids, str):
@@ -697,7 +695,7 @@ class Session:
 
         # Type/Argument validation
         if not isinstance(playlist_ids, str) and\
-            not all(type(x) is str for x in playlist_ids):
+            not all(isinstance(x, str) for x in playlist_ids):
             raise TypeError('playlist_ids should be str or list of str')
         if fields is not None and not isinstance(fields, str):
             raise TypeError('fields should be None or str')
