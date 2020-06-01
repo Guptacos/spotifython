@@ -4,17 +4,12 @@ This class represents an Artist object, tied to a Spotify user id.
 """
 
 # Standard library imports
-from typing import List, Any
+from typing import List
 
 # Local imports
 import spotifython.constants as const
 from spotifython.endpoints import Endpoints
 import spotifython.utils as utils
-
-# Aliases to avoid circular dependencies
-Album = Any  # album.py imports this module.
-Track = Any  # track.py imports this module.
-Session = Any # session.py imports this module
 
 # pylint: disable = pointless-string-statement, too-many-instance-attributes
 # pylint: disable = too-many-branches, wrong-import-position
@@ -36,7 +31,7 @@ class Artist:
         """
         # TODO: add type checking for session
         if not isinstance(artist_info, dict):
-            raise TypeError(artist_info)
+            raise TypeError('artist_info should be dict')
 
         self.session = session
         self._raw = artist_info
@@ -59,14 +54,11 @@ class Artist:
     def __repr__(self):
         return self.__str__()
 
-
     def __eq__(self, other):
         return utils.spotifython_eq(self, other)
 
-
     def __ne__(self, other):
         return not self.__eq__(other)
-
 
     def __hash__(self):
         return utils.spotifython_hash(self)
@@ -82,32 +74,50 @@ class Artist:
     # Type: is an artist. we don't need to include this.
 
     def genres(self):
-        """ Getter for the genre of an artist. Returns a List[str].
+        """ Getter for the genre of an artist.
+
+        Returns:
+            A List[str] of the genres associated with the artist.
         """
         return utils.get_field(self, 'genres')
 
     def href(self):
-        """ Getter for the href for an artist. Returns a str.
+        """ Getter for the href for an artist.
+
+        Returns:
+            A str of the Web API endpoint providing full details of the artist.
         """
         return utils.get_field(self, 'href')
 
     def spotify_id(self):
-        """ Getter for the spotify id for an artist. Returns a str.
+        """ Getter for the spotify id for an artist.
+
+        Returns:
+            A str of the artist's Spotify ID.
         """
         return utils.get_field(self, 'id')
 
     def name(self):
-        """ Getter for the name for an artist. Returns a str.
+        """ Getter for the name for an artist.
+
+        Returns:
+            A str of the artist name.
         """
         return utils.get_field(self, 'name')
 
     def popularity(self):
-        """ Getter for the popularity for an artist. Returns a str.
+        """ Getter for the popularity for an artist.
+
+        Returns:
+            An int of the popularity of the artist.
         """
         return utils.get_field(self, 'popularity')
 
     def uri(self):
-        """ Getter for the uri for an artist. Returns a str.
+        """ Getter for the uri for an artist.
+
+        Returns:
+            A str of the Spotify URI for the artist.
         """
         return utils.get_field(self, 'uri')
 
@@ -123,8 +133,7 @@ class Artist:
         Calls endpoints:
             GET     /v1/artists/{id}
         """
-        _artist_id = self.spotify_id()
-        endpoint = f'/v1/artists/{_artist_id}'
+        endpoint = f'/v1/artists/{self.spotify_id()}'
         response_json, _ = utils.request(
             session=self.session,
             request_type=const.REQUEST_GET,
@@ -180,12 +189,12 @@ class Artist:
 
         # Type validation
         if search_limit is not None and not isinstance(search_limit, int):
-            raise TypeError(search_limit)
+            raise TypeError('search_limit should be None or int')
         if include_groups is not None and \
-            not isinstance(include_groups, List[str]):
-            raise TypeError(include_groups)
+            not all(type(x) is str for x in include_groups):
+            raise TypeError('include_groups should be None or str')
         if market is not None and not isinstance(market, str):
-            raise TypeError(market)
+            raise TypeError('market should be None or str')
 
         # Lazy loading check
         search_query = (search_limit, include_groups, market)
@@ -193,8 +202,7 @@ class Artist:
             return self._albums
 
         # Construct params for API call
-        _artist_id = self.spotify_id()
-        endpoint = Endpoints.ARTIST_GET_ALBUMS.format(_artist_id)
+        endpoint = Endpoints.ARTIST_GET_ALBUMS.format(self.spotify_id())
         uri_params = dict()
         if include_groups is not None and len(include_groups) > 0:
             uri_params['include_groups'] = ','.join(include_groups)
@@ -248,22 +256,21 @@ class Artist:
 
         # Type validation
         if not isinstance(market, str):
-            raise TypeError(market)
+            raise TypeError('market should bes tr')
         if not isinstance(search_limit, int):
-            raise TypeError(search_limit)
+            raise TypeError('search_limit should be int')
 
         # Argument validation
         if market is None:
-            raise ValueError(market)
-        if search_limit > 10:
-            raise ValueError(search_limit)
+            raise ValueError('market is a required argument')
+        if search_limit < 0 or search_limit > 10:
+            raise ValueError('search_limit should be >= 0 and <= 10')
 
         # Save params for lazy loading check
         search_query = (market, search_limit)
 
         # Construct params for API call
-        _artist_id = self.spotify_id()
-        endpoint = Endpoints.ARTIST_TOP_TRACKS.format(_artist_id)
+        endpoint = Endpoints.ARTIST_TOP_TRACKS.format(self.spotify_id())
         uri_params = dict()
         uri_params['country'] = market
 
@@ -314,18 +321,17 @@ class Artist:
 
         # Type validation
         if search_limit is not None and not isinstance(search_limit, int):
-            raise TypeError(search_limit)
+            raise TypeError('search_limit should be None or int')
 
         # Argument validation
-        if search_limit > 20:
-            raise ValueError(search_limit)
+        if search_limit < 0 or search_limit > 20:
+            raise ValueError('search_limit should be >= 0 and <= 20')
 
         # Save params for lazy loading check
         search_query = (search_limit)
 
         # Construct params for API call
-        _artist_id = self.spotify_id()
-        endpoint = Endpoints.ARTIST_RELATED_ARTISTS.format(_artist_id)
+        endpoint = Endpoints.ARTIST_RELATED_ARTISTS.format(self.spotify_id())
 
         # Lazy loading check
         if search_query == self._related_artists_query_params:
