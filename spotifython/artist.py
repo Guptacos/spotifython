@@ -3,9 +3,6 @@
 This class represents an Artist object, tied to a Spotify user id.
 """
 
-# Standard library imports
-from typing import List
-
 # Local imports
 import spotifython.constants as const
 from spotifython.endpoints import Endpoints
@@ -128,20 +125,26 @@ class Artist:
             ValueError if artist id not present in the raw object data.
 
         Required token scopes:
-            N/A
+            None
 
         Calls endpoints:
             GET     /v1/artists/{id}
         """
         endpoint = f'/v1/artists/{self.spotify_id()}'
-        response_json, _ = utils.request(
+        response_json, status_code = utils.request(
             session=self.session,
             request_type=const.REQUEST_GET,
             endpoint=endpoint,
         )
+
+        if status_code != 200:
+            raise utils.SpotifyError(status_code, response_json)
+
         # Updates _raw with new values. One liner : for each key in union of
         # keys in self._raw and response_json, takes value for key from
         # response_json if present, else takes value for key from self._raw.
+        # TODO: this is weird notation, make a utility function for it.
+        # Especially useful since it is an action necessary for many classes.
         self._raw = {**self._raw, **response_json}
 
     ##################################
@@ -161,10 +164,10 @@ class Artist:
             include_groups: (Optional) List[str], a list of keywords
                 that will be used to filter the response. If not supplied,
                 all album types will be returned.
-                Valid values are: const.ARTIST_ALBUM, const.ARTIST_SINGLE,
-                const.ARTIST_APPEARS_ON, const.ARTIST_COMPILATION
+                Valid values are: sp.ARTIST_ALBUM, sp.ARTIST_SINGLE,
+                sp.ARTIST_APPEARS_ON, sp.ARTIST_COMPILATION
             market: (Optional) str, An ISO 3166-1 alpha-2 country code or the
-                string const.TOKEN_REGION.
+                string sp.TOKEN_REGION.
                 Supply this parameter to limit the response to one particular
                 geographical market. If this value is None, results will be
                 returned for all countries and you are likely to get duplicate
@@ -181,7 +184,7 @@ class Artist:
             HTTPError for web request errors or partial failures.
 
         Required token scopes:
-            N/A
+            None
 
         Calls endpoints:
             GET	/v1/artists/{id}/albums
@@ -191,7 +194,7 @@ class Artist:
         if search_limit is not None and not isinstance(search_limit, int):
             raise TypeError('search_limit should be None or int')
         if include_groups is not None and \
-            not all(type(x) is str for x in include_groups):
+            not all(isinstance(x, str) for x in include_groups):
             raise TypeError('include_groups should be None or str')
         if market is not None and not isinstance(market, str):
             raise TypeError('market should be None or str')
@@ -202,7 +205,7 @@ class Artist:
             return self._albums
 
         # Construct params for API call
-        endpoint = Endpoints.ARTIST_GET_ALBUMS.format(self.spotify_id())
+        endpoint = Endpoints.ARTIST_GET_ALBUMS % self.spotify_id()
         uri_params = dict()
         if include_groups is not None and len(include_groups) > 0:
             uri_params['include_groups'] = ','.join(include_groups)
@@ -228,7 +231,7 @@ class Artist:
 
         Args:
             market: str, an ISO 3166-1 alpha-2 country code or the string
-                const.TOKEN_REGION.
+                sp.TOKEN_REGION.
             search_limit: int, the maximum number of results to return.
 
         Returns:
@@ -244,7 +247,7 @@ class Artist:
             HTTPError for web request errors.
 
         Required token scopes:
-            N/A
+            None
 
         Calls endpoints:
             GET	/v1/artists/{id}/top-tracks
@@ -270,7 +273,7 @@ class Artist:
         search_query = (market, search_limit)
 
         # Construct params for API call
-        endpoint = Endpoints.ARTIST_TOP_TRACKS.format(self.spotify_id())
+        endpoint = Endpoints.ARTIST_TOP_TRACKS % self.spotify_id()
         uri_params = dict()
         uri_params['country'] = market
 
@@ -310,7 +313,7 @@ class Artist:
             HTTPError for web request errors.
 
         Required token scopes:
-            N/A
+            None
 
         Calls endpoints:
             GET	/v1/artists/{id}/related-artists
@@ -331,7 +334,7 @@ class Artist:
         search_query = (search_limit)
 
         # Construct params for API call
-        endpoint = Endpoints.ARTIST_RELATED_ARTISTS.format(self.spotify_id())
+        endpoint = Endpoints.ARTIST_RELATED_ARTISTS % self.spotify_id()
 
         # Lazy loading check
         if search_query == self._related_artists_query_params:

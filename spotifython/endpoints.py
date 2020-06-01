@@ -1,8 +1,7 @@
 class Endpoints:
     BASE_URI = 'https://api.spotify.com'
-    ARTIST_GET_ALBUMS = '/v1/artists/{}/albums'
-    ARTIST_TOP_TRACKS = '/v1/artists/{}/top-tracks'
-    ARTIST_RELATED_ARTISTS = '/v1/artists/{}/related-artists'
 
-# import endpoint
-# endpoint.BASE_URI        
+    # Artist endpoints
+    ARTIST_GET_ALBUMS = '/v1/artists/%s/albums'
+    ARTIST_TOP_TRACKS = '/v1/artists/%s/top-tracks'
+    ARTIST_RELATED_ARTISTS = '/v1/artists/%s/related-artists'
