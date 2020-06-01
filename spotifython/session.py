@@ -582,22 +582,19 @@ class Session:
             user_ids = list('user_ids should be str')
 
         # Construct params for API call
-        endpoint = Endpoints.SEARCH_GET_USER
         uri_params = dict()
 
         # Each API call can return at most 1 user. Therefore there is no need
         # to batch this query.
         result = list()
         for user_id in user_ids:
-            uri_params['ids'] = user_id
-
             # Execute requests
             # TODO: Partial failure - if user with user_id does not exist,
             # status_code is 404
             response_json, status_code = utils.request(
                 session=self,
                 request_type=const.REQUEST_GET,
-                endpoint=endpoint,
+                endpoint=Endpoints.SEARCH_GET_USER % user_id,
                 uri_params=uri_params
             )
 
@@ -715,7 +712,7 @@ class Session:
         # need to batch this query.
         result = list()
         for playlist_id in playlist_ids:
-            endpoint = Endpoints.SEARCH_GET_PLAYLIST.format(playlist_id)
+            endpoint = Endpoints.SEARCH_GET_PLAYLIST % playlist_id
 
             # Execute requests
             response_json, status_code = utils.request(
