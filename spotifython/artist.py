@@ -1,14 +1,13 @@
-from spotifython.response import Response # Deprecated
-# Local imports
-from tests.help_lib import get_dummy_data
-import spotifython.constants as const
-
+from album import Album
+from track import Track
 from copy import deepcopy
+from response import Response
+import spotifython as sp
 
 class Artist:
     # User should never call this constructor. As a result, they should never
     # have access to the artist_info structure prior to creating an Artist.
-    def __init__(self, artist_info: dict, top):
+    def __init__(self, artist_info: dict, top: Spotifython):
         self._top = top
         self._raw = artist_info
         self.albums = None # Lazily load
@@ -38,49 +37,49 @@ class Artist:
 
     def href(self) -> Response: # str
         return Response(status=Response.OK, contents=self._raw.get('href'))
-
+    
     def artist_id(self) -> Response: # str
         return Response(status=Response.OK, contents=self._raw.get('id'))
-
+    
     def name(self) -> Response: # str
         return Response(status=Response.OK, contents=self._raw.get('name'))
-
+    
     def popularity(self) -> Response: # int
         return Response(status=Response.OK, contents=self._raw.get('popularity'))
-
+    
     def uri(self) -> Response: # str
         return Response(status=Response.OK, contents=self._raw.get('uri'))
 
     ##################################
     # API Calls
     ##################################
-
-    def albums(self,
+    
+    def albums(self, 
         search_limit: int = None,
         include_groups: str = None,
-        country: str = const.TOKEN_REGION,
+        country: str = sp.TOKEN_REGION,
     ) -> Response: # List[Album]
         '''
         Gets the albums associated with the current Spotify artist.
-
+        
         Args:
             search_limit: (Optional) the maximum number of results to return.
-            include_groups: (Optional) A comma-separated list of keywords
-                that will be used to filter the response. If not supplied,
-                all album types will be returned.
-                Valid values are: 'album', 'single', 'appears_on', 'compilation'
+            include_groups: (Optional) A comma-separated list of keywords 
+                that will be used to filter the response. If not supplied, 
+                all album types will be returned. 
+                Valid values are: 'album', 'single', 'appears_on', 'compilation' 
             country: (Optional) An ISO 3166-1 alpha-2 country code or the string sp.TOKEN_REGION.
-                Supply this parameter to limit the response to one particular geographical
-                market. If this value is None, results will be returned for all countries and you
-                are likely to get duplicate results per album, one for each country in
+                Supply this parameter to limit the response to one particular geographical 
+                market. If this value is None, results will be returned for all countries and you 
+                are likely to get duplicate results per album, one for each country in 
                 which the album is available!
 
-        Returns:
+        Returns: 
             A response object containing a list of Albums if the request succeeded.
 
         Exceptions:
             TypeError for invalid types in any argument.
-
+        
         Calls endpoints:
             GET	/v1/artists/{id}/albums
         '''
@@ -89,34 +88,34 @@ class Artist:
         # Request: the response body contains an array of simplified album
         # objects (wrapped in a paging object)
         return self.albums
-
-
+    
+    
     def top_tracks(self,
-        country: str = const.TOKEN_REGION,
+        country: str = sp.TOKEN_REGION,
         search_limit: int = 10,
     ) -> Response: # List[Track]
         '''
         Gets the top tracks associated with the current Spotify artist.
-
+        
         Args:
             country: An ISO 3166-1 alpha-2 country code or the string sp.TOKEN_REGION.
             search_limit: (Optional) the maximum number of results to return.
 
-        Returns:
+        Returns: 
             A response object containing a list of Tracks if the request succeeded.
 
         Exceptions:
             TypeError for invalid types in any argument.
             ValueError for invalid country, or if country is None.
             ValueError if search_limit is > 10: this is the Spotify API's search limit.
-
+        
         Calls endpoints:
             GET	/v1/artists/{id}/top-tracks
         '''
 
         # This search limit is not part of the API, spotify always returns up to 10.
         return self.top_tracks
-
+    
     def related_artists(self,
         search_limit: int = 20,
     ) -> Response: # List[Artist]
@@ -126,20 +125,17 @@ class Artist:
         Args:
             search_limit: (Optional) the maximum number of results to return.
 
-        Returns:
-            A response object containing a list of Artist objects
+        Returns: 
+            A response object containing a list of Artist objects 
             if the request succeeded.
 
         Exceptions:
             TypeError for invalid types in any argument.
             ValueError if search_limit is > 20: this is the Spotify API's search limit.
-
+        
         Calls endpoints:
             GET	/v1/artists/{id}/related-artists
         '''
 
         # This search limit is not part of the API, spotify always returns up to 20.
         return self.related_artists
-
-from spotifython.album import Album
-from spotifython.track import Track
