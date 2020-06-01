@@ -1,13 +1,16 @@
-from spotifython.response import Response # Deprecated
-# Local imports
-from tests.help_lib import get_dummy_data
-import spotifython.constants as const
+from album import Album
+from artist import Artist
+from player import Player
+from playlist import Playlist
+from spotifython import Spotifython
+from track import Track
 
+from response import Response
 from typing import Union, List, Dict
 
 # TODO: auth required for each param
 # TODO: what to do about partial success?
-class User:
+class User():
     ''' Define behaviors related to a user, such as reading / modifying the
         library and following artists.
 
@@ -20,14 +23,14 @@ class User:
 
 
     def __init__(self,
-                 sp_obj,
+                 sp_obj: Spotifython,
                  user_id: str,
                  known_vals: Dict=None
-    ):
+    ) -> User:
         # note to self: init self.player
         pass
 
-
+        
     # Format should be 'User <%s>' % user_id
     def __str__(self) -> str:
         pass
@@ -49,7 +52,7 @@ class User:
         pass
 
 
-    def player(self):
+    def player(self) -> Player:
         ''' Get the player object for this user
 
         This is how client code should access a player. For example:
@@ -65,7 +68,7 @@ class User:
     def top(self,
             top_type: str,
             limit: int,
-            time_range: str=const.MEDIUM
+            time_range: str=sp.MEDIUM
     ) -> Response: # Union[List[Artist], List[Track]]
         ''' Get the top artists or tracks for the user over a time range.
 
@@ -136,7 +139,7 @@ class User:
 
     def create_playlist(self,
                         name: str,
-                        visibility: str=const.PUBLIC,
+                        visibility: str=sp.PUBLIC,
                         description: str=""
     ) -> Response: # None
         ''' Create a new playlist owned by the current user
@@ -163,7 +166,8 @@ class User:
 
 
     def is_following(self,
-                     other
+                     other: Union[Artist, User, Playlist,
+                                  List[Union[Artist, User, Playlist]]]
     ) -> Response: # List[Tuple[Union[Artist, User, Playlist], bool]]
         ''' Check if the current user is following something
 
@@ -214,7 +218,8 @@ class User:
 
 
     def follow(self,
-               other
+               other: Union[Artist, User, Playlist,
+                            List[Union[Artist, User, Playlist]]]
     ) -> Response: # None
         ''' Follow one or more things
 
@@ -240,7 +245,8 @@ class User:
 
 
     def unfollow(self,
-                 other
+                 other: Union[Artist, User, Playlist,
+                              List[Union[Artist, User, Playlist]]]
     ) -> Response: # None
         ''' Unfollow one or more things
 
@@ -266,7 +272,8 @@ class User:
 
 
     def has_saved(self,
-                  other
+                  other: Union[Track, Album,
+                               List[Union[Track, Album]]]
     ) -> Response: # List[Tuple[Union[Track, Album], bool]]
         ''' Check if the user has one or more things saved to their library
 
@@ -311,7 +318,8 @@ class User:
 
 
     def save(self,
-             other
+             other: Union[Track, Album,
+                          List[Union[Track, Album]]]
     ) -> Response: # None
         ''' Save one or more things to the user's library
 
@@ -337,7 +345,8 @@ class User:
 
 
     def remove(self,
-               other
+               other: Union[Track, Album,
+                            List[Union[Track, Album]]]
     ) -> Response: # None
         ''' Remove one or more things from the user's library
 
@@ -360,10 +369,3 @@ class User:
         # DELETE /v1/me/albums
         # DELETE /v1/me/tracks
         pass
-
-from spotifython.album import Album
-from spotifython.player import Player
-from spotifython.playlist import Playlist
-from spotifython.artist import Artist
-from spotifython.track import Track
-from spotifython.session import Session as sp
