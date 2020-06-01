@@ -360,7 +360,7 @@ class Session:
             HTTPError if failure or partial failure.
 
         Required token scopes:
-            N/A
+            None
 
         Calls endpoints:
             GET   /v1/albums
@@ -429,7 +429,7 @@ class Session:
             HTTPError if failure or partial failure.
 
         Required token scopes:
-            N/A
+            None
 
         Calls endpoints:
             GET   /v1/artists
@@ -499,7 +499,7 @@ class Session:
             HTTPError if failure or partial failure.
 
         Required token scopes:
-            N/A
+            None
 
         Calls endpoints:
             GET   /v1/tracks
@@ -567,7 +567,7 @@ class Session:
             HTTPError if failure or partial failure.
 
         Required token scopes:
-            N/A
+            None
 
         Calls endpoints:
             GET	/v1/users/{user_id}
@@ -681,7 +681,7 @@ class Session:
             HTTPError if failure or partial failure.
 
         Required token scopes:
-            N/A
+            None
 
         Calls endpoints:
             GET	/v1/playlists/{playlist_id}
