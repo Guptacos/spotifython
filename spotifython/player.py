@@ -1,6 +1,7 @@
 """ User class
 
-This class represents a Player object, which is tied to a User
+This class represents a Player object, which is tied to a Spotifython User
+object.
 
 """
 
@@ -30,7 +31,7 @@ class Player:
             Defaults to using the currently active device, which is what you
             will want most of the time.
 
-        position: always an integer that represents milliseconds.
+        position: an integer that always represents milliseconds.
 
     Raises:
         TypeError:  if incorrectly typed parameters are given.
@@ -93,22 +94,23 @@ class Player:
     def _player_data(self,
                      key,
                      market=const.TOKEN_REGION,
-                     return_none=False):
+                     should_raise_error=True):
         """ Helper function for the getter methods.
         Wraps calling the player endpoint and handling a missing key.
 
         Args:
             key: the key to get from the currently playing context
             market: used in track relinking
-            return_none: if True: returns None when no device available
-                         if False: raises SpotifyError when no device available
+            should_raise_error:
+                if False: returns None when no device available
+                if True: raises SpotifyError when no device available
 
         Returns:
-            None if there is no active device and return_none is True
+            None if there is no active device and should_raise_error is False
             The result of player_data[key] otherwise
 
         Raises:
-            SpotifyError: if spotify returns an error or the key isn't found
+            SpotifyError: if Spotify returns an error or the key isn't found
             NetworkError: for misc network failures
 
         Calls endpoints:
@@ -128,7 +130,7 @@ class Player:
         # No active device
         # TODO: update when bug report is resolved
         if status_code == 204:
-            if return_none:
+            if not should_raise_error:
                 return None
             raise utils.SpotifyError('No active device',
                                      status_code,
@@ -482,7 +484,7 @@ class Player:
         Required token scopes:
             user-read-playback-state
         """
-        device = self._player_data('device', return_none=True)
+        device = self._player_data('device', should_raise_error=False)
         if device is None:
             return None
 
