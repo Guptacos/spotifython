@@ -2,3 +2,8 @@ __pycache__
 
 // Sphinx ignores
 docs/build
+
+// Pypi packaging
+build
+dist
+*.egg-info
