@@ -5,7 +5,6 @@ API token.
 """
 
 # Standard library imports
-from typing import Union, List
 import math
 import requests
 
@@ -119,61 +118,15 @@ class Session:
         # Internal: Update search results via paginated searches
         def _add(self, iterable):
             if all(type(x) is Album for x in iterable):
-                self._add_albums(self, iterable)
+                self._albums_paging += iterable
             elif all(type(x) is Artist for x in iterable):
-                self._add_artists(self, iterable)
+                self._artists_paging += iterable
             elif all(type(x) is Playlist for x in iterable):
-                self._add_playlists(self, iterable)
+                self._playlists_paging += iterable
             elif all(type(x) is Track for x in iterable):
-                self._add_tracks(self, iterable)
+                self._tracks_paging += iterable
             else:
                 raise TypeError('iterable is not of a valid type')
-
-        def _add_albums(self, albums):
-            """ Used to build the list of albums returned by the search query.
-
-            Args:
-                albums: List[Album], the albums to add to the search result.
-            """
-            if not all(type(x) is Album for x in albums):
-                raise TypeError('albums should be a list of Album objs')
-
-            self._albums_paging += albums
-
-        def _add_artists(self, artists):
-            """ Used to build the list of artists returned by the search query.
-
-            Args:
-                artists: List[Artist], the artists to add to the search result.
-            """
-            if not all(type(x) is Artist for x in artists):
-                raise TypeError('artists should be a list of Artist objs')
-
-            self._artists_paging += artists
-
-        def _add_playlists(self, playlists):
-            """ Used to build the list of playlists returned by the
-            search query.
-
-            Args:
-                playlists: List[Playlist], the playlists to add to the
-                    search result.
-            """
-            if not all(type(x) is Playlist for x in playlists):
-                raise TypeError('playlists should be a list of Playlist objs')
-
-            self._playlists_paging += playlists
-
-        def _add_tracks(self, tracks):
-            """ Used to build the list of tracks returned by the search query.
-
-            Args:
-                tracks: List[Track], the tracks to add to the search result.
-            """
-            if not all(type(x) is Track for x in tracks):
-                raise TypeError('tracks should be a list of Track objs')
-
-            self._tracks_paging += tracks
 
         # Field accessors
         def albums(self):
@@ -227,18 +180,18 @@ class Session:
                 operators.
             types: str or List[str], singular search type or a list of the types
                 of results to search for.
-                Valid arguments are const.SEARCH_TYPE_ALBUM,
-                const.SEARCH_TYPE_ARTIST, const.SEARCH_TYPE_PLAYLIST, and
-                const.SEARCH_TYPE_TRACK.
+                Valid arguments are sp.SEARCH_TYPE_ALBUM,
+                sp.SEARCH_TYPE_ARTIST, sp.SEARCH_TYPE_PLAYLIST, and
+                sp.SEARCH_TYPE_TRACK.
                 Note: shows and episodes will be supported in a future release.
             limit: int, the maximum number of results to return.
             market: (Optional) str, An ISO 3166-1 alpha-2 country code or the
-                string const.TOKEN_REGION. If a country code is specified,
+                string sp.TOKEN_REGION. If a country code is specified,
                 only artists, albums, and tracks with content that is playable
                 in that market is returned.
                 Note:
                 - Playlist results are not affected by the market parameter.
-                - If market is set to const.TOKEN_REGION, and a valid access
+                - If market is set to sp.TOKEN_REGION, and a valid access
                 token is specified in the request header, only content playable
                 in the country associated with the user account, is returned.
                 - If market is set to None, no market is passed to Spotify's Web
@@ -251,7 +204,6 @@ class Session:
         Returns:
             Returns a SearchResult if the request succeeded.
             On failure or partial failure, throws an HTTPError.
-            JSON and a corresponding status code defined in the Response class.
 
         Exceptions:
             TypeError for invalid types in any argument.
@@ -327,12 +279,12 @@ class Session:
         # We want the singular search types, while our constants are plural
         # search types in the argument for uniformity.
         type_mapping = {
-            const.ALBUMS: const.SEARCH_TYPE_ALBUM,
-            const.ARTISTS: const.SEARCH_TYPE_ARTIST,
-            const.PLAYLISTS: const.SEARCH_TYPE_PLAYLIST,
-            const.TRACKS: const.SEARCH_TYPE_TRACK,
-            const.SHOWS: const.SEARCH_TYPE_SHOW,
-            const.EPISODES: const.SEARCH_TYPE_EPISODE,
+            const.ALBUMS: 'album',
+            const.ARTISTS: 'artist',
+            const.PLAYLISTS: 'playlist',
+            const.TRACKS: 'track',
+            const.SHOWS: 'show',
+            const.EPISODES: 'episode',
         }
         remaining_types = [type_mapping.get(s) for s in types]
 
@@ -344,14 +296,19 @@ class Session:
             uri_params['offset'] = offset
 
             # Execute requests
-            response_json, _ = utils.request(
+            response_json, status_code = utils.request(
                 session=self,
                 request_type=const.REQUEST_GET,
                 endpoint=endpoint,
                 uri_params=uri_params
             )
 
+            if status_code != 200:
+                raise utils.SpotifyError(status_code, response_json)
+
             # Extract data per search type
+            # TODO: test what happens if unnecessary types are specified for
+            # the given offsets against live api
             for curr_type in remaining_types:
                 items = response_json[curr_type]['items']
                 acc = list()
@@ -390,7 +347,7 @@ class Session:
             album_ids: str or List[str], a string or list of strings of the
                 Spotify album ids to search for.
             market: (Optional) str, an ISO 3166-1 alpha-2 country code or the
-                string const.TOKEN_REGION.
+                string sp.TOKEN_REGION.
                 Provide this parameter if you want to apply Track Relinking.
                 If market is set to None, no market is passed to Spotify's Web
                 API, and its default behavior is invoked.
@@ -398,7 +355,6 @@ class Session:
         Returns:
             Returns an Album or List[Album] if the request succeeded.
             On failure or partial failure, throws an HTTPError.
-            JSON and a corresponding status code defined in the Response class.
 
         Exceptions:
             TypeError for invalid types in any argument.
@@ -441,15 +397,17 @@ class Session:
             uri_params['ids'] = ','.join(batch)
 
             # Execute requests
-            response_json, _ = utils.request(
+            response_json, status_code = utils.request(
                 session=self,
                 request_type=const.REQUEST_GET,
                 endpoint=endpoint,
                 uri_params=uri_params
             )
 
-            items = response_json['albums']
+            if status_code != 200:
+                raise utils.SpotifyError(status_code, response_json)
 
+            items = response_json['albums']
             for item in items:
                 result.append(Album(item))
 
@@ -467,7 +425,6 @@ class Session:
         Returns:
             Returns an Artist or List[Artists] if the request succeeded.
             On failure or partial failure, throws an HTTPError.
-            JSON and a corresponding status code defined in the Response class.
 
         Exceptions:
             TypeError for invalid types in any argument.
@@ -503,15 +460,17 @@ class Session:
             uri_params['ids'] = ','.join(batch)
 
             # Execute requests
-            response_json, _ = utils.request(
+            response_json, status_code = utils.request(
                 session=self,
                 request_type=const.REQUEST_GET,
                 endpoint=endpoint,
                 uri_params=uri_params
             )
 
-            items = response_json['artists']
+            if status_code != 200:
+                raise utils.SpotifyError(status_code, response_json)
 
+            items = response_json['artists']
             for item in items:
                 result.append(Artist(item))
 
@@ -527,7 +486,7 @@ class Session:
         Args:
             track_ids: str or List[str], the Spotify track ids to search for.
             market: (Optional) An ISO 3166-1 alpha-2 country code or the string
-                const.TOKEN_REGION.
+                sp.TOKEN_REGION.
                 Provide this parameter if you want to apply Track Relinking.
                 If market is set to None, no market is passed to Spotify's Web
                 API, and its default behavior is invoked.
@@ -535,7 +494,6 @@ class Session:
         Returns:
             Returns a Track or List[Track] if the request succeeded.
             On failure or partial failure, throws an HTTPError.
-            JSON and a corresponding status code defined in the Response class.
 
         Exceptions:
             TypeError for invalid types in any argument.
@@ -577,15 +535,17 @@ class Session:
             uri_params['ids'] = ','.join(batch)
 
             # Execute requests
-            response_json, _ = utils.request(
+            response_json, status_code = utils.request(
                 session=self,
                 request_type=const.REQUEST_GET,
                 endpoint=endpoint,
                 uri_params=uri_params
             )
 
-            items = response_json['tracks']
+            if status_code != 200:
+                raise utils.SpotifyError(status_code, response_json)
 
+            items = response_json['tracks']
             for item in items:
                 result.append(Track(item))
 
@@ -603,7 +563,6 @@ class Session:
         Returns:
             Returns a User or List[User] if the request succeeded.
             On failure or partial failure, throws an HTTPError.
-            JSON and a corresponding status code defined in the Response class.
 
         Exceptions:
             TypeError for invalid types in any argument.
@@ -637,12 +596,16 @@ class Session:
             # Execute requests
             # TODO: Partial failure - if user with user_id does not exist,
             # status_code is 404
-            response_json, _ = utils.request(
+            response_json, status_code = utils.request(
                 session=self,
                 request_type=const.REQUEST_GET,
                 endpoint=endpoint,
                 uri_params=uri_params
             )
+
+            if status_code != 200:
+                raise utils.SpotifyError(status_code, response_json)
+
             result.append(User(response_json))
 
         return result if len(result) != 1 else result[0]
@@ -677,16 +640,14 @@ class Session:
         endpoint = Endpoints.SEARCH_GET_CURRENT_USER
 
         # Execute requests
-        try:
-            response_json, _ = utils.request(
-                session=self,
-                request_type=const.REQUEST_GET,
-                endpoint=endpoint
-            )
-        except requests.exceptions.HTTPError as exception:
-            if exception.request.status_code == 403:
-                raise ValueError('Spotify API key is not valid')
-            raise exception
+        response_json, status_code = utils.request(
+            session=self,
+            request_type=const.REQUEST_GET,
+            endpoint=endpoint
+        )
+
+        if status_code != 200:
+            raise utils.SpotifyError(status_code, response_json)
 
         return User(response_json)
 
@@ -710,7 +671,7 @@ class Session:
                 Fields can be excluded by prefixing them with an exclamation
                 mark.
             market: (Optional) str, an ISO 3166-1 alpha-2 country code or the
-                string const.TOKEN_REGION.
+                string sp.TOKEN_REGION.
                 Provide this parameter if you want to apply Track Relinking.
                 If market is set to None, no market is passed to Spotify's
                 Web API.
@@ -718,7 +679,6 @@ class Session:
         Returns:
             Returns a Playlist or List[Playlist] if the request succeeded.
             On failure or partial failure, throws an HTTPError.
-            JSON and a corresponding status code defined in the Response class.
 
         Exceptions:
             TypeError for invalid types in any argument.
@@ -760,12 +720,15 @@ class Session:
             endpoint = Endpoints.SEARCH_GET_PLAYLIST.format(playlist_id)
 
             # Execute requests
-            response_json, _ = utils.request(
+            response_json, status_code = utils.request(
                 session=self,
                 request_type=const.REQUEST_GET,
                 endpoint=endpoint,
                 uri_params=uri_params
             )
+
+            if status_code != 200:
+                raise utils.SpotifyError(status_code, response_json)
 
             result.append(Playlist(response_json))
 

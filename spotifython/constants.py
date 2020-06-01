@@ -21,12 +21,6 @@ FORCE_PLAY = 'force_play'
 PUBLIC = 'public'
 PRIVATE = 'private'
 PRIVATE_COLLAB = 'private_collab'
-SEARCH_TYPE_ALBUM = 'album'
-SEARCH_TYPE_ARTIST = 'artist'
-SEARCH_TYPE_PLAYLIST = 'playlist'
-SEARCH_TYPE_TRACK = 'track'
-SEARCH_TYPE_SHOW = 'show'
-SEARCH_TYPE_EPISODE = 'episode'
 
 # Constants
 DEFAULT_REQUEST_TIMEOUT = 10 # in seconds
