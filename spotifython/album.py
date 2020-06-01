@@ -1,4 +1,6 @@
-import spotifython.constants as const
+from track import Track
+from artist import Artist
+
 
 class Album:
     def __init__(self, album_info):
@@ -70,6 +72,3 @@ class Album:
 
     def release_date(self):
         return self._release_date
-
-from spotifython.track import Track
-from spotifython.artist import Artist
