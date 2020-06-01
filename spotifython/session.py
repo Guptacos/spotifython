@@ -5,7 +5,7 @@ API token.
 """
 
 # Standard library imports
-from typing import Union, List, Any
+from typing import Union, List
 import math
 import requests
 
@@ -13,13 +13,6 @@ import requests
 import spotifython.constants as const
 from spotifython.endpoints import Endpoints
 import spotifython.utils as utils
-
-# Aliases to avoid circular dependencies
-Album = Any  # album.py imports this module.
-Artist = Any  # artist.py imports this module.
-Playlist = Any  # playlist.py imports this module.
-Track = Any  # track.py imports this module.
-User = Any  # user.py imports this module.
 
 # pylint: disable=pointless-string-statement, too-many-instance-attributes
 # pylint: disable=too-many-arguments, too-many-locals, protected-access
@@ -47,9 +40,11 @@ class Session:
             ValueError: if parameters with illegal values are given.
         """
         if not isinstance(token, str):
-            raise TypeError(token)
+            raise TypeError('token should be str')
         if not isinstance(timeout, int):
-            raise TypeError(timeout)
+            raise TypeError(f'timeout should be int')
+        if timeout < 0:
+            raise ValueError(f'timeout {timeout} is < 0')
 
         self._token = token
         self._timeout = timeout
@@ -62,17 +57,23 @@ class Session:
             token: str, the new Spotify authentication token.
         """
         if not isinstance(token, str):
-            raise TypeError(token)
+            raise TypeError("token should be string")
 
         self._token = token
 
     def token(self):
-        """ Getter for the token provided by the client. Returns a str.
+        """ Getter for the token provided by the client.
+
+        Returns:
+            A str containing the token.
         """
         return self._token
 
     def timeout(self):
-        """ Getter for the timeout provided by the client. Returns an int.
+        """ Getter for the timeout provided by the client.
+
+        Returns:
+            An int containing the provided timeout.
         """
         return self._timeout
 
@@ -80,21 +81,10 @@ class Session:
         # Guarantee that the IDs of different objects in memory are different
         # Avoids exposing the token as plaintext for no reason, since that is
         # the other possible indicator of object identity.
-        return f"Session(${id(self)})"
+        return f'Session<${id(self)}>'
 
     def __repr__(self):
         return self.__str__()
-
-    def __eq__(self, other):
-        # TODO: A session is the same if its token is the same? Or do we want
-        # this to be done using memory addresses (id)?
-        return self._token == other._token
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-    def __hash__(self):
-        return hash(self.token)
 
     class SearchResult:
         """ SearchResult class
@@ -110,10 +100,11 @@ class Session:
             results (up to search limit).
 
             Args:
-                search_info: dictionary, contains known values about the user
+                search_info: dictionary, contains known values about the user's
+                    search query
             """
             if not isinstance(search_info, dict):
-                raise TypeError(search_info)
+                raise TypeError('search_info should be dict')
 
             self._raw = search_info
             self._albums_paging = self._raw.get('albums', dict())\
@@ -127,16 +118,16 @@ class Session:
 
         # Internal: Update search results via paginated searches
         def _add(self, iterable):
-            if isinstance(iterable, List[Album]):
+            if all(type(x) is Album for x in iterable):
                 self._add_albums(self, iterable)
-            elif isinstance(iterable, List[Artist]):
+            elif all(type(x) is Artist for x in iterable):
                 self._add_artists(self, iterable)
-            elif isinstance(iterable, List[Playlist]):
+            elif all(type(x) is Playlist for x in iterable):
                 self._add_playlists(self, iterable)
-            elif isinstance(iterable, List[Track]):
+            elif all(type(x) is Track for x in iterable):
                 self._add_tracks(self, iterable)
             else:
-                raise TypeError(iterable)
+                raise TypeError('iterable is not of a valid type')
 
         def _add_albums(self, albums):
             """ Used to build the list of albums returned by the search query.
@@ -144,8 +135,8 @@ class Session:
             Args:
                 albums: List[Album], the albums to add to the search result.
             """
-            if not isinstance(albums, List[Album]):
-                raise TypeError(albums)
+            if not all(type(x) is Album for x in albums):
+                raise TypeError('albums should be a list of Album objs')
 
             self._albums_paging += albums
 
@@ -155,8 +146,8 @@ class Session:
             Args:
                 artists: List[Artist], the artists to add to the search result.
             """
-            if not isinstance(artists, List[Artist]):
-                raise TypeError(artists)
+            if not all(type(x) is Artist for x in artists):
+                raise TypeError('artists should be a list of Artist objs')
 
             self._artists_paging += artists
 
@@ -168,8 +159,8 @@ class Session:
                 playlists: List[Playlist], the playlists to add to the
                     search result.
             """
-            if not isinstance(playlists, List[Playlist]):
-                raise TypeError(playlists)
+            if not all(type(x) is Playlist for x in playlists):
+                raise TypeError('playlists should be a list of Playlist objs')
 
             self._playlists_paging += playlists
 
@@ -179,33 +170,41 @@ class Session:
             Args:
                 tracks: List[Track], the tracks to add to the search result.
             """
-            if not isinstance(tracks, List[Track]):
-                raise TypeError(tracks)
+            if not all(type(x) is Track for x in tracks):
+                raise TypeError('tracks should be a list of Track objs')
 
             self._tracks_paging += tracks
 
         # Field accessors
         def albums(self):
             """ Getter for the albums returned by the search query.
-            Returns a List[Album].
+
+            Returns:
+                A list of Album objects.
             """
             return self._albums_paging.get('items', list())
 
         def artists(self):
             """ Getter for the artists returned by the search query.
-            Returns a List[Artist].
+
+            Returns:
+                A list of Artist objects.
             """
             return self._artists_paging.get('items', list())
 
         def playlists(self):
             """ Getter for the playlist returned by the search query.
-            Returns a List[Playlist].
+
+            Returns:
+                A list of Playlist objects.
             """
             return self._playlists_paging.get('items', list())
 
         def tracks(self):
             """ Getter for the tracks returned by the search query.
-            Returns a List[Track].
+
+            Returns:
+                A list of Track objects.
             """
             return self._tracks_paging.get('items', list())
 
@@ -276,24 +275,26 @@ class Session:
         # Internally, include_external='audio' is the only valid argument.
 
         # Type validation
-        if not isinstance(query, str):
-            raise TypeError(query)
-        if not isinstance(types, Union[str, List[str]]):
-            raise TypeError(types)
+        if not all(type(x) is str for x in query):
+            raise TypeError('query should be str')
+        if not isinstance(types, str) and \
+            not all(type(x) is str for x in types):
+            raise TypeError('types should be str or a list of str')
         if not isinstance(limit, int):
-            raise TypeError(limit)
+            raise TypeError('limit should be int')
         if market is not None and not isinstance(market, str):
-            raise TypeError(market)
+            raise TypeError('market should be None or str')
         if include_external_audio is not None and \
             not isinstance(include_external_audio, bool):
-            raise TypeError(include_external_audio)
+            raise TypeError('include_external_audio should be None or bool')
 
         # Encode the spaces in strings! See the following link for more details.
         # https://developer.spotify.com/documentation/web-api/reference/search/search/
         encoded_query = query.replace(' ', '+')
 
         # Argument validation
-        types = types if isinstance(types, List[str]) else list(types)
+        if isinstance(types, str):
+            types = list(types)
         valid_types = [
             const.ALBUMS,
             const.ARTISTS,
@@ -302,7 +303,7 @@ class Session:
         ]
         for search_type_filter in types:
             if search_type_filter not in valid_types:
-                raise ValueError(types)
+                raise ValueError(f'search type {search_type_filter} invalid')
         if limit > 2000:
             raise ValueError('Spotify only supports up to 2000 search results.')
 
@@ -415,12 +416,13 @@ class Session:
         """
 
         # Type/Argument validation
-        if not isinstance(album_ids, Union[str, List[str]]):
-            raise TypeError(album_ids)
+        if not isinstance(album_ids, str) and\
+            not all(type(x) is str for x in album_ids):
+            raise TypeError('album_ids should be str or list of str')
         if market is None:
-            raise ValueError(market)
+            raise ValueError('market is a required argument')
         if not isinstance(market, str):
-            raise TypeError(market)
+            raise TypeError('market should be str')
 
         if isinstance(album_ids, str):
             album_ids = list(album_ids)
@@ -482,11 +484,12 @@ class Session:
         """
 
         # Type validation
-        if not isinstance(artist_ids, Union[str, List[str]]):
-            raise TypeError(artist_ids)
+        if not isinstance(artist_ids, str) and\
+            not all(type(x) is str for x in artist_ids):
+            raise TypeError('artist_ids should be str or list of str')
 
-        artist_ids = artist_ids if isinstance(artist_ids, List[str]) \
-            else list(artist_ids)
+        if isinstance(artist_ids, str):
+            artist_ids = list(artist_ids)
 
         # Construct params for API call
         endpoint = Endpoints.SEARCH_GET_ALBUMS
@@ -550,17 +553,15 @@ class Session:
         """
 
         # Type validation
-        if not isinstance(track_ids, Union[str, List[str]]):
-            raise TypeError(track_ids)
+        if not isinstance(track_ids, str) and\
+            not all(type(x) is str for x in track_ids):
+            raise TypeError('track_ids should be str or list of str')
         if market is not None and not isinstance(market, str):
-            raise TypeError(market)
+            raise TypeError('market should be None or str')
 
         # Argument validation
-        if market is None:
-            raise ValueError(market)
-
-        track_ids = track_ids if isinstance(track_ids, List[str]) \
-            else list(track_ids)
+        if isinstance(track_ids, str):
+            track_ids = list(track_ids)
 
         # Construct params for API call
         endpoint = Endpoints.SEARCH_GET_TRACKS
@@ -616,11 +617,12 @@ class Session:
         """
 
         # Type validation
-        if not isinstance(user_ids, Union[str, List[str]]):
-            raise TypeError(user_ids)
+        if not isinstance(user_ids, str) and\
+            not all(type(x) is str for x in user_ids):
+            raise TypeError('user_ids should be str or list of str')
 
         if isinstance(user_ids, str):
-            user_ids = list(user_ids)
+            user_ids = list('user_ids should be str')
 
         # Construct params for API call
         endpoint = Endpoints.SEARCH_GET_USER
@@ -649,10 +651,14 @@ class Session:
         """ Gets the user associated with the current Spotify API
         authentication key.
 
+        If the user-read-email scope is authorized, the returned JSON will
+        include the email address that was entered when the user created their
+        Spotify account. This email address is unverified; do not assume that
+        the email address belongs to the user.
+
         Returns:
-            Returns a User if the request succeeded.
-            On failure or partial failure, throws an HTTPError.
-            JSON and a corresponding status code defined in the Response class.
+            Returns a User if the request succeeded. On failure or partial
+            failure, throws an HTTPError.
 
         Exceptions:
             ValueError if the Spotify API key is not valid.
@@ -664,7 +670,7 @@ class Session:
             user-read-email
 
         Calls endpoints:
-            GET	/v1/me
+            GET /v1/me
         """
 
         # Construct params for API call
@@ -681,10 +687,6 @@ class Session:
             if exception.request.status_code == 403:
                 raise ValueError('Spotify API key is not valid')
             raise exception
-
-        # Impossible to initialize a user with no response_json
-        if response_json is None:
-            raise ValueError(response_json)
 
         return User(response_json)
 
@@ -734,22 +736,20 @@ class Session:
         # has been deprecated and therefore is removed from the API wrapper.
 
         # Type/Argument validation
-        if not isinstance(playlist_ids, Union[str, List[str]]):
-            raise TypeError(playlist_ids)
+        if not isinstance(playlist_ids, str) and\
+            not all(type(x) is str for x in playlist_ids):
+            raise TypeError('playlist_ids should be str or list of str')
         if fields is not None and not isinstance(fields, str):
-            raise TypeError(fields)
-        if market is None:
-            raise ValueError(market)
+            raise TypeError('fields should be None or str')
         if not isinstance(market, str):
-            raise TypeError(market)
+            raise TypeError('market should be str')
 
         if isinstance(playlist_ids, str):
             playlist_ids = list(playlist_ids)
 
         # Construct params for API call
         uri_params = dict()
-        if market is not None:
-            uri_params['market'] = market
+        uri_params['market'] = market
         if fields is not None:
             uri_params['fields'] = fields
 

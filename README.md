@@ -25,4 +25,3 @@ and find the endpoint you are interested in.
 
 ## Contributing
 TODO: Are others allowed to contribute?
-
