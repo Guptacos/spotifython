@@ -15,9 +15,9 @@ import spotifython.utils as utils
 
 # TODO: what to do about partial success on batch operations?
 class User:
-    """ Define behaviors related to a user, such as reading / modifying the
-        library and following artists.
+    """ Define behaviors related to a Spotify user
 
+    Includes things like reading / modifying the library and following artists.
     Getting an instance of User should be done using spotifython.get_users()
 
     Raises:
@@ -156,9 +156,10 @@ class User:
         Calls endpoints:
             GET     /v1/me/player/recently-played
 
-        Note: the 'before' and 'after' functionalities are not supported.
-        Note: does not return the time the tracks were played
-        Note: a track must be played for >30s to be included in the history.
+        Note:
+            * The 'before' and 'after' functionalities are not supported.
+            * Does not return the time the tracks were played
+            * A track must be played for >30s to be included in the history.
               Tracks played while in a 'private session' not recorded.
         """
         # Validate arguments
@@ -283,10 +284,11 @@ class User:
         Args:
             other: check if current user is following 'other'. Other must be
                 one of the following:
-                    Artist
-                    User
-                    Playlist
-                    List: can contain multiple of the above types
+
+                    * Artist
+                    * User
+                    * Playlist
+                    * List: can contain multiple of the above types
 
         Required token scopes:
             user-follow-read
@@ -570,9 +572,10 @@ class User:
         Args:
             other: check if the current user has 'other' saved to the library.
                 Other must be one of the following:
-                    Track
-                    Album
-                    List: can contain multiple of the above types
+
+                    * Track
+                    * Album
+                    * List: can contain multiple of the above types
 
         Returns:
             List of tuples. Each tuple has an input object and whether the user
