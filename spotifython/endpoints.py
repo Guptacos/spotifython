@@ -18,3 +18,8 @@ class Endpoints:
     PLAYER_VOLUME = PLAYER + '/volume'
     PLAYER_REPEAT = PLAYER + '/repeat'
     PLAYER_QUEUE = PLAYER + '/queue'
+
+    # Track
+    TRACK_GET_DATA = '/v1/tracks/%s'
+    TRACK_FEATURES = '/v1/audio-features/%s'
+    TRACK_ANALYSIS = '/v1/audio-analysis/%s'
