@@ -29,7 +29,7 @@ class Track:
         instance of Track, use Session.get_tracks()
 
         Args:
-            session: a Spotifython instance
+            session: a Session instance
             info: the track's information
         """
         # Validate inputs
