@@ -11,6 +11,7 @@ Welcome to Spotifython's documentation!
    :caption: Contents:
 
    intro
+   quickstart
    spotifython
    examples
 
