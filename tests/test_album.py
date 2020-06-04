@@ -57,6 +57,11 @@ class TestAlbum(unittest.TestCase):
 
 
     @unittest.skip('Not yet implemented')
+    def test__update_tracks(self):
+        pass
+
+
+    @unittest.skip('Not yet implemented')
     def test_spotify_id(self):
         pass
 
