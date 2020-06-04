@@ -42,6 +42,10 @@ class Track:
         self._raw = copy.deepcopy(info)
         self._session = session
 
+        # Cached fields
+        self._album = None
+        self._artists = None
+
 
     # TODO: test this
     # TODO: is it bad for print to make api calls?
@@ -122,8 +126,11 @@ class Track:
         Calls endpoints:
             GET     /v1/tracks/{id}
         """
-        album = utils.get_field(self, 'album')
-        return Album(self._session, album)
+        if self._album is None:
+            album = utils.get_field(self, 'album')
+            self._album = Album(self._session, album)
+
+        return self._album
 
 
     def artists(self):
@@ -135,8 +142,11 @@ class Track:
         Calls endpoints:
             GET     /v1/tracks/{id}
         """
-        artists = utils.get_field(self, 'artists')
-        return [Artist(self._session, art) for art in artists]
+        if self._artists is None:
+            artists = utils.get_field(self, 'artists')
+            self._artists = [Artist(self._session, art) for art in artists]
+
+        return self._artists
 
 
     def available_markets(self):
@@ -236,7 +246,7 @@ class Track:
         """ Get the Track's href
 
         Returns:
-            str: a link to the Web API endpoint providing full track details.
+            str: a link to the Web API endpoint providing full Track details.
 
         Calls endpoints:
             GET     /v1/tracks/{id}
