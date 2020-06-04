@@ -5,6 +5,7 @@ This class represents an Album object, which represents a Spotify album.
 
 # Standard library imports
 import copy
+import sys
 
 # Local imports
 import spotifython.constants as const
@@ -36,68 +37,104 @@ class Album:
         if 'id' not in info:
             raise ValueError('Album id not in info')
 
-        self._id = info['id']
+        # Defensively copy
+        info = copy.deepcopy(info)
 
-        self._raw = copy.deepcopy(info)
+        self._id = info['id']
+        self._raw = info
         self._session = session
 
-        # TODO:?????
-        self._iter = 0
+        # If tracks / paging objects malformed, defer manual track fetching.
+        if 'tracks' not in info or \
+            'total' not in info['tracks'] or \
+            'limit' not in info['tracks'] or \
+            'items' not in info['tracks']:
+            self._tracks = None
+
+        # If too many tracks, defer fetching them until needed.
+        if info['tracks']['total'] > info['tracks']['limit']:
+            self._tracks = None
+
+        self._tracks = info['tracks']['items']
+
+        # Defer artists until later
+        self._artists = None
 
 
     def __str__(self):
-        pass
+        return f'Album {self.name()}'
 
 
     def __repr__(self):
-        pass
+        return str(self) + f' with id <{self.spotify_id()}'
 
 
     def __eq__(self, other):
-        pass
+        return utils.spotifython_eq(self, other)
 
 
     def __ne__(self, other):
-        pass
+        return not self.__eq__(other)
 
 
     def __hash__(self):
-        pass
+        return utils.spotifython_hash(self)
 
 
     def __len__(self):
-        # return len(self._tracks)
-        pass
-
-
-    # iter and next let you loop through the tracks in the album. len gives you
-    # the number of tracks in the album.
-    def __iter__(self):
-        self._iter = 0
-        return self
-
-
-    def __next__(self):
-        # if self._iter < len(self._tracks):
-        #     track = self._tracks[self._iter]
-        #     self._iter += 1
-        #     return track
-
-        # raise StopIteration
-        pass
-
-
-    def __reversed__(self):
-        pass
-
-
-    def __contains__(self, other):
-        pass
+        self._update_tracks()
+        return len(self._tracks)
 
 
     def __getitem__(self, key):
-        # Should accept negative keys and slice objects
-        pass
+        # Make sure we have tracks to get items from
+        self._update_tracks()
+
+        # Since self._tracks is a list, accepts negative keys and slices
+        return self._tracks[key]
+
+
+    def _update_fields(self):
+        """ Update self._raw using the Album id
+
+        Calls endpoints:
+            GET     /v1/albums/{id}
+        """
+
+        response_json, status_code = utils.request(
+            session=self._session,
+            request_type=const.REQUEST_GET,
+            endpoint=Endpoints.ALBUM_GET_DATA % self.spotify_id()
+        )
+
+        if status_code != 200:
+            raise utils.SpotifyError(status_code, response_json)
+
+        # Updates _raw with new values. One liner : for each key in union of
+        # keys in self._raw and response_json, takes value for key from
+        # response_json if present, else takes value for key from self._raw.
+        # TODO: this is weird notation, make a utility function for it.
+        # Especially useful since it is an action necessary for many classes.
+        self._raw = {**self._raw, **response_json}
+
+
+    def _update_tracks(self):
+        """ Update self._tracks using the Album id
+
+        Calls endpoints:
+            GET     /v1/albums/{id}/tracks
+        """
+
+        # Only populate tracks if necessary
+        if self._tracks is not None:
+            return
+
+        self._tracks = utils.paginate_get(
+            session=self._session,
+            limit=sys.maxsize,
+            return_class=Track,
+            endpoint=Endpoints.ALBUM_GET_DATA % self.spotify_id()
+        )
 
 
     def spotify_id(self):
@@ -105,70 +142,72 @@ class Album:
 
 
     def type(self):
-        pass
+        types = {
+            'single': const.SINGLE,
+            'compilation': const.COMPILATION,
+            'album': const.ALBUMS
+        }
+        return types[utils.get_field(self, 'album_type')]
 
 
     def artists(self):
-        # for artist in album_info.get('artists', []):
-        #     self._artists.append(Artist(artist))
-        # return self._artists
-        pass
+        if self._artists is not None:
+            return self._artists
+
+        artists = utils.get_field(self, 'artists')
+        self._artists = [Artist(self._session, art) for art in artists]
+
+        return self._artists
 
 
     def available_markets(self):
-        pass
+        return utils.get_field(self, 'available_markets')
 
 
     def copyrights(self):
-        pass
+        return utils.get_field(self, 'copyrights')
 
 
     def genres(self):
-        pass
+        return utils.get_field(self, 'genres')
 
 
     def href(self):
-        pass
+        return utils.get_field(self, 'href')
 
 
     def uri(self):
-        pass
+        return utils.get_field(self, 'uri')
 
 
     def images(self):
-        """
-        # TODO: usually has three sizes, maybe take in an optional arg for size,
-        # otherwise return the first one (largest).
-        def image(self, size=None):
-            return self._images[0] if size == None else self._images[0]
-        """
-        pass
+        return utils.get_field(self, 'images')
 
 
     def label(self):
-        pass
+        return utils.get_field(self, 'label')
 
 
     def name(self):
-        pass
+        return utils.get_field(self, 'name')
 
 
     def popularity(self):
-        pass
+        return utils.get_field(self, 'popularity')
 
 
     def release_date(self):
-        pass
+        # Spotify returns date in format Y-M-D
+        date = utils.get_field(self, 'release_date').split('-')
+
+        # Convert to ints
+        date = [int(elem) for elem in date]
+        return tuple(date)
 
 
     def tracks(self):
-        # tracks_wrapper = album_info.get('tracks', None)
-        # if tracks_wrapper != None:
-        #     self._tracks = list()
-        #     for track in tracks_wrapper.get('items', []):
-        #         self._tracks.append(Track(track))
-        # return self._tracks
-        pass
+        self._update_tracks()
+        return self._tracks
 
 
 #pylint: disable=wrong-import-position
