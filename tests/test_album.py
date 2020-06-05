@@ -14,7 +14,7 @@ import spotifython.constants as const
 import spotifython.utils as utils
 from spotifython.session import Session
 
-TOKEN = 'feedbaed'
+TOKEN = 'feebdaed'
 
 
 class TestAlbum(unittest.TestCase):
@@ -36,19 +36,67 @@ class TestAlbum(unittest.TestCase):
         pass
 
 
-    @unittest.skip('Not yet implemented')
     def test_dunder(self):
-        # str
-        # repr
-        # eq
-        # ne
-        # hash
-        # len
+        # Get 2 instances of the same album
+        album1 = get_dummy_data(const.ALBUMS, limit=1, to_obj=True)[0]
+        album1_dup = get_dummy_data(const.ALBUMS, limit=1, to_obj=True)[0]
+
+        # eq, hash
+        self.assertEqual(album1, album1_dup)
+        self.assertEqual(hash(album1), hash(album1_dup))
+        self.assertIsNot(album1, album1_dup)
+
+        # str, repr should return str and not raise exceptions
+        self.assertIsInstance(album1.__str__(), str)
+        self.assertIsInstance(album1.__repr__(), str)
+
+        # Get a second album to compare for ne
+        album2 = get_dummy_data(const.ALBUMS, limit=2, to_obj=True)[1]
+        self.assertNotEqual(album1, album2)
+
+        # The dummy_data albums don't have Tracks, so mock the Spotify request
+        # TODO: should this be fixed?
+        response_json = {
+            'items': get_dummy_data(const.TRACKS, limit=10),
+            'total': 10,
+            'limit': 50,
+            'offset': 0
+        }
+        empty_response = {
+            'items': [],
+            'total': 0,
+            'limit': 50,
+            'offset': 50
+        }
+
+        self.request_mock.side_effect = [
+            (response_json, 200),
+            (empty_response, 200)
+        ]
+
         # iter / next
+        counter = 0
+        for track in album1:
+            # contains
+            self.assertIn(track, album1)
+
+            # getitem
+            self.assertIs(album1[counter], track)
+
+            self.assertIsInstance(track, Track)
+            counter += 1
+
+        # len
+        self.assertEqual(len(album1), counter)
+        self.assertEqual(len(album1), 10)
+
         # reversed
-        # contains
-        # getitem
-        pass
+        counter = len(album1) - 1
+        for track in reversed(album1):
+            self.assertIn(track, album1)
+            self.assertIs(album1[counter], track)
+
+            counter -= 1
 
 
     @unittest.skip('Not yet implemented')
@@ -137,6 +185,4 @@ if __name__ == '__main__':
 
 #pylint: disable=wrong-import-position
 #pylint: disable=wrong-import-order
-from spotifython.album import Album
-from spotifython.artist import Artist
 from spotifython.track import Track
