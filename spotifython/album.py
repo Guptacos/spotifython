@@ -56,10 +56,11 @@ class Album:
             self._tracks = None
 
         # If too many tracks, defer fetching them until needed.
-        if info['tracks']['total'] > info['tracks']['limit']:
+        elif info['tracks']['total'] > info['tracks']['limit']:
             self._tracks = None
 
-        self._tracks = info['tracks']['items']
+        else:
+            self._tracks = info['tracks']['items']
 
         # Defer artists until later
         self._artists = None
