@@ -7,7 +7,7 @@ class Endpoints:
     # Player
     PLAYER = '/v1/me/player'
     PLAYER_GET_DATA = PLAYER
-    PLAYER_NEXT = PLAYER + '/next'
+    PLAYER_SKIP = PLAYER + '/next'
     PLAYER_PREVIOUS = PLAYER + '/previous'
     PLAYER_PAUSE = PLAYER + '/pause'
     PLAYER_PLAY = PLAYER + '/play'
