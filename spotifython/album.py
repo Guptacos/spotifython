@@ -16,10 +16,14 @@ import spotifython.utils as utils
 class Album:
     """ The Album class. Use methods here to get information about an Album.
 
+    Note:
+        The Album class does not currently support track relinking using market
+        codes. As such, ``__len__()``, ``__getitem___()``, and ``tracks()``
+        are not relinked
+
     Required token scopes:
         None: the methods in the Album class require a token, but the token
             needs no scopes.
-    TODO: is this true?
     """
 
 
@@ -70,6 +74,8 @@ class Album:
 
 
     def __eq__(self, other):
+        """ 2 Albums are equal if they have the same Spotify id
+        """
         return utils.spotifython_eq(self, other)
 
 
@@ -78,15 +84,37 @@ class Album:
 
 
     def __hash__(self):
+        """ 2 equivalent Albums will return the same hashcode
+        """
         return utils.spotifython_hash(self)
 
 
     def __len__(self):
+        """ Get the length of the album
+
+        Returns:
+            int: the number of tracks in the album
+
+        Calls endpoints:
+            GET     /v1/albums/{id}/tracks
+        """
         self._update_tracks()
         return len(self._tracks)
 
 
     def __getitem__(self, key):
+        """ Allows you to get a Track in an Album as if the Album were a list
+
+        Usage:
+            a = Album()
+            track = a[2]
+
+        Args:
+            key (int): the index into the album. 0 <= key < len(Album)
+
+        Returns:
+            The Track at index "key"
+        """
         # Make sure we have tracks to get items from
         self._update_tracks()
 
@@ -138,10 +166,27 @@ class Album:
 
 
     def spotify_id(self):
+        """ Get the id of this Track
+
+        Returns:
+            str: the Track's Spotify id
+        """
         return self._id
 
 
     def type(self):
+        """ Get the type of this Album
+
+        Returns:
+            One of:
+
+                * sp.SINGLE
+                * sp.COMPILATION
+                * sp.ALBUMS
+
+        Calls endpoints:
+            GET     /v1/albums/{id}
+        """
         types = {
             'single': const.SINGLE,
             'compilation': const.COMPILATION,
@@ -151,6 +196,14 @@ class Album:
 
 
     def artists(self):
+        """ Get the artists who wrote this Album
+
+        Returns:
+            A list of Artist objects. Can have 1 or more Artists.
+
+        Calls endpoints:
+            GET     /v1/albums/{id}
+        """
         if self._artists is not None:
             return self._artists
 
@@ -161,42 +214,144 @@ class Album:
 
 
     def available_markets(self):
+        """ Get the country codes of the markets this Album is available in.
+
+        The Album is considered available in a market when at least one of its
+        Tracks is available in that market.
+
+        Returns:
+            List[str]: a list of the available country codes
+
+        Calls endpoints:
+            GET     /v1/albums/{id}
+        """
         return utils.get_field(self, 'available_markets')
 
 
     def copyrights(self):
+        """ Get the copyrights statements for this album
+
+        Returns:
+            List[dict]: a list of copyright objects as defined here:
+                https://developer.spotify.com/documentation/web-api/reference/object-model/#copyright-object
+
+        Calls endpoints:
+            GET     /v1/albums/{id}
+        """
         return utils.get_field(self, 'copyrights')
 
 
     def genres(self):
+        """ Get the genres for this album as categorized by Spotify
+
+        Returns:
+            List[str]: a list of genre names. Could be empty if the album is not
+                yet classified.
+
+        Calls endpoints:
+            GET     /v1/albums/{id}
+        """
         return utils.get_field(self, 'genres')
 
 
     def href(self):
+        """ Get the Album's href
+
+        Returns:
+            str: a link to the Web API endpoint providing full Album details.
+
+        Calls endpoints:
+            GET     /v1/albums/{id}
+        """
         return utils.get_field(self, 'href')
 
 
     def uri(self):
+        """ Get the Album's uri
+
+        Returns:
+            str: the Spotify uri for this Album
+
+        Calls endpoints:
+            GET     /v1/albums/{id}
+        """
         return utils.get_field(self, 'uri')
 
 
     def images(self):
+        """ Get the Album's cover art in various sizes, widest first
+
+        Returns:
+            List[dict]: a list of image objects as defined here:
+                https://developer.spotify.com/documentation/web-api/reference/object-model/#image-object
+
+        Calls endpoints:
+            GET     /v1/albums/{id}
+        """
         return utils.get_field(self, 'images')
 
 
     def label(self):
+        """ The label for this Album
+
+        Returns:
+            str: the name of the label
+
+        Calls endpoints:
+            GET     /v1/albums/{id}
+        """
         return utils.get_field(self, 'label')
 
 
     def name(self):
+        """ Get the name of the Album
+
+        Returns:
+            str: the name of the Album as it appears on Spotify
+
+        Calls endpoints:
+            GET     /v1/albums/{id}
+        """
         return utils.get_field(self, 'name')
 
 
     def popularity(self):
+        """ Get the popularity of the Album
+
+        The popularity is between 0 and 100 (inclusive), with 100 being the most
+        popular. This number is calculated using the popularity of each Track.
+
+        Returns:
+            int: the popularity of the Album as calculated by Spotify
+
+        Calls endpoints:
+            GET     /v1/albums/{id}
+        """
         return utils.get_field(self, 'popularity')
 
 
     def release_date(self):
+        """ The date the Album was first released.
+
+        Returns:
+            A tuple with up to 3 ints. The tuple will be one of the following:
+
+                * (year,)
+                * (year, month)
+                * (year, month, day)
+
+        Note:
+            If the album was first released in March 2010 in Europe, and
+            then 2 months later (May) was released to the rest of the world,
+            this function will return the March 2010 date.
+
+            We considered instead returning a Python datetime.date object.
+            However since Spotify may not return a month / day, we cannot use
+            a datetime.date object.
+
+        Calls endpoints:
+            GET     /v1/albums/{id}
+        """
         # Spotify returns date in format Y-M-D
         date = utils.get_field(self, 'release_date').split('-')
 
@@ -206,6 +361,14 @@ class Album:
 
 
     def tracks(self):
+        """ Get the Tracks in the Album
+
+        Returns:
+            List[Track]: the Album's Tracks
+
+        Calls endpoints:
+            GET     /v1/albums/{id}/tracks
+        """
         self._update_tracks()
         return self._tracks
 
