@@ -156,7 +156,7 @@ class Player:
         return self._user
 
 
-    def next(self, device_id=None):
+    def skip(self, device_id=None):
         """ Skip the current song in the playback
 
         Returns:
@@ -173,7 +173,7 @@ class Player:
         response_json, status_code = utils.request(
             self._session,
             request_type=const.REQUEST_POST,
-            endpoint=Endpoints.PLAYER_NEXT,
+            endpoint=Endpoints.PLAYER_SKIP,
             body=None,
             uri_params=uri_params
         )
