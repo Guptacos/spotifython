@@ -85,29 +85,22 @@ class Session:
         This class represents the results of a Spotify API search call.
         """
 
-        def __init__(self):
+        def __init__(self, search_result):
             """ User should never call this constructor. Internally, the search result will
             perform all necessary API calls to get the desired number of search
             results (up to search limit).
+
+            Args:
+                search_result: dict containing keys 'album', 'artist',
+                    'playlist', 'track', each mapped to a list of the
+                    corresponding object type. For example, the key 'artist'
+                    maps to a list of Artist objects.
             """
 
-            self._albums_paging = list()
-            self._artists_paging = list()
-            self._playlists_paging = list()
-            self._tracks_paging = list()
-
-        # Internal: Update search results via paginated searches
-        def _add(self, iterable):
-            if all(isinstance(x, Album) for x in iterable):
-                self._albums_paging += iterable
-            elif all(isinstance(x, Artist) for x in iterable):
-                self._artists_paging += iterable
-            elif all(isinstance(x, Playlist) for x in iterable):
-                self._playlists_paging += iterable
-            elif all(isinstance(x, Track) for x in iterable):
-                self._tracks_paging += iterable
-            else:
-                raise TypeError('iterable is not of a valid type')
+            self._albums = search_result.get('album', list())
+            self._artists = search_result.get('artist', list())
+            self._playlists = search_result.get('playlist', list())
+            self._tracks = search_result.get('track', list())
 
         # Field accessors
         def albums(self):
@@ -116,7 +109,7 @@ class Session:
             Returns:
                 A list of Album objects.
             """
-            return self._albums_paging.get('items', list())
+            return self._albums
 
         def artists(self):
             """ Getter for the artists returned by the search query.
@@ -124,7 +117,7 @@ class Session:
             Returns:
                 A list of Artist objects.
             """
-            return self._artists_paging.get('items', list())
+            return self._artists
 
         def playlists(self):
             """ Getter for the playlist returned by the search query.
@@ -132,7 +125,7 @@ class Session:
             Returns:
                 A list of Playlist objects.
             """
-            return self._playlists_paging.get('items', list())
+            return self._playlists
 
         def tracks(self):
             """ Getter for the tracks returned by the search query.
@@ -140,7 +133,7 @@ class Session:
             Returns:
                 A list of Track objects.
             """
-            return self._tracks_paging.get('items', list())
+            return self._tracks
 
     ##################################
     # API Calls
@@ -254,8 +247,6 @@ class Session:
         next_multiple = lambda num, mult: math.ceil(num / mult) * mult
         num_to_request = next_multiple(limit, const.SPOTIFY_PAGE_SIZE)
 
-        # Initialize SearchResult object
-        result = self.SearchResult()
 
         # We want the singular search types, while our constants are plural
         # search types in the argument for uniformity.
@@ -268,6 +259,14 @@ class Session:
             const.EPISODES: 'episode',
         }
         remaining_types = [type_mapping.get(s) for s in types]
+
+        # Initialize SearchResult object
+        result = {
+            type_mapping[const.ALBUMS]: list(),
+            type_mapping[const.ARTISTS]: list(),
+            type_mapping[const.PLAYLISTS]: list(),
+            type_mapping[const.TRACKS]: list(),
+        }
 
         # Unfortunately because each type can have a different amount of return
         # values, utils.paginate_get() is not suited for this call.
@@ -292,21 +291,20 @@ class Session:
             # the given offsets against live api
             for curr_type in remaining_types:
                 items = response_json[curr_type]['items']
-                acc = list()
 
                 # Add items to accumulator
                 for item in items:
                     if curr_type is type_mapping[const.ALBUMS]:
-                        acc.append(Album(self, item))
+                        result.get(curr_type).append(Album(self, item))
                     elif curr_type is type_mapping[const.ARTISTS]:
-                        acc.append(Artist(self, item))
+                        result.get(curr_type).append(Artist(self, item))
                     elif curr_type is type_mapping[const.PLAYLISTS]:
-                        acc.append(Playlist(self, item))
+                        result.get(curr_type).append(Playlist(self, item))
                     elif curr_type is type_mapping[const.TRACKS]:
-                        acc.append(Track(self, item))
-
-                # Update accumulated results into search result
-                result._add(acc)
+                        result.get(curr_type).append(Track(self, item))
+                    else:
+                        # Should never reach here, but here for safety!
+                        raise ValueError("Invalid type when building search")
 
             # Only make necessary search queries
             new_remaining_types = list()
@@ -315,7 +313,7 @@ class Session:
                     new_remaining_types.append(curr_type)
             remaining_types = new_remaining_types
 
-        return result
+        return self.SearchResult(result)
 
     def get_albums(self,
                    album_ids,
