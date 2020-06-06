@@ -9,7 +9,7 @@ from spotifython.endpoints import Endpoints
 import spotifython.utils as utils
 
 # pylint: disable = pointless-string-statement, too-many-instance-attributes
-# pylint: disable = too-many-branches, wrong-import-position
+# pylint: disable = too-many-branches
 
 class Artist:
     """ Artist class
@@ -30,7 +30,7 @@ class Artist:
         if not isinstance(artist_info, dict):
             raise TypeError('artist_info should be dict')
 
-        self.session = session
+        self._session = session
         self._raw = artist_info
         # Lazily loaded fields from API calls
         self._albums = None
@@ -130,9 +130,9 @@ class Artist:
         Calls endpoints:
             GET     /v1/artists/{id}
         """
-        endpoint = f'/v1/artists/{self.spotify_id()}'
+        endpoint = Endpoints.ARTIST_GET_BY_ID % self.spotify_id()
         response_json, status_code = utils.request(
-            session=self.session,
+            session=self._session,
             request_type=const.REQUEST_GET,
             endpoint=endpoint,
         )
@@ -213,7 +213,7 @@ class Artist:
             uri_params['market'] = market
 
         # Update stored params for lazy loading
-        self._albums = utils.paginate_get(session=self.session,
+        self._albums = utils.paginate_get(session=self._session,
                                           limit=search_limit,
                                           return_class=Album,
                                           endpoint=endpoint,
@@ -282,7 +282,7 @@ class Artist:
             return self._top_tracks
 
         # Update stored params for lazy loading
-        self._top_tracks = utils.paginate_get(session=self.session,
+        self._top_tracks = utils.paginate_get(session=self._session,
                                               limit=search_limit,
                                               return_class=Track,
                                               endpoint=endpoint,
@@ -341,7 +341,7 @@ class Artist:
             return self._related_artists
 
         # Update stored params for lazy loading
-        self._related_artists = utils.paginate_get(session=self.session,
+        self._related_artists = utils.paginate_get(session=self._session,
                                                    limit=search_limit,
                                                    return_class=Artist,
                                                    endpoint=endpoint
