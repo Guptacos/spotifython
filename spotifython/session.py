@@ -12,10 +12,6 @@ import spotifython.constants as const
 from spotifython.endpoints import Endpoints
 import spotifython.utils as utils
 
-# pylint: disable=wrong-import-position, protected-access
-# TODO: This is necessary until we find a better way to handle type importing
-# pylint: disable=undefined-variable
-
 class Session:
     """ Session class
 
@@ -89,29 +85,16 @@ class Session:
         This class represents the results of a Spotify API search call.
         """
 
-        def __init__(self, search_info):
-            """ User should never call this constructor. As a result, they
-            should never have access to the search_info structure prior to
-            creating an SearchResult. Internally, the search result will
+        def __init__(self):
+            """ User should never call this constructor. Internally, the search result will
             perform all necessary API calls to get the desired number of search
             results (up to search limit).
-
-            Args:
-                search_info: dictionary, contains known values about the user's
-                    search query
             """
-            if not isinstance(search_info, dict):
-                raise TypeError('search_info should be dict')
 
-            self._raw = search_info
-            self._albums_paging = self._raw.get('albums', dict())\
-                .get('items', list())
-            self._artists_paging = self._raw.get('artists', dict())\
-                .get('items', list())
-            self._playlists_paging = self._raw.get('playlists', dict())\
-                .get('items', list())
-            self._tracks_paging = self._raw.get('tracks', dict())\
-                .get('items', list())
+            self._albums_paging = list()
+            self._artists_paging = list()
+            self._playlists_paging = list()
+            self._tracks_paging = list()
 
         # Internal: Update search results via paginated searches
         def _add(self, iterable):
@@ -272,7 +255,7 @@ class Session:
         num_to_request = next_multiple(limit, const.SPOTIFY_PAGE_SIZE)
 
         # Initialize SearchResult object
-        result = self.SearchResult(dict())
+        result = self.SearchResult()
 
         # We want the singular search types, while our constants are plural
         # search types in the argument for uniformity.
@@ -314,13 +297,13 @@ class Session:
                 # Add items to accumulator
                 for item in items:
                     if curr_type is type_mapping[const.ALBUMS]:
-                        acc.append(Album(item))
+                        acc.append(Album(self, item))
                     elif curr_type is type_mapping[const.ARTISTS]:
-                        acc.append(Artist(item))
+                        acc.append(Artist(self, item))
                     elif curr_type is type_mapping[const.PLAYLISTS]:
-                        acc.append(Playlist(item))
+                        acc.append(Playlist(self, item))
                     elif curr_type is type_mapping[const.TRACKS]:
-                        acc.append(Track(item))
+                        acc.append(Track(self, item))
 
                 # Update accumulated results into search result
                 result._add(acc)
@@ -407,7 +390,7 @@ class Session:
 
             items = response_json['albums']
             for item in items:
-                result.append(Album(item))
+                result.append(Album(self, item))
 
         return result if len(result) != 1 else result[0]
 
@@ -455,7 +438,7 @@ class Session:
 
         result = list()
         for batch in batches:
-            uri_params['ids'] = ','.join(batch)
+            uri_params['ids'] = batch
 
             # Execute requests
             response_json, status_code = utils.request(
@@ -470,7 +453,7 @@ class Session:
 
             items = response_json['artists']
             for item in items:
-                result.append(Artist(item))
+                result.append(Artist(self, item))
 
         return result if len(result) != 1 else result[0]
 
@@ -545,7 +528,7 @@ class Session:
 
             items = response_json['tracks']
             for item in items:
-                result.append(Track(item))
+                result.append(Track(self, item))
 
         return result if len(result) != 1 else result[0]
 
@@ -601,7 +584,7 @@ class Session:
             if status_code != 200:
                 raise utils.SpotifyError(status_code, response_json)
 
-            result.append(User(response_json))
+            result.append(User(self, response_json))
 
         return result if len(result) != 1 else result[0]
 
@@ -644,7 +627,7 @@ class Session:
         if status_code != 200:
             raise utils.SpotifyError(status_code, response_json)
 
-        return User(response_json)
+        return User(self, response_json)
 
     def get_playlists(self,
                       playlist_ids,
@@ -725,6 +708,13 @@ class Session:
             if status_code != 200:
                 raise utils.SpotifyError(status_code, response_json)
 
-            result.append(Playlist(response_json))
+            result.append(Playlist(self, response_json))
 
         return result if len(result) != 1 else result[0]
+
+# pylint: disable=wrong-import-position
+from spotifython.album import Album
+from spotifython.artist import Artist
+from spotifython.playlist import Playlist
+from spotifython.track import Track
+from spotifython.user import User
