@@ -6,7 +6,10 @@ Note:
 
     Actual applications should get tokens using Spotify's authentication
     pipeline, and should deal with reauthentication.
-    TODO: put reauth link
+
+    See this link for more information:
+    https://developer.spotify.com/documentation/general/guides/authorization-guide/
+
 
 Running this example:
     * Install Spotifython using our quickstart: TODO
@@ -97,7 +100,7 @@ def play_pause():
 def skip():
     """ Go to the next song """
     try:
-        player.next()
+        player.skip()
         update()
 
     # No active device
