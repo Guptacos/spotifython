@@ -1,5 +1,4 @@
-""" Constants and enums used by the spotifython library.
-"""
+""" Constants and enums used by the spotifython library """
 
 # Enums
 ALBUMS = 'albums'

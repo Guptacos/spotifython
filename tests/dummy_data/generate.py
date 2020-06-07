@@ -1,4 +1,4 @@
-'''
+"""
 Since you can't get random users from the Spotify interface, randomly generate
 some fake users for testing.
 
@@ -8,7 +8,7 @@ Usage:
 `python generate.py _num_entries_` to print to the console
 `python generate.py _num_entries_ > file.json` to save to a file
 
-'''
+"""
 #pylint: disable=missing-function-docstring
 #pylint: disable=bare-except
 
