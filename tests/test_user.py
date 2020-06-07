@@ -1,12 +1,12 @@
-''' Tests for the User class
+""" Tests for the User class
 
 Note: these tests are not exhaustive and could always be improved. Since the
-Spotify REST api is mocked, if it's functionality ever changes these tests may
+Spotify REST api is mocked, if its functionality ever changes these tests may
 become obsolete.
 
 Last updated: May 14, 2020
 
-'''
+"""
 #pylint: disable=missing-class-docstring
 #pylint: disable=missing-function-docstring
 

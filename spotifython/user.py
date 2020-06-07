@@ -1,8 +1,4 @@
-""" User class
-
-This class represents a User object, tied to a Spotify user id.
-
-"""
+""" User class """
 
 # Standard library imports
 import sys
@@ -15,10 +11,10 @@ import spotifython.utils as utils
 
 # TODO: what to do about partial success on batch operations?
 class User:
-    """ Define behaviors related to a Spotify user
+    """ Represents a Spotify user tied to a unique Spotify id
 
-    Includes things like reading / modifying the library and following artists.
-    Getting an instance of User should be done using spotifython.get_users()
+    Use methods here to interact with a User, such as reading / modifying the
+    library and following artists.
 
     Raises:
         TypeError:  if incorrectly typed parameters are given.
@@ -27,7 +23,11 @@ class User:
 
 
     def __init__(self, session, info):
-        """
+        """ Get an instance of User
+
+        This constructor should never be called by the client. To get an
+        instance of User, use Session.get_users()
+
         Args:
             session: an instance of sp.Session
             info: (dict) known values about the user. Must contain 'id'.
