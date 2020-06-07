@@ -1,7 +1,4 @@
-""" Album class
-
-This class represents an Album object, which represents a Spotify album.
-"""
+""" Album class """
 
 # Standard library imports
 import copy
@@ -14,7 +11,9 @@ import spotifython.utils as utils
 
 
 class Album:
-    """ The Album class. Use methods here to get information about an Album.
+    """ Represents a Spotify album tied to a unique Spotify id
+
+    Use methods here to get information about an Album.
 
     Note:
         The Album class does not currently support track relinking using market
@@ -71,7 +70,7 @@ class Album:
 
 
     def __repr__(self):
-        return str(self) + f' with id <{self.spotify_id()}'
+        return str(self) + f' with id <{self.spotify_id()}>'
 
 
     def __eq__(self, other):
@@ -209,7 +208,7 @@ class Album:
             return self._artists
 
         artists = utils.get_field(self, 'artists')
-        self._artists = [Artist(self._session, art) for art in artists]
+        self._artists = [Artist(self._session, artist) for artist in artists]
 
         return self._artists
 
