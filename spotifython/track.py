@@ -1,7 +1,4 @@
-""" Track class
-
-This class represents a Track object, which represents a Spotify track / song.
-"""
+""" Track class """
 
 # Standard library imports
 import copy
@@ -13,7 +10,9 @@ import spotifython.utils as utils
 
 
 class Track:
-    """ The Track class. Use methods here to get information about a Track.
+    """ Represents a Spotify track / song tied to a unique Spotify id
+
+    Use methods here to get information about a Track.
 
     Required token scopes:
         None: the methods in the Track class require a token, but the token
@@ -38,9 +37,13 @@ class Track:
 
         self._id = info['id']
 
-        # TODO: name this _raw or _info?
         self._raw = copy.deepcopy(info)
         self._session = session
+
+        # Need name in order to print. 'name' should always be in info, so this
+        # shouldn't ever trigger, and is here more as a precaution.
+        if 'name' not in info:
+            self._update_fields()
 
         # Cached fields
         self._album = None
@@ -48,14 +51,10 @@ class Track:
 
 
     # TODO: test this
-    # TODO: is it bad for print to make api calls?
-    # TODO: should include artists?
     def __str__(self):
-        name = self.name()
-        return f'Track {name}'
+        return f'Track {self.name()}'
 
 
-    # Too long print?
     def __repr__(self):
         return str(self) + f' with id <{self.spotify_id()}>'
 
@@ -177,7 +176,7 @@ class Track:
         """ Get the popularity of the Track
 
         The popularity is between 0 and 100 (inclusive), with 100 being the most
-        popular. This number is calculated by a Spotify algorithm.
+        popular. This number is calculated in Spotify's backend.
 
         Returns:
             int: the popularity of the Track as calculated by Spotify
@@ -204,7 +203,7 @@ class Track:
 
 
     def track_number(self):
-        """ Get the Track's number
+        """ Get the Track's number (1 indexed)
 
         This is the track's number in the album. If an album has several discs,
         the track number is the number of this Track on the disc it appears.
