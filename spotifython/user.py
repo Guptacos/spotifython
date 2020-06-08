@@ -8,6 +8,7 @@ import sys
 import spotifython.constants as const
 from spotifython.endpoints import Endpoints
 import spotifython.utils as utils
+from spotifython.image import Image
 
 
 # TODO: what to do about partial success on batch operations?
@@ -140,6 +141,24 @@ class User:
             GET     /v1/users/{id}
         """
         return utils.get_field(self, 'uri')
+
+
+    def image(self):
+        """ Get the User's profile picture
+
+        Returns:
+            Image: an image object if the User has a profile picture
+            None: if the User has no profile picture.
+
+        Calls endpoints:
+            GET     /v1/users/{id}
+        """
+        result = utils.get_field(self, 'images')
+
+        if len(result) > 1:
+            raise SpotifyError('User has more than one profile picture!')
+
+        return None if len(result) == 0 else Image(result[0])
 
 
     def player(self):
