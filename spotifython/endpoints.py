@@ -55,3 +55,7 @@ class Endpoints:
     TRACK_GET_DATA = '/v1/tracks/%s'
     TRACK_FEATURES = '/v1/audio-features/%s'
     TRACK_ANALYSIS = '/v1/audio-analysis/%s'
+
+    # Album
+    ALBUM_GET_DATA = '/v1/albums/%s'
+    ALBUM_GET_TRACKS = ALBUM_GET_DATA + '/tracks'
