@@ -124,7 +124,7 @@ def main():
     """
 
     # Tkinter setup
-    root.title(f'{user.spotify_id()}\'s player controller')
+    root.title(f'{user.name()}\'s player controller')
     root.geometry('400x250')
     root.configure(bg='darkgray')
 
