@@ -23,8 +23,7 @@ setuptools.setup(
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
     ],
-    # Use ~= to signify that we aren't commiting to Python 4 support yet
-    python_requires='~=3.6',
+    python_requires='>=3.6',
     project_urls={
         'Documentation': 'https://github.com/Guptacos/spotifython',
         'Source': 'https://github.com/Guptacos/spotifython',
