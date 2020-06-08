@@ -27,6 +27,8 @@ ARTIST_ALBUM = 'album'
 ARTIST_SINGLE = 'single'
 ARTIST_APPEARS_ON = 'appears_on'
 ARTIST_COMPILATION = 'compilation'
+SINGLE = 'single'
+COMPILATION = 'compilation'
 
 # Constants
 DEFAULT_REQUEST_TIMEOUT = 10 # in seconds
