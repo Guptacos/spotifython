@@ -1,18 +1,28 @@
+""" Example showing how to get the release dates of an artist's top albums """
+
+#pylint: disable=import-error
 import spotifython as sp
+
+# TODO: this example makes method calls to stale methods.
 
 # You shouldn't do this for security reasons, but we want to demonstrate that
 # however the user chooses to store the token for an API session is decoupled
 # from the API itself.
-TOKEN = 'woohoo'
+TOKEN = 'deadbeef'
 
-# this function takes the name of an artist and returns a dictionary mapping the
-# album name to its release year.
-def get_album_releases(artist : str):
-    session = sp.Spotifython(TOKEN)
-    results = session.search(artist, types=[sp.ARTISTS])
+def get_album_releases(artist):
+    """ Get release dates for an artists top albums
 
-    # artists() method automatically sorts based off of top results according
-    # to Spotify.
+    Args:
+        artist: an instance of sp.Artist
+
+    Returns:
+        dict: dictionary mapping the album name to its release year.
+    """
+    session = sp.Session(TOKEN)
+    results = session.search(artist, types=[sp.ARTISTS], limit=5)
+
+    # artists() automatically sorts based off top results according to Spotify.
     top_artist = results.artists()[0]
 
     release_dates = {}

@@ -16,6 +16,9 @@ Last updated: May 25, 2020
 #pylint: disable=import-error
 #pylint: disable=redundant-unittest-assert
 
+#TODO: remove this pylint ignore when the tests are written
+#pylint: disable=unused-import
+
 # Standard library imports
 import unittest
 from unittest.mock import patch
@@ -62,11 +65,6 @@ class TestArtist(unittest.TestCase):
     # Test __eq__, __ne__, __hash__
     @unittest.skip('Not yet implemented')
     def test_equality_overloads(self):
-        self.assertTrue(False)
-
-    # Test __str__, __repr__
-    @unittest.skip('Not yet implemented')
-    def test_str_overloads(self):
         self.assertTrue(False)
 
     # Test genres(), href(), spotify_id(), name(), popularity(), uri() when

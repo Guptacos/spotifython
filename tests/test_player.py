@@ -3,6 +3,9 @@
 #pylint: disable=missing-class-docstring
 #pylint: disable=missing-function-docstring
 
+#TODO: remove this pylint ignore when the tests are written
+#pylint: disable=unused-import
+
 # Standard library imports
 import unittest
 from unittest.mock import patch
