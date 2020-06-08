@@ -72,6 +72,15 @@ class Playlist:
         return self._raw['href']
 
 
+    def spotify_id(self):
+        """ Returns the Spotify ID of the playlist.
+
+        Returns:
+            A string ID.
+        """
+        return self._raw['id']
+
+
     def add_tracks(self, tracks, position=None):
         """ Adds one or more tracks to the playlist.
 
@@ -93,7 +102,7 @@ class Playlist:
             POST /v1/playlists/{playlist_id}/tracks
         """
         endpoint = Endpoints.BASE_URI
-        endpoint += Endpoints.PLAYLIST_TRACKS % self._raw['id']
+        endpoint += Endpoints.PLAYLIST_TRACKS % self.spotify_id()
         body = {}
         uris = []
         if isinstance(tracks, list):
@@ -142,7 +151,7 @@ class Playlist:
             PUT /v1/playlists/{playlist_id}
         """
         endpoint = Endpoints.BASE_URI
-        endpoint += Endpoints.PLAYLIST % self._raw['id']
+        endpoint += Endpoints.PLAYLIST % self.spotify_id()
         if not isinstance(name, str):
             raise TypeError('The name must be a string')
         body = {}
@@ -173,7 +182,7 @@ class Playlist:
             PUT /v1/playlists/{playlist_id}
         """
         endpoint = Endpoints.BASE_URI
-        endpoint += Endpoints.PLAYLIST % self._raw['id']
+        endpoint += Endpoints.PLAYLIST % self.spotify_id()
         if not isinstance(description, str):
             raise TypeError('The description must be a string')
         body = {}
@@ -205,7 +214,7 @@ class Playlist:
             PUT /v1/playlists/{playlist_id}
         """
         endpoint = Endpoints.BASE_URI
-        endpoint += Endpoints.PLAYLIST % self._raw['id']
+        endpoint += Endpoints.PLAYLIST % self.spotify_id()
         body = {}
         if visibility not in [const.PUBLIC, const.PRIVATE,
                               const.PRIVATE_COLLAB]:
@@ -234,7 +243,7 @@ class Playlist:
             PUT /v1/playlists/{playlist_id}
         """
         endpoint = Endpoints.BASE_URI
-        endpoint += Endpoints.PLAYLIST_IMAGES % self._raw['id']
+        endpoint += Endpoints.PLAYLIST_IMAGES % self.spotify_id()
         response_json, status_code = utils.request(
             self._session,
             request_type='GET',
@@ -272,7 +281,7 @@ class Playlist:
             GET /v1/playlists/{playlist_id}/tracks
         """
         endpoint = Endpoints.BASE_URI
-        endpoint += Endpoints.PLAYLIST_TRACKS % self._raw['id']
+        endpoint += Endpoints.PLAYLIST_TRACKS % self.spotify_id()
         if not isinstance(start, int):
             raise TypeError('The start index must be an integer')
         original_start = start
@@ -321,7 +330,7 @@ class Playlist:
             DELETE /v1/playlists/{playlist_id}/tracks
         """
         endpoint = Endpoints.BASE_URI
-        endpoint += Endpoints.PLAYLIST_TRACKS % self._raw['id']
+        endpoint += Endpoints.PLAYLIST_TRACKS % self.spotify_id()
         body = {}
         body['tracks'] = []
         if tracks is not None and positions is None:
@@ -397,7 +406,7 @@ class Playlist:
             PUT /v1/playlists/{playlist_id}/tracks
         """
         endpoint = Endpoints.BASE_URI
-        endpoint += Endpoints.PLAYLIST_TRACKS % self._raw['id']
+        endpoint += Endpoints.PLAYLIST_TRACKS % self.spotify_id()
         if not isinstance(source_index, int):
             raise TypeError('The source index must be an integer')
         if not isinstance(dest_index, int):
@@ -446,7 +455,7 @@ class Playlist:
             PUT /v1/playlists/{playlist_id}/tracks
         """
         endpoint = Endpoints.BASE_URI
-        endpoint += Endpoints.PLAYLIST_TRACKS % self._raw['id']
+        endpoint += Endpoints.PLAYLIST_TRACKS % self.spotify_id()
         if not all([isinstance(track, Track) for track in tracks]):
             raise TypeError('All elements of tracks must be Track objects')
         body = {}
@@ -481,7 +490,7 @@ class Playlist:
             PUT /v1/playlists/{playlist_id}/images
         """
         endpoint = Endpoints.BASE_URI
-        endpoint += Endpoints.PLAYLIST_IMAGES % self._raw['id']
+        endpoint += Endpoints.PLAYLIST_IMAGES % self.spotify_id()
         if not any(ext in image for ext in ['.jpg', '.jpeg']):
             raise ValueError('The image must be a JPEG')
         body = []
