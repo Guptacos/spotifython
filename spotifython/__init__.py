@@ -1,5 +1,6 @@
 from .constants import *
 from .session import Session
+from .utils import AuthenticationError, SpotifyError, NetworkError
 
 # TODO: these should probably be removed for production
 # Clients won't need to directly access the Album constructor, and can still

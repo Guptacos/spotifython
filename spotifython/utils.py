@@ -10,6 +10,10 @@ import time
 # Third party imports
 import requests
 from requests.adapters import HTTPAdapter
+
+# Known pylint problem with certain libraries, this import should work.
+# See: https://github.com/PyCQA/pylint/issues/2603
+#pylint: disable=import-error
 from requests.packages.urllib3.util.retry import Retry
 
 # Local imports
@@ -163,8 +167,8 @@ def request(session,
     # Get error message if it exists
     try:
         message = content['error']['message']
-    except:
-        messge = str(content)
+    except (KeyError, TypeError):
+        message = str(content)
 
     # 400: bad request
     if status_code == 400:
@@ -213,7 +217,7 @@ def paginate_get(session,
         uri_params: (dict) the uri parameters for the request
         body: (dict) the body of the call
 
-    Return:
+    Returns:
         A list of objects of type return_class
     """
     # Init params
@@ -298,3 +302,15 @@ def spotifython_hash(obj):
 
     # Use builtin hash
     return hash(obj.__class__.__name__ + obj.spotify_id())
+
+
+def separate(elems, filter_type):
+    """ Filter out all objects of type 'filter_type' from elems """
+    filter_func = lambda elem: isinstance(elem, filter_type)
+    return list(filter(filter_func, elems))
+
+
+def map_ids(elems):
+    """ Turn a list of objects into a list of spotify ids """
+    map_func = lambda elem: elem.spotify_id()
+    return list(map(map_func, elems))

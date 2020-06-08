@@ -1,371 +1,790 @@
-from album import Album
-from artist import Artist
-from player import Player
-from playlist import Playlist
-from spotifython import Spotifython
-from track import Track
+""" User class """
 
-from response import Response
-from typing import Union, List, Dict
+# Standard library imports
+import sys
 
-# TODO: auth required for each param
-# TODO: what to do about partial success?
-class User():
-    ''' Define behaviors related to a user, such as reading / modifying the
-        library and following artists.
+# Local imports
+import spotifython.constants as const
+from spotifython.endpoints import Endpoints
+import spotifython.utils as utils
 
-    Getting an instance of User should be done using spotifython.get_users()
 
-    Exceptions:
+# TODO: what to do about partial success on batch operations?
+class User:
+    """ Represents a Spotify user tied to a unique Spotify id
+
+    Use methods here to interact with a User, such as reading / modifying the
+    library and following artists.
+
+    Raises:
         TypeError:  if incorrectly typed parameters are given.
         ValueError: if parameters with illegal values are given.
-    '''
+    """
 
 
-    def __init__(self,
-                 sp_obj: Spotifython,
-                 user_id: str,
-                 known_vals: Dict=None
-    ) -> User:
-        # note to self: init self.player
-        pass
+    def __init__(self, session, info):
+        """ Get an instance of User
 
-        
-    # Format should be 'User <%s>' % user_id
-    def __str__(self) -> str:
-        pass
+        This constructor should never be called by the client. To get an
+        instance of User, use Session.get_users()
 
+        Args:
+            session: an instance of sp.Session
+            info: (dict) known values about the user. Must contain 'id'.
+        """
+        # Validate inputs
+        if 'id' not in info:
+            raise ValueError('Cannot create a User without a user id')
 
-    def _update_internal(self,
-                         new_vals: Dict
-    ) -> None:
-        ''' Used internally to keep cached data up to date
-
-        Keyword arguments:
-            new_vals: a dictionary with fields that should be added to or
-                updated in the internal cache. Any values in the dictionary will
-                become the new value for that key.
-
-        Return:
-            None
-        '''
-        pass
+        self._session = session
+        self._id = info['id']
+        self._player = Player(self._session, self)
 
 
-    def player(self) -> Player:
-        ''' Get the player object for this user
+    def __str__(self):
+        return f'User <{self._id}>'
+
+
+    def __repr__(self):
+        return str(self)
+
+
+    def __eq__(self, other):
+        return utils.spotifython_eq(self, other)
+
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+
+    def __hash__(self):
+        return utils.spotifython_hash(self)
+
+
+    def spotify_id(self):
+        """ Get the id of this user
+
+        Returns:
+            The same id that this user was created with as a string.
+        """
+        return self._id
+
+
+    def player(self):
+        """ Get the player object for this user
 
         This is how client code should access a player. For example:
             u = sp.get_user(user_id)
             u.player().pause()
 
-        Return:
+        Returns:
             A Player object.
-        '''
-        pass
+        """
+        return self._player
 
 
     def top(self,
-            top_type: str,
-            limit: int,
-            time_range: str=sp.MEDIUM
-    ) -> Response: # Union[List[Artist], List[Track]]
-        ''' Get the top artists or tracks for the user over a time range.
+            top_type,
+            limit,
+            time_range=const.MEDIUM):
+        """ Get the top artists or tracks for the user over a time range.
 
-        Keyword arguments:
-            top_type: only get items of this type. One of:
-                sp.ARTIST
-                sp.TRACK
-            limit: max number of items to return.
-            time_range: (optional) only get items for this time range. One of:
+        Args:
+            top_type: get top items of this type. One of:
+                sp.ARTISTS
+                sp.TRACKS
+            limit: (int) max number of items to return. Must be positive.
+            time_range: get top items for this time range. One of:
                 sp.LONG (several years)
                 sp.MEDIUM (about 6 months)
                 sp.SHORT (about 4 weeks)
 
-        response.contents():
-            Success: list of artists or a list of tracks, depending on top_type.
-                Could be empty.
-            Failure: None
+        Returns:
+            A list of artists or a list of tracks, depending on top_type
+            Could return an empty list.
+
+        Required token scopes:
+            user-top-read
+
+        Calls endpoints:
+            GET     /v1/me/top/{type}
 
         Note: Spotify defines "top items" using internal metrics.
-        '''
-        # GET /v1/me/top/{type}
-        pass
+        """
+        # Validate arguments
+        if top_type not in [const.ARTISTS, const.TRACKS]:
+            raise TypeError(top_type)
+        if time_range not in [const.LONG, const.MEDIUM, const.SHORT]:
+            raise TypeError(time_range)
+        if limit <= 0:
+            raise ValueError(limit)
+
+        # Parse arguments
+        time_ranges = {
+            const.LONG: 'long_term',
+            const.MEDIUM: 'medium_term',
+            const.SHORT: 'short_term',
+        }
+
+        uri_params = {'time_range': time_ranges[time_range]}
+        endpoint_type = 'artists' if top_type == const.ARTISTS else 'tracks'
+        return_class = Artist if top_type == const.ARTISTS else Track
+
+        # Execute requests
+        return utils.paginate_get(
+                        self._session,
+                        limit=limit,
+                        return_class=return_class,
+                        endpoint=Endpoints.USER_TOP % endpoint_type,
+                        uri_params=uri_params,
+                        body=None)
 
 
-    def recently_played(self,
-                        limit: int=50
-    ) -> Response: # List[Track]
-        ''' Get the user's recently played tracks
+    def recently_played(self, limit=50):
+        """ Get the user's recently played tracks
 
-        Keyword arguments:
-            limit: (optional) max number of items to return. Can't be larger
-                than 50.
+        Args:
+            limit: (int) max number of items to return. Must be between 1 and
+                50, inclusive.
 
-        response.contents():
-            Success: a list of tracks. Could be empty.
-            Failure: None
+        Returns:
+            A list of tracks. Could be empty.
 
-        Exceptions:
-            ValueError: raised if limit > 50
+        Required token scopes:
+            user-read-recently-played
 
-        Note: the 'before' and 'after' functionalities are not supported.
-        '''
-        # GET /v1/me/player/recently-played
-        pass
+        Calls endpoints:
+            GET     /v1/me/player/recently-played
+
+        Note:
+            * The 'before' and 'after' functionalities are not supported.
+            * Does not return the time the tracks were played
+            * A track must be played for >30s to be included in the history.
+              Tracks played while in a 'private session' not recorded.
+        """
+        # Validate arguments
+        if limit <= 0 or limit > 50:
+            raise ValueError(limit)
+
+        # Execute requests
+        response_json, status_code = utils.request(
+            self._session,
+            request_type=const.REQUEST_GET,
+            endpoint=Endpoints.USER_RECENTLY_PLAYED,
+            body=None,
+            uri_params={'limit': limit}
+        )
+
+        if status_code != 200:
+            raise utils.SpotifyError(status_code, response_json)
+
+        results = []
+        for elem in response_json['items']:
+            results.append(Track(self._session, elem))
+
+        return results
 
 
-    def get_playlists(self,
-                      limit: int=None
-    ) -> Response: # List[Playlist]
-        ''' Get all playlists that this user has in their library
+    def get_playlists(self, limit=const.MAX_PLAYLISTS):
+        """ Get the playlists the user has in their library
 
-        Keyword arguments:
-            limit: (optional) the max number of items to return. If None, will
-                return all.
+        Args:
+            limit: (int) the max number of items to return. Must be between
+                1 and 100,000 inclusive. Default is 100,000.
 
-        response.contents():
-            Success: a list of playlists. Could be empty.
-            Failure: None
+        Returns:
+            A list of playlists. Could be empty.
 
         Note: this includes both playlists owned by this user and playlists
             that this user follows but are owned by others.
 
+        Required token scopes:
+            playlist-read-private
+            playlist-read-collaborative
+
+        Calls endpoints:
+            GET     /v1/users/{user_id}/playlists
+
         To get only playlists this user follows, use get_following(sp.PLAYLISTS)
-        '''
-        # GET /v1/users/{user_id}/playlists
-        pass
+        """
+        # Validate inputs
+        if limit <= 0 or limit > const.MAX_PLAYLISTS:
+            raise ValueError(limit)
+
+        endpoint = Endpoints.USER_GET_PLAYLISTS % self.spotify_id()
+
+        return utils.paginate_get(
+                        self._session,
+                        limit=limit,
+                        return_class=Playlist,
+                        endpoint=endpoint,
+                        uri_params={},
+                        body=None)
 
 
     def create_playlist(self,
-                        name: str,
-                        visibility: str=sp.PUBLIC,
-                        description: str=""
-    ) -> Response: # None
-        ''' Create a new playlist owned by the current user
+                        name,
+                        visibility=const.PUBLIC,
+                        description=None):
+        """ Create a new playlist owned by the current user
 
-        Keyword arguments:
-            name: The name for the new playlist. Does not need to be unique;
-                a user may have several playlists with the same name.
-            visibility: (optional) describes how other users can interact with
-                this playlist. One of:
+        Args:
+            name: (str) The name for the new playlist. Does not need to be
+                unique; a user may have several playlists with the same name.
+            visibility: how other users interact with this playlist. One of:
                     sp.PUBLIC: publicly viewable, not collaborative
                     sp.PRIVATE: not publicly viewable, not collaborative
                     sp.PRIVATE_COLLAB: not publicly viewable, collaborative
-            description: (optional) viewable description of the playlist.
+            description: (str) viewable description of the playlist.
 
-        response.contents():
-            None
+        Returns:
+            The newly created Playlist object. Note that this function modifies
+            the user's library.
 
-        Exceptions:
-            TypeError: raised if visibility is not one of the types described
-                above.
-        '''
-        # POST /v1/users/{user_id}/playlists
-        pass
+        Required token scopes:
+            playlist-modify-public
+            playlist-modify-private
+
+        Calls endpoints:
+            POST    /v1/users/{user_id}/playlists
+        """
+        # Validate inputs
+        if visibility not in [const.PUBLIC,
+                              const.PRIVATE,
+                              const.PRIVATE_COLLAB]:
+            raise TypeError(visibility)
+
+        body = {
+            'name': name,
+            'public': visibility == const.PUBLIC,
+            'collaborative': visibility == const.PRIVATE_COLLAB
+        }
+
+        if description is not None:
+            body['description'] = description
+
+        response_json, status_code = utils.request(
+            self._session,
+            request_type=const.REQUEST_POST,
+            endpoint=Endpoints.USER_CREATE_PLAYLIST % self.spotify_id(),
+            body=body,
+            uri_params=None
+        )
+
+        if status_code != 201:
+            raise utils.SpotifyError(status_code, response_json)
+
+        return Playlist(self._session, response_json)
 
 
-    def is_following(self,
-                     other: Union[Artist, User, Playlist,
-                                  List[Union[Artist, User, Playlist]]]
-    ) -> Response: # List[Tuple[Union[Artist, User, Playlist], bool]]
-        ''' Check if the current user is following something
+    # TODO: checking return of tuple funcs means ret[0][1] for 1 elem...
+    def is_following(self, other):
+        """ Check if the current user is following something
 
-        Keyword arguments:
+        Args:
             other: check if current user is following 'other'. Other must be
-                either a single object or a list of objects.
-                If other is a list, it can conatin multiple types.
+                one of the following:
 
-                Can only check for Artist, User, and Playlist.
+                    * Artist
+                    * User
+                    * Playlist
+                    * List: can contain multiple of the above types
 
-        Exceptions:
-            TypeError: raised if other is not one of the types described above.
+        Required token scopes:
+            user-follow-read
+            playlist-read-private
+            playlist-read-collaborative
 
-        response.contents():
-            Success: List of tuples. Each tuple has an input object and whether
-                     the user follows the object.
-            Failure: None
-        '''
-        # GET /v1/me/following/contains
-        # GET /v1/playlists/{playlist_id}/followers/contains
-        # Note for me: easier to use get_playlists and check in there
-        pass
+        Calls endpoints:
+            GET     /v1/me/following/contains
+            GET     /v1/users/{user_id}/playlists
+
+        Returns:
+            List of tuples. Each tuple has an input object and whether the user
+            follows the object.
+        """
+        # Validate input
+        if not isinstance(other, list):
+            other = [other]
+
+        for elem in other:
+            if type(elem) not in [Artist, User, Playlist]:
+                raise TypeError(elem)
+
+        # Split up input
+        artists = utils.separate(other, Artist)
+        users = utils.separate(other, User)
+        playlists = utils.separate(other, Playlist)
+
+        # Get boolean values for whether the user follows each in 'other'
+        endpoint = Endpoints.USER_FOLLOWING_CONTAINS
+        artist_bools = []
+        for batch in utils.create_batches(utils.map_ids(artists)):
+            response_json, status_code = utils.request(
+                self._session,
+                request_type=const.REQUEST_GET,
+                endpoint=endpoint,
+                body=None,
+                uri_params={'type': 'artist', 'ids': batch}
+            )
+
+            if status_code != 200:
+                raise utils.SpotifyError(status_code, response_json)
+
+            artist_bools.append(response_json)
+
+        user_bools = []
+        for batch in utils.create_batches(utils.map_ids(users)):
+            response_json, status_code = utils.request(
+                self._session,
+                request_type=const.REQUEST_GET,
+                endpoint=endpoint,
+                body=None,
+                uri_params={'type': 'user', 'ids': batch}
+            )
+
+            if status_code != 200:
+                raise utils.SpotifyError(status_code, response_json)
+
+            user_bools.append(response_json)
+
+        # For each playlist in other, check if in the User's followed playlists
+        followed_playlists = self.get_following(const.PLAYLISTS)
+        playlist_bools = list(map(lambda p: p in followed_playlists, playlists))
+
+        # Zip output with input to make tuples
+        artists = list(zip(artists, artist_bools))
+        users = list(zip(users, user_bools))
+        playlists = list(zip(playlists, playlist_bools))
+        return artists + users + playlists
 
 
     def get_following(self,
-                      follow_type: str,
-                      limit: int=None
-    ) -> Response: # Union[List[Artist], List[Playlist]]
-        ''' Get all follow_type objects the current user is following
+                      follow_type,
+                      limit=None):
+        #pylint: disable=line-too-long
+        """ Get all follow_type objects the current user is following
 
-        Keyword arguments:
-            follow_type: one of sp.ARTIST or sp.PLAYLIST
-            limit: (optional) the max number of items to return. If None, will
-                return all.
+        Args:
+            follow_type: one of:
+                sp.ARTISTS
+                sp.PLAYLISTS
+            limit: (int) the max number of items to return. If None,
+                will return all. Must be positive.
+                If follow_type == sp.PLAYLISTS, must be <= 100,000
+                See here: https://developer.spotify.com/documentation/web-api/reference/playlists/get-list-users-playlists/
 
-        response.contents():
-            Success: List of follow_type objects. Could be empty.
-            Failure: None
+        Returns:
+            List of follow_type objects. Could be empty.
 
-        Exceptions:
-            TypeError: if sp.USER is passed in. The Spotify web api does not
+        Required token scopes:
+            user-follow-read
+            playlist-read-private
+            playlist-read-collaborative
+
+        Calls endpoints:
+            GET     /v1/me/following
+            GET     /v1/users/{user_id}/playlists
+
+        Calls functions:
+            self.get_playlists() if follow_type == sp.PLAYLISTS
+
+        Raises:
+            ValueError: if sp.USERS is passed in. The Spotify web api does not
                 currently allow you to access this information.
                 For more info: https://github.com/spotify/web-api/issues/4
-        '''
-        # GET /v1/me/following
-        # get user playlists / parse for diff owner to get following playlists
-        pass
+        """
+        # Validate follow_type
+        if follow_type not in [const.ARTISTS, const.PLAYLISTS]:
+            raise TypeError(follow_type)
+
+        # Validate limit
+        if limit is not None:
+            if limit <= 0:
+                raise ValueError(limit)
+            if follow_type == const.PLAYLISTS and limit > const.MAX_PLAYLISTS:
+                raise ValueError(limit)
+
+        # Set limit if not set
+        elif follow_type == const.ARTISTS:
+            limit = sys.maxsize
+        else:
+            limit = const.MAX_PLAYLISTS
+
+        # Deal with followed playlists
+        if follow_type == const.PLAYLISTS:
+            results = self.get_playlists()
+
+            def filter_func(playlist):
+                return playlist.owner().spotify_id() != self.spotify_id()
+            results = list(filter(filter_func, results))
+
+            return results[:limit]
+
+        # Deal with followed artists assert(follow_type == const.ARTISTS)
+        uri_params = {
+            'type': 'artist',
+            'limit': const.SPOTIFY_PAGE_SIZE
+        }
+        results = []
+
+        # Loop until we get 'limit' many items or run out
+        # Can't use _paginate_get because artist endpoint does it differently...
+        while len(results) < limit:
+
+            # Paginate
+            if len(results) != 0:
+                uri_params['after'] = results[-1].spotify_id()
+
+            response_json, status_code = utils.request(
+                self._session,
+                request_type=const.REQUEST_GET,
+                endpoint=Endpoints.USER_GET_ARTISTS,
+                body=None,
+                uri_params=uri_params
+            )
+
+            if status_code != 200:
+                raise utils.SpotifyError(status_code, response_json)
+
+            # No more results to grab from spotify
+            if len(response_json['artists']['items']) == 0:
+                break
+
+            for elem in response_json['artists']['items']:
+                results.append(Artist(self._session, elem))
+
+        results = results[:limit] if limit is not None else results
+        return results
 
 
-    def follow(self,
-               other: Union[Artist, User, Playlist,
-                            List[Union[Artist, User, Playlist]]]
-    ) -> Response: # None
-        ''' Follow one or more things
+    def _follow_unfollow_help(self, other, request_type):
+        """ follow and unfollow are identical, except for the request type.
+        This function implements that functionality to remove duplicate code.
+        """
+        # Validate input
+        if not isinstance(other, list):
+            other = [other]
 
-        Keyword arguments:
-            other: the object(s) to follow. Other must be either a single object
-                or a list of objects.
-                If other is a list, it can conatin multiple types.
+        for elem in other:
+            if type(elem) not in [Artist, User, Playlist]:
+                raise TypeError(elem)
 
-                Can only follow Artist, User, and Playlist.
+        # Split up input
+        artists = utils.separate(other, Artist)
+        users = utils.separate(other, User)
+        playlists = utils. separate(other, Playlist)
 
-        Exceptions:
-            TypeError: raised if other is not one of the types described above.
+        for batch in utils.create_batches(utils.map_ids(artists)):
+            response_json, status_code = utils.request(
+                self._session,
+                request_type=request_type,
+                endpoint=Endpoints.USER_FOLLOW_ARTIST_USER,
+                body=None,
+                uri_params={'type': 'artist', 'ids': batch}
+            )
 
-        Note: if user is already following other, will do nothing and return
-            a success code in response.status()
+            if status_code != 204:
+                raise utils.SpotifyError(status_code, response_json)
 
-        response.contents():
+        for batch in utils.create_batches(utils.map_ids(users)):
+            response_json, status_code = utils.request(
+                self._session,
+                request_type=request_type,
+                endpoint=Endpoints.USER_FOLLOW_ARTIST_USER,
+                body=None,
+                uri_params={'type': 'user', 'ids': batch}
+            )
+
+            if status_code != 204:
+                raise utils.SpotifyError(status_code, response_json)
+
+        for playlist in playlists:
+            response_json, status_code = utils.request(
+                self._session,
+                request_type=request_type,
+                endpoint=Endpoints.USER_FOLLOW_PLAYLIST % playlist,
+                body=None,
+                uri_params=None
+            )
+
+            if status_code != 200:
+                raise utils.SpotifyError(status_code, response_json)
+
+    def follow(self, other):
+        """ Follow one or more things
+
+        Args:
+            other: follow 'other'. Other must be one of the following:
+                    Artist
+                    User
+                    Playlist
+                    List: can contain multiple of the above types
+
+        Note: does not currently support privately following playlists. Any
+            playlists followed will be automatically added to the user's public
+            playlists.
+
+        Returns:
             None
-        '''
-        # PUT /v1/me/following
-        # PUT /v1/playlists/{playlist_id}/followers
-        pass
+
+        Required token scopes:
+            user-follow-modify
+            playlist-modify-public
+            playlist-modify-private
+
+        Calls endpoints:
+            PUT     /v1/me/following
+            PUT     /v1/playlists/{playlist_id}/followers
+        """
+        self._follow_unfollow_help(other, const.REQUEST_PUT)
 
 
-    def unfollow(self,
-                 other: Union[Artist, User, Playlist,
-                              List[Union[Artist, User, Playlist]]]
-    ) -> Response: # None
-        ''' Unfollow one or more things
+    def unfollow(self, other):
+        """ Unfollow one or more things
 
-        Keyword arguments:
-            other: the object(s) to unfollow. Other must be either a single
-                object or a list of objects.
-                If other is a list, it can conatin multiple types.
+        Args:
+            other: unfollow 'other'. Other must be one of the following:
+                    Artist
+                    User
+                    Playlist
+                    List: can contain multiple of the above types
 
-                Can only unfollow Artist, User, and Playlist.
-
-        Exceptions:
-            TypeError: raised if other is not one of the types described above.
-
-        Note: if user is already not following other, will do nothing and return
-            a success code in response.status()
-
-        response.contents():
+        Returns:
             None
-        '''
-        # DELETE /v1/me/following
-        # DELETE /v1/playlists/{playlist_id}/followers
-        pass
+
+        Required token scopes:
+            user-follow-modify
+            playlist-modify-public
+            playlist-modify-private
+
+        Calls endpoints:
+            DELETE  /v1/me/following
+            DELETE  /v1/playlists/{playlist_id}/followers
+        """
+        self._follow_unfollow_help(other, const.REQUEST_DELETE)
 
 
-    def has_saved(self,
-                  other: Union[Track, Album,
-                               List[Union[Track, Album]]]
-    ) -> Response: # List[Tuple[Union[Track, Album], bool]]
-        ''' Check if the user has one or more things saved to their library
+    # TODO: checking return of tuple funcs means ret[0][1] for 1 elem...
+    def has_saved(self, other):
+        """ Check if the user has one or more things saved to their library
 
-        Keyword arguments:
-            other: check if current user has 'other' saved to the library.
-                Other must be either a single object or a list of objects.
-                If other is a list, it can conatin multiple types.
+        Args:
+            other: check if the current user has 'other' saved to the library.
+                Other must be one of the following:
 
-                Can only check for Track and Album.
+                    * Track
+                    * Album
+                    * List: can contain multiple of the above types
 
-        Exceptions:
-            TypeError: raised if other is not one of the types described above.
+        Returns:
+            List of tuples. Each tuple has an input object and whether the user
+            has that object saved.
 
-        response.contents():
-            Success: List of tuples. Each tuple has an input object and whether
-                     the user has that object saved.
-            Failure: None
-        '''
-        # GET /v1/me/albums/contains
-        # GET /v1/me/tracks/contains
-        pass
+        Required token scopes:
+            user-library-read
+
+        Calls endpoints:
+            GET     /v1/me/albums/contains
+            GET     /v1/me/tracks/contains
+        """
+        # Validate input
+        if not isinstance(other, list):
+            other = [other]
+
+        for elem in other:
+            if type(elem) not in [Track, Album]:
+                raise TypeError(elem)
+
+        # Split up input
+        tracks = utils.separate(other, Track)
+        albums = utils.separate(other, Album)
+
+        # Get boolean values for whether the user has each item saved
+        endpoint = Endpoints.USER_HAS_SAVED
+
+        track_bools = []
+        for batch in utils.create_batches(utils.map_ids(tracks)):
+            response_json, status_code = utils.request(
+                self._session,
+                request_type=const.REQUEST_GET,
+                endpoint=endpoint % 'tracks',
+                body=None,
+                uri_params={'ids': batch}
+            )
+
+            if status_code != 200:
+                raise utils.SpotifyError(status_code, response_json)
+
+            track_bools.append(response_json)
+
+        album_bools = []
+        for batch in utils.create_batches(utils.map_ids(albums)):
+            response_json, status_code = utils.request(
+                self._session,
+                request_type=const.REQUEST_GET,
+                endpoint=endpoint % 'albums',
+                body=None,
+                uri_params={'ids': batch}
+            )
+
+            if status_code != 200:
+                raise utils.SpotifyError(status_code, response_json)
+
+            album_bools.append(response_json)
+
+        # Zip output with input to make tuples
+        zipped_tracks = list(zip(tracks, track_bools))
+        zipped_albums = list(zip(albums, album_bools))
+        return zipped_tracks + zipped_albums
 
 
     def get_saved(self,
-                  saved_type: str,
-                  limit: int=None
-    ) -> Response: # Union[List[Album], List[Track]]
-        ''' Get all saved_type objects the user has saved to their library
+                  saved_type,
+                  limit=None,
+                  market=const.TOKEN_REGION):
+        """ Get all saved_type objects the user has saved to their library
 
-        Keyword arguments:
-            saved_type: one of sp.ALBUM or sp.TRACK
-            limit: (optional) the max number of items to return. If None, will
-                return all.
+        Args:
+            saved_type: one of:
+                sp.ALBUMS
+                sp.TRACKS
+            limit: (int) the max number of items to return. If None,
+                will return all. Must be positive.
+            market: a 2 letter country code as defined here:
+                https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
+                Used for track relinking:
+                https://developer.spotify.com/documentation/general/guides/track-relinking-guide/
 
-        response.contents():
-            Success: List of saved_type objects. Could be empty.
-            Failure: None
-        '''
-        # GET /v1/me/albums
-        # GET /v1/me/tracks
-        pass
+                if sp.TOKEN_REGION (default) is given, will use appropriate
+                country code for user based on their auth token and location.
+
+        Returns:
+            List of saved_type objects. Could be empty.
+
+        Required token scopes:
+            user-library-read
+
+        Calls endpoints:
+            GET     /v1/me/albums
+            GET     /v1/me/tracks
+
+        """
+        # Validate inputs
+        if saved_type not in [const.ALBUMS, const.TRACKS]:
+            raise TypeError(saved_type)
+
+        if limit is None: # Lists can't be longer than sys.maxsize in python
+            limit = sys.maxsize
+
+        if limit <= 0:
+            raise ValueError(limit)
+
+        # Make request
+        endpoint_type = 'albums' if saved_type == const.ALBUMS else 'tracks'
+        return_class = Album if saved_type == const.ALBUMS else Track
+        uri_params = {'market': market}
+
+        return utils.paginate_get(
+                        self._session,
+                        limit=limit,
+                        return_class=return_class,
+                        endpoint=Endpoints.USER_GET_SAVED % endpoint_type,
+                        uri_params=uri_params,
+                        body=None)
 
 
-    def save(self,
-             other: Union[Track, Album,
-                          List[Union[Track, Album]]]
-    ) -> Response: # None
-        ''' Save one or more things to the user's library
+    def _save_remove_help(self, other, request_type):
+        """ save and remove are identical, except for the request type and
+        return codes.
+        This function implements that functionality to remove duplicate code.
+        """
+        # Validate input
+        if not isinstance(other, list):
+            other = [other]
 
-        Keyword arguments:
-            other: the object(s) to save. Other must be either a single object
-                or a list of objects.
-                If other is a list, it can conatin multiple types.
+        for elem in other:
+            if type(elem) not in [Album, Track]:
+                raise TypeError(elem)
 
-                Can only save Track or Album.
+        # Split up input
+        albums = utils.separate(other, Album)
+        tracks = utils.separate(other, Track)
 
-        Exceptions:
-            TypeError: raised if other is not one of the types described above.
+        for batch in utils.create_batches(utils.map_ids(albums)):
+            response_json, status_code = utils.request(
+                self._session,
+                request_type=request_type,
+                endpoint=Endpoints.USER_SAVE_ALBUMS,
+                body=None,
+                uri_params={'ids': batch}
+            )
 
-        Note: if user already has other saved, will do nothing and return
-            a success code in response.status()
+            # All success codes are 200, except saving an album
+            success = 201 if request_type == const.REQUEST_PUT else 200
+            if status_code != success:
+                raise utils.SpotifyError(status_code, response_json)
 
-        response.contents():
+        for batch in utils.create_batches(utils.map_ids(tracks)):
+            response_json, status_code = utils.request(
+                self._session,
+                request_type=request_type,
+                endpoint=Endpoints.USER_SAVE_TRACKS,
+                body=None,
+                uri_params={'ids': batch}
+            )
+
+            if status_code != 200:
+                raise utils.SpotifyError(status_code, response_json)
+
+
+    def save(self, other):
+        """ Save one or more things to the user's library
+
+        Args:
+            other: the object(s) to save. Other must be one of the following:
+                    Track
+                    Album
+                    List: can contain multiple of the above types
+
+        Returns:
             None
-        '''
-        # PUT /v1/me/albums
-        # PUT /v1/me/tracks
-        pass
+
+        Required token scopes:
+            user-library-modify
+
+        Calls endpoints:
+            PUT     /v1/me/albums
+            PUT     /v1/me/tracks
+        """
+        self._save_remove_help(other, const.REQUEST_PUT)
 
 
-    def remove(self,
-               other: Union[Track, Album,
-                            List[Union[Track, Album]]]
-    ) -> Response: # None
-        ''' Remove one or more things from the user's library
+    def remove(self, other):
+        """ Remove one or more things from the user's library
 
-        Keyword arguments:
-            other: the object(s) to remove. Other must be either a single object
-                or a list of objects.
-                If other is a list, it can conatin multiple types.
+        Args:
+            other: the object(s) to remove. Other must be one of the following:
+                    Track
+                    Album
+                    List: can contain multiple of the above types
 
-                Can only remove Track or Album.
-
-        Exceptions:
-            TypeError: raised if other is not one of the types described above.
-
-        Note: if user already does not have other saved, will do nothing and
-            return a success code in response.status()
-
-        response.contents():
+        Returns:
             None
-        '''
-        # DELETE /v1/me/albums
-        # DELETE /v1/me/tracks
-        pass
+
+        Required token scopes:
+            user-library-modify
+
+        Calls endpoints:
+            DELETE  /v1/me/albums
+            DELETE  /v1/me/tracks
+        """
+        self._save_remove_help(other, const.REQUEST_DELETE)
+
+
+#pylint: disable=wrong-import-position
+from spotifython.album import Album
+from spotifython.artist import Artist
+from spotifython.player import Player
+from spotifython.playlist import Playlist
+from spotifython.track import Track
