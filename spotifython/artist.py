@@ -17,7 +17,7 @@ class Artist:
     This class represents an Artist object, tied to a Spotify user id.
     """
 
-    def __init__(self, session, artist_info):
+    def __init__(self, session, info):
         """ User should never call this constructor. As a result, they should
         never have access to the artist_info structure prior to creating an
         Artist.
@@ -27,11 +27,11 @@ class Artist:
             artist_info: a dictionary containing known values about the artist
         """
         # TODO: add type checking for session
-        if not isinstance(artist_info, dict):
+        if not isinstance(info, dict):
             raise TypeError('artist_info should be dict')
 
         self._session = session
-        self._raw = artist_info
+        self._raw = info
         # Lazily loaded fields from API calls
         self._albums = None
         self._top_tracks = None

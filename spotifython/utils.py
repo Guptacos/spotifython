@@ -38,9 +38,12 @@ class SpotifyError(Exception):
     pass
 
 def get_field(obj, field):
-    """ Gets the field if present in the Spotify object. If the field is not
-    present, then the object is updated using the object's Spotify id. Will
-    raise SpotifyError if the field is still invalid post-update.
+    """ Gets the field if present in the Spotify object.
+
+    If the field is not present, then the object is updated using the object's
+    Spotify id. Will raise SpotifyError if the field is still invalid
+    post-update.
+
     Args:
         obj: Union[Album, Artist, Player, Playlist, Session, Track, User], the
             instance of the object that the update call is meant for. The object
@@ -61,9 +64,11 @@ def get_field(obj, field):
     return obj._raw.get(field)
 
 def update_and_get_field(obj, field):
-    """ Updates the field if not present in the Spotify object and checks
-    if the field is present afterwards. If it is not present, then raise
-    SpotifyError.
+    """ Updates the field if not present in the Spotify object.
+
+    Also checks if the field is present afterwards. If it is not present, then
+    raise SpotifyError.
+
     Args:
         obj: Union[Album, Artist, Player, Playlist, Session, Track, User], the
             instance of the object that the update call is meant for. The object
