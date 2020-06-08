@@ -586,7 +586,7 @@ class Session:
 
         return result if len(result) != 1 else result[0]
 
-    def get_current_user(self):
+    def current_user(self):
         """ Gets the user associated with the current Spotify API
         authentication key.
 
@@ -613,7 +613,7 @@ class Session:
         """
 
         # Construct params for API call
-        endpoint = Endpoints.SEARCH_GET_CURRENT_USER
+        endpoint = Endpoints.SEARCH_CURRENT_USER
 
         # Execute requests
         response_json, status_code = utils.request(

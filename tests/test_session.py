@@ -92,7 +92,7 @@ class TestSession(unittest.TestCase):
     def test_get_tracks(self):
         self.assertTrue(False)
 
-    # Test get_users, get_current_user
+    # Test get_users, current_user
     @unittest.skip('Not yet implemented')
     def test_get_users(self):
         self.assertTrue(False)
