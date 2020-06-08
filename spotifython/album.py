@@ -232,13 +232,13 @@ class Album:
         """ Get the copyrights statements for this album
 
         Returns:
-            List[dict]: a list of copyright objects as defined here:
-                https://developer.spotify.com/documentation/web-api/reference/object-model/#copyright-object
+            List[Copyright]: a list of Copyright objects
 
         Calls endpoints:
             GET     /v1/albums/{id}
         """
-        return utils.get_field(self, 'copyrights')
+        result = utils.get_field(self, 'copyrights')
+        return [Copyright(elem) for elem in result]
 
 
     def genres(self):
@@ -371,6 +371,54 @@ class Album:
         """
         self._update_tracks()
         return self._tracks
+
+
+class Copyright:
+    """ Represents a single copyright """
+
+
+    def __init__(self, info):
+        # Validate info
+        if 'text' not in info or 'type' not in info:
+            raise ValueError('Missing dict key in copyright response', info)
+
+        if info['type'] not in ['C', 'P']:
+            raise ValueError('Unknown copyright type <{info["text"]}>')
+
+        self._text = info['text']
+
+        if info['type'] == 'C':
+            self._type = const.COMPOSITION
+        else:
+            self._type = const.SOUND_RECORDING
+
+
+    def __str__(self):
+        return self.text()
+
+
+    def __repr__(self):
+        return str(self)
+
+
+    def text(self):
+        """ Get the text describing the copyright """
+        return self._text
+
+
+    def type(self):
+        """ Get the type of the copyright
+
+        Sound recordings (performances) and musical compositions (original
+        works) are considered separate things for copyright purposes.
+
+        Returns:
+            One of:
+
+                * sp.SOUND_RECORDING
+                * sp.COMPOSITION
+        """
+        return self._type
 
 
 #pylint: disable=wrong-import-position

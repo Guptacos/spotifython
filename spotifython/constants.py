@@ -30,6 +30,10 @@ ARTIST_COMPILATION = 'compilation'
 SINGLE = 'single'
 COMPILATION = 'compilation'
 
+# Copyrights
+SOUND_RECORDING = 'sound recording'
+COMPOSITION = 'composition'
+
 # Constants
 DEFAULT_REQUEST_TIMEOUT = 10 # in seconds
 SPOTIFY_PAGE_SIZE = 50
