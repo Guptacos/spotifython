@@ -347,3 +347,8 @@ class Artist:
         self._related_artists_query_params = search_query
 
         return self._related_artists
+
+
+#pylint: disable=wrong-import-position
+from spotifython.album import Album
+from spotifython.track import Track

@@ -16,6 +16,9 @@ Last updated: May 30, 2020
 #pylint: disable=import-error
 #pylint: disable=redundant-unittest-assert
 
+#TODO: remove this pylint ignore when the tests are written
+#pylint: disable=unused-import
+
 # Standard library imports
 import unittest
 from unittest.mock import patch

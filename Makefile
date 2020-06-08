@@ -1,6 +1,6 @@
 # Get all python files tracked by git
-ALL_LINT_FILES := $(shell git ls-files | grep '**.py' | xargs)
-DIFF_LINT_FILES := $(shell git diff origin/master --name-only | grep '**.py' | xargs)
+ALL_LINT_FILES := $(shell python3 lint.py all)
+DIFF_LINT_FILES := $(shell python3 lint.py diff)
 
 lint:
 	pylint $(ALL_LINT_FILES)

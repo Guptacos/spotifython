@@ -12,6 +12,7 @@ from spotifython.playlist import Playlist
 from spotifython.track import Track
 from spotifython.user import User
 
+#pylint: disable=wrong-import-position
 sys.path.append('../spotifython')
 import spotifython.constants as const
 
