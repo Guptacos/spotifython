@@ -1,14 +1,25 @@
 class Endpoints:
     BASE_URI = 'https://api.spotify.com'
-    SEARCH = '/v1/search'
 
     # Search constants
+    SEARCH = '/v1/search'
     SEARCH_GET_ALBUMS = '/v1/albums'
     SEARCH_GET_ARTISTS = '/v1/artists'
     SEARCH_GET_TRACKS = '/v1/tracks'
     SEARCH_GET_USER = '/v1/users/%s'
     SEARCH_GET_CURRENT_USER = '/v1/me'
     SEARCH_GET_PLAYLIST = '/v1/playlists/%s'
+
+    # Artist endpoints
+    ARTIST_GET_ALBUMS = '/v1/artists/%s/albums'
+    ARTIST_TOP_TRACKS = '/v1/artists/%s/top-tracks'
+    ARTIST_RELATED_ARTISTS = '/v1/artists/%s/related-artists'
+    ARTIST_GET_BY_ID = '/v1/artists/%s'
+
+    # Playlist
+    PLAYLIST = '/v1/playlists/{playlist_id}'
+    PLAYLIST_TRACKS = '/v1/playlists/{playlist_id}/tracks'
+    PLAYLIST_IMAGES = '/v1/playlists/{playlist_id}/images'
 
     # User
     USER_TOP = '/v1/me/top/%s'
