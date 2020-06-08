@@ -1,3 +1,9 @@
+""" Container for the Spotify API endpoints
+
+This class should not be touched by the client
+"""
+
+#pylint: disable=missing-class-docstring, too-few-public-methods
 class Endpoints:
     BASE_URI = 'https://api.spotify.com'
 
@@ -7,7 +13,7 @@ class Endpoints:
     SEARCH_GET_ARTISTS = '/v1/artists'
     SEARCH_GET_TRACKS = '/v1/tracks'
     SEARCH_GET_USER = '/v1/users/%s'
-    SEARCH_GET_CURRENT_USER = '/v1/me'
+    SEARCH_CURRENT_USER = '/v1/me'
     SEARCH_GET_PLAYLIST = '/v1/playlists/%s'
 
     # Artist endpoints

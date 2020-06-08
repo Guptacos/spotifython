@@ -86,9 +86,10 @@ class Session:
         """
 
         def __init__(self, search_result):
-            """ User should never call this constructor. Internally, the search result will
-            perform all necessary API calls to get the desired number of search
-            results (up to search limit).
+            """ User should never call this constructor.
+
+            Internally, the search result will perform all necessary API calls
+            to get the desired number of search results (up to search limit).
 
             Args:
                 search_result: dict containing keys 'album', 'artist',
@@ -304,7 +305,7 @@ class Session:
                         result.get(curr_type).append(Track(self, item))
                     else:
                         # Should never reach here, but here for safety!
-                        raise ValueError("Invalid type when building search")
+                        raise ValueError('Invalid type when building search')
 
             # Only make necessary search queries
             new_remaining_types = list()
