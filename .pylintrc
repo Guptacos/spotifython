@@ -11,7 +11,10 @@ check-quote-consistency=yes
 
 [MESSAGES CONTROL]
 # Don't complain about "TODO", "FIXME", and "XXX" in the code
-disable=fixme
+# allow comparing len in conditionals
+disable=
+    fixme,
+    len-as-condition
 
 [REPORTS]
 # Only display messages, no aggregate report
