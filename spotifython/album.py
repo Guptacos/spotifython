@@ -8,6 +8,7 @@ import sys
 import spotifython.constants as const
 from spotifython.endpoints import Endpoints
 import spotifython.utils as utils
+from spotifython.image import Image
 
 
 class Album:
@@ -282,13 +283,13 @@ class Album:
         """ Get the Album's cover art in various sizes, widest first
 
         Returns:
-            List[dict]: a list of image objects as defined here:
-                https://developer.spotify.com/documentation/web-api/reference/object-model/#image-object
+            List[Image]: a list of Image objects
 
         Calls endpoints:
             GET     /v1/albums/{id}
         """
-        return utils.get_field(self, 'images')
+        result = utils.get_field(self, 'images')
+        return [Image(elem) for elem in result]
 
 
     def label(self):
