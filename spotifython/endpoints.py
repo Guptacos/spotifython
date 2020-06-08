@@ -28,6 +28,7 @@ class Endpoints:
     PLAYLIST_IMAGES = '/v1/playlists/{playlist_id}/images'
 
     # User
+    USER_GET_DATA = '/v1/users/%s'
     USER_TOP = '/v1/me/top/%s'
     USER_RECENTLY_PLAYED = '/v1/me/player/recently-played'
     USER_GET_PLAYLISTS = '/v1/users/%s/playlists'

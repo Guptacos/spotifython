@@ -1,6 +1,7 @@
 """ User class """
 
 # Standard library imports
+import copy
 import sys
 
 # Local imports
@@ -11,6 +12,7 @@ import spotifython.utils as utils
 
 # TODO: what to do about partial success on batch operations?
 class User:
+    #pylint: disable=line-too-long
     """ Represents a Spotify user tied to a unique Spotify id
 
     Use methods here to interact with a User, such as reading / modifying the
@@ -19,6 +21,11 @@ class User:
     Raises:
         TypeError:  if incorrectly typed parameters are given.
         ValueError: if parameters with illegal values are given.
+
+    Unsupported:
+
+        * external_urls
+        * followers: unsupported by Spotify, see https://developer.spotify.com/documentation/web-api/reference/object-model/#followers-object
     """
 
 
@@ -39,6 +46,35 @@ class User:
         self._session = session
         self._id = info['id']
         self._player = Player(self._session, self)
+
+        self._raw = copy.deepcopy(info)
+
+        if 'display_name' not in info:
+            self._update_fields()
+
+
+    def _update_fields(self):
+        """ Update self._raw using the User id
+
+        Calls endpoints:
+            GET     /v1/users/{id}
+        """
+
+        response_json, status_code = utils.request(
+            session=self._session,
+            request_type=const.REQUEST_GET,
+            endpoint=Endpoints.USER_GET_DATA % self.spotify_id()
+        )
+
+        if status_code != 200:
+            raise utils.SpotifyError(status_code, response_json)
+
+        # Updates _raw with new values. One liner : for each key in union of
+        # keys in self._raw and response_json, takes value for key from
+        # response_json if present, else takes value for key from self._raw.
+        # TODO: this is weird notation, make a utility function for it.
+        # Especially useful since it is an action necessary for many classes.
+        self._raw = {**self._raw, **response_json}
 
 
     def __str__(self):
@@ -68,6 +104,42 @@ class User:
             The same id that this user was created with as a string.
         """
         return self._id
+
+
+    def name(self):
+        """ Get the User's display name
+
+        Returns:
+            str: the display name of the User as it appears on Spotify
+
+        Calls endpoints:
+            GET     /v1/users/{id}
+        """
+        return utils.get_field(self, 'display_name')
+
+
+    def href(self):
+        """ Get the User's href
+
+        Returns:
+            str: a link to the Web API endpoint containing the User's profile.
+
+        Calls endpoints:
+            GET     /v1/users/{id}
+        """
+        return utils.get_field(self, 'href')
+
+
+    def uri(self):
+        """ Get the User's uri
+
+        Returns:
+            str: the Spotify uri for this User
+
+        Calls endpoints:
+            GET     /v1/users/{id}
+        """
+        return utils.get_field(self, 'uri')
 
 
     def player(self):
