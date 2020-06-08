@@ -20,7 +20,6 @@ class Track:
     """
 
 
-    # TODO: should init call self._update_fields()?
     def __init__(self, session, info):
         """ Get an instance of Track
 
@@ -50,7 +49,6 @@ class Track:
         self._artists = None
 
 
-    # TODO: test this
     def __str__(self):
         return f'Track {self.name()}'
 
@@ -188,10 +186,15 @@ class Track:
 
 
     def disc_number(self):
-        """ Get the Track's disc number (1 indexed)
+        """ Get the Track's disc number (0 indexed)
 
-        The number of the disc on which this Track appears. This is usually 1,
+        The number of the disc on which this Track appears. This is usually 0,
         unless an album has multiple discs.
+
+        Note:
+            On Spotify (and in most music software) disc number is 1-indexed.
+            This method intentionally makes it 0 indexed for consistency with
+            the rest of the library.
 
         Returns:
             int: the number of the Track's disc
@@ -199,22 +202,34 @@ class Track:
         Calls endpoints:
             GET     /v1/tracks/{id}
         """
-        return utils.get_field(self, 'disc_number')
+        result = utils.get_field(self, 'disc_number')
+        return result - 1
 
 
     def track_number(self):
-        """ Get the Track's number (1 indexed)
+        """ Get the Track's number (0 indexed)
 
         This is the track's number in the album. If an album has several discs,
         the track number is the number of this Track on the disc it appears.
 
+        Note:
+            On Spotify (and in most music software) track number is 1-indexed.
+            This method intentionally makes it 0 indexed for consistency with
+            the rest of the library.
+
+            This decision was made so that Track.track_number() is consistent
+            with Album.__get_item__().
+
+            Ex: for some 0 <= num < len(Album), Album[num].track_number() == num
+
         Returns:
-            int: the Track's number on it's disc
+            int: the Track's number on its disc
 
         Calls endpoints:
             GET     /v1/tracks/{id}
         """
-        return utils.get_field(self, 'track_number')
+        result = utils.get_field(self, 'track_number')
+        return result - 1
 
 
     def explicit(self):
@@ -253,7 +268,8 @@ class Track:
         return utils.get_field(self, 'href')
 
 
-    # TODO: maybe change this to a feature object?
+    # TODO: If Spotify ever freezes the audio features, may be worth making into
+    #       an object.
     def audio_features(self):
         """ Get the audio features for this Track
 
@@ -279,7 +295,8 @@ class Track:
         return response_json
 
 
-    # TODO: this is a fat response json... should we make an analysis object?
+    # TODO: If Spotify ever freezes the audio analysis, may be worth making into
+    #       an object.
     def audio_analysis(self):
         """ Get the audio analysis for this Track
 
