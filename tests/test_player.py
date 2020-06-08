@@ -2,7 +2,6 @@
 '''
 #pylint: disable=missing-class-docstring
 #pylint: disable=missing-function-docstring
-#pylint: disable=too-many-public-methods
 
 # Standard library imports
 import unittest

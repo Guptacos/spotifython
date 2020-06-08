@@ -14,7 +14,8 @@ check-quote-consistency=yes
 # allow comparing len in conditionals
 disable=
     fixme,
-    len-as-condition
+    len-as-condition,
+    too-many-public-methods
 
 [REPORTS]
 # Only display messages, no aggregate report
