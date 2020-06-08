@@ -15,7 +15,6 @@ import spotifython.utils as utils
 KEYSTRING = 'Spotify response missing data'
 
 
-#pylint: disable=too-many-public-methods
 class Player:
     """ Interact with a user's playback, such as pausing / playing the current
         song, modifying the queue, etc.

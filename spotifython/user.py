@@ -78,6 +78,42 @@ class User:
         self._raw = {**self._raw, **response_json}
 
 
+    def _get_private_field(self, key):
+        """ Get a private user field.
+
+        If the field isn't in self._raw, update private User info
+
+        Raises:
+            AuthenticationError: if this User isn't the one who authorized the
+                token, in which case the client can't access private user
+                information
+
+        Calls endpoints:
+            GET     /v1/me
+        """
+
+        if key in self._raw:
+            return self._raw[key]
+
+        other = self._session.current_user()
+        if self != other:
+            raise utils.AuthenticationError(
+                f'Can\'t access private user field <{key}>'
+            )
+
+        # Updates _raw with new values. One liner : for each key in union of
+        # keys in self._raw and response_json, takes value for key from
+        # response_json if present, else takes value for key from self._raw.
+        # TODO: this is weird notation, make a utility function for it.
+        # Especially useful since it is an action necessary for many classes.
+
+        # We know other is a 'User' object, so this protected access is okay
+        #pylint: disable=protected-access
+        self._raw = {**self._raw, **other._raw}
+
+        return self._raw[key]
+
+
     def __str__(self):
         return f'User <{self._id}>'
 
@@ -156,9 +192,67 @@ class User:
         result = utils.get_field(self, 'images')
 
         if len(result) > 1:
-            raise SpotifyError('User has more than one profile picture!')
+            raise utils.SpotifyError('User has more than one profile picture!')
 
         return None if len(result) == 0 else Image(result[0])
+
+
+    def country(self):
+        """ Get the User's country code
+
+        Returns:
+            str: an ISO alpha-2 country code
+
+        Calls endpoints:
+            GET     /v1/me
+
+        Required token scopes:
+            user-read-private
+
+        Raises:
+            AuthenticationError: if this User is not the User who made the token
+        """
+        return self._get_private_field('country')
+
+
+    def email(self):
+        """ Get the User's email address
+
+        Returns:
+            str: the email address associated with the account
+
+        Calls endpoints:
+            GET     /v1/me
+
+        Required token scopes:
+            user-read-email
+
+        Raises:
+            AuthenticationError: if this User is not the User who made the token
+        """
+        return self._get_private_field('email')
+
+
+    def subscription(self):
+        """ Get the User's account subscription
+
+        Returns:
+            str: the account's subscription, such as 'premium', 'free', etc.
+
+        Note: Spotify does not define all possible subscription types, so
+            instead of returning an enum (like many other methods in the
+            library), it returns the raw string. See the 'product' field here:
+            https://developer.spotify.com/documentation/web-api/reference/users-profile/get-current-users-profile/
+        Calls endpoints:
+            GET     /v1/me
+
+        Required token scopes:
+            user-read-private
+
+        Raises:
+            AuthenticationError: if this User is not the User who made the token
+        """
+        return self._get_private_field('product')
 
 
     def player(self):
