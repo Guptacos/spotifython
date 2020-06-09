@@ -70,12 +70,7 @@ class User:
         if status_code != 200:
             raise utils.SpotifyError(status_code, response_json)
 
-        # Updates _raw with new values. One liner : for each key in union of
-        # keys in self._raw and response_json, takes value for key from
-        # response_json if present, else takes value for key from self._raw.
-        # TODO: this is weird notation, make a utility function for it.
-        # Especially useful since it is an action necessary for many classes.
-        self._raw = {**self._raw, **response_json}
+        self._raw.update(response_json)
 
 
     def _get_private_field(self, key):
@@ -101,15 +96,9 @@ class User:
                 f'Can\'t access private user field <{key}>'
             )
 
-        # Updates _raw with new values. One liner : for each key in union of
-        # keys in self._raw and response_json, takes value for key from
-        # response_json if present, else takes value for key from self._raw.
-        # TODO: this is weird notation, make a utility function for it.
-        # Especially useful since it is an action necessary for many classes.
-
         # We know other is a 'User' object, so this protected access is okay
         #pylint: disable=protected-access
-        self._raw = {**self._raw, **other._raw}
+        self._raw.update(other._raw)
 
         return self._raw[key]
 
