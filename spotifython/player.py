@@ -463,7 +463,7 @@ class Player:
 
         try:
             devices = response_json['devices']
-            result = list(map(lambda elem: elem['id'], devices))
+            result = [elem['id'] for elem in devices]
         except KeyError:
             raise utils.SpotifyError(KEYSTRING)
 

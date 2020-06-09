@@ -310,5 +310,4 @@ def separate(elems, filter_type):
 
 def map_ids(elems):
     """ Turn a list of objects into a list of spotify ids """
-    map_func = lambda elem: elem.spotify_id()
-    return list(map(map_func, elems))
+    return [elem.spotify_id() for elem in elems]

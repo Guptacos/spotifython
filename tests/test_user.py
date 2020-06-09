@@ -283,9 +283,10 @@ class TestUser(unittest.TestCase):
 
         # Build some objects to check
         tracks = get_dummy_data(const.TRACKS)
-        tracks = list(map(lambda elem: Track(None, elem), tracks))
+        tracks = [Track(None, data) for data in tracks]
+
         albums = get_dummy_data(const.ALBUMS)
-        albums = list(map(lambda elem: Album(None, elem), albums))
+        albums = [Album(None, data) for data in albums]
 
         other = tracks + albums
         random.shuffle(other)

@@ -62,6 +62,6 @@ def get_dummy_data(data_type: str,
 
     if to_obj:
         map_func = lambda elem: CLASS_MAPPINGS[data_type](None, elem)
-        result = list(map(map_func, result))
+        result = [map_func(elem) for elem in result]
 
     return result
