@@ -43,7 +43,7 @@ REFRESH_RATE = 1000 # 1 second
 
 # Spotifython variables
 session = sp.Session(os.environ['TOKEN'])
-user = session.get_current_user()
+user = session.current_user()
 player = user.player()
 
 # Tkinter setup
@@ -65,7 +65,7 @@ def update():
 
     # In a normal app, may want to pick one of the images.
     # Here, use first one and resize
-    url = images[0]['url']
+    url = images[0].url()
 
     # Build an image object to render in tkinter
     raw_data = urllib.request.urlopen(url).read()
