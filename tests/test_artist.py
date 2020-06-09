@@ -35,7 +35,7 @@ class TestArtist(unittest.TestCase):
         # Note: since we're mocking Spotify and never actually using the token,
         # we can put any string here for the token.
         self.session = sp(TOKEN)
-        self.artist = Artist(self.session, get_dummy_data(const.ARTISTS, 1))
+        self.artist = Artist(self.session, get_dummy_data(const.ARTISTS, 1)[0])
 
         # Mock the sp._request method so that we never actually reach Spotify
         self.patcher = patch.object(sp, '_request', autospec=True)
