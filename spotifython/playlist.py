@@ -17,9 +17,10 @@ class Playlist:
     """ A Playlist object.
 
     Functions requiring specific token scopes will specify the required scope.
-    Use caution when comparing the equality of two playlists; two equal
-    playlists might have different data and therefore require a call to
-    refresh() before they are functionally identical objects.
+    Use caution when comparing the equality of two playlists; it only depends
+    on the spotify id of each playlist. Two equal playlists might have
+    different data and therefore would require a call to refresh() before they
+    could be treated as functionally identical objects.
     """
 
     # TODO store only static fields
@@ -550,22 +551,18 @@ class Playlist:
 
 
     def __str__(self):
-        """ Return a printable representation of the playlist. """
         return self._raw['name']
 
 
     def __repr__(self):
-        """ Return a printable representation of the playlist. """
         return str(self)
 
 
     def __len__(self):
-        """ Return the number of tracks in the playlist. """
         return len(self._tracks)
 
 
     def __getitem__(self, key):
-        """ Return the specified element of the playlist. """
         if not isinstance(key, int):
             raise TypeError(key)
         if key < 0:
@@ -573,6 +570,18 @@ class Playlist:
         if key < 0 or key >= len(self):
             raise IndexError(key)
         return self._tracks[key]
+
+
+    def __eq__(self, other):
+        return utils.spotifython_eq(self, other)
+
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+
+    def __hash__(self):
+        return utils.spotifython_hash(self)
 
 
 # pylint: disable=wrong-import-position
