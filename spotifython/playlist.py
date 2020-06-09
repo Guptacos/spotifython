@@ -72,6 +72,15 @@ class Playlist:
         return self._raw['href']
 
 
+    def name(self):
+        """ Returns the name of the playlist.
+
+        Returns:
+            A string name.
+        """
+        return self._raw['name']
+
+
     def spotify_id(self):
         """ Returns the Spotify ID of the playlist.
 
