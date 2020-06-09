@@ -29,7 +29,6 @@ class User:
         * followers: unsupported by Spotify, see https://developer.spotify.com/documentation/web-api/reference/object-model/#followers-object
     """
 
-
     def __init__(self, session, info):
         """ Get an instance of User
 
@@ -38,7 +37,7 @@ class User:
 
         Args:
             session: an instance of sp.Session
-            info: (dict) known values about the user. Must contain 'id'.
+            info (dict): known values about the user. Must contain 'id'.
         """
         # Validate inputs
         if 'id' not in info:
@@ -53,13 +52,45 @@ class User:
         if 'display_name' not in info:
             self._update_fields()
 
+    def __str__(self):
+        return f'User <{self.name()}>'
+
+    def __repr__(self):
+        return f'{str(self)} with id <{self.spotify_id()}>'
+
+    def __eq__(self, other):
+        return utils.spotifython_eq(self, other)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return utils.spotifython_hash(self)
+
 
     def _update_fields(self):
         """ Update self._raw using the User id
 
         Calls endpoints:
             GET     /v1/users/{id}
+            GET     /v1/me
+
+        Note:
+            This method only includes private fields if those are allowed by the
+            token scopes and the token was created by this user.
+
+        Required token scopes:
+            user-read-email: to read the email
+            user-read-private: to read the country and subscription
         """
+        other = self._session.current_user()
+        if self == other:
+            # We know other is a 'User' object, so this protected access is okay
+            #pylint: disable=protected-access
+            self._raw.update(other._raw)
+
+            # other._raw has superset of data gotten below, skip extra api call
+            return
 
         response_json, status_code = utils.request(
             session=self._session,
@@ -73,54 +104,56 @@ class User:
         self._raw.update(response_json)
 
 
+    # Note: this function necessary so as to return a custom exception,
+    #       instead of using utils.get_field
     def _get_private_field(self, key):
         """ Get a private user field.
-
-        If the field isn't in self._raw, update private User info
 
         Raises:
             AuthenticationError: if this User isn't the one who authorized the
                 token, in which case the client can't access private user
-                information
+                information.
 
         Calls endpoints:
             GET     /v1/me
         """
+        if key not in self._raw:
+            self._update_fields()
 
         if key in self._raw:
             return self._raw[key]
 
-        other = self._session.current_user()
-        if self != other:
-            raise utils.AuthenticationError(
-                f'Can\'t access private user field <{key}>'
-            )
-
-        # We know other is a 'User' object, so this protected access is okay
-        #pylint: disable=protected-access
-        self._raw.update(other._raw)
-
-        return self._raw[key]
+        raise utils.AuthenticationError(
+            f'Can\'t access private user field <{key}>'
+        )
 
 
-    def __str__(self):
-        return f'User <{self._id}>'
+    def refresh(self):
+        """ Refreshes the User data.
+
+        Use to update personal information such as profile pic or display name.
+
+        Calls:
+            GET     /v1/users/{id}
+        """
+        # TODO: should we just remove _update_fields()?
+        self._update_fields()
 
 
-    def __repr__(self):
-        return str(self)
+    def raw(self):
+        """ Returns the raw user json.
 
+        Makes a call to refresh() to update raw data before returning it.
 
-    def __eq__(self, other):
-        return utils.spotifython_eq(self, other)
+        Returns:
+            A dict representing a raw user object from the Spotify Web API.
 
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-
-    def __hash__(self):
-        return utils.spotifython_hash(self)
+        Calls:
+            GET     /v1/me
+            GET     /v1/users/{id}
+        """
+        self.refresh()
+        return copy.deepcopy(self._raw)
 
 
     def spotify_id(self):
@@ -628,8 +661,7 @@ class User:
             for elem in response_json['artists']['items']:
                 results.append(Artist(self._session, elem))
 
-        results = results[:limit] if limit is not None else results
-        return results
+        return results[:limit] if limit is not None else results
 
 
     def _follow_unfollow_help(self, other, request_type):
