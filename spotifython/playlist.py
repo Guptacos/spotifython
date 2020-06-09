@@ -17,10 +17,11 @@ class Playlist:
     """ A Playlist object.
 
     Functions requiring specific token scopes will specify the required scope.
+    Use caution when comparing the equality of two playlists; it only depends
+    on the spotify id of each playlist. Two equal playlists might have
+    different data and therefore would require a call to refresh() before they
+    could be treated as functionally identical objects.
     """
-    # TODO add disclaimer about equivalence and stale data
-    # TODO add raw function with disclaimer about updating object data
-    # TODO add refresh
 
     # TODO store only static fields
     def __init__(self, session, info):
@@ -42,7 +43,41 @@ class Playlist:
             for item in tracks.get('items', []):
                 if 'track' not in item:
                     raise ValueError('Track information missing')
-                self._tracks.append(Track(item.get('track', {})))
+                self._tracks.append(Track(session, item.get('track', {})))
+
+
+    def refresh(self):
+        """ Refreshes the playlist data.
+
+        Calls:
+            GET /v1/playlists/{playlist_id}
+        """
+        endpoint = Endpoints.BASE_URI
+        endpoint += Endpoints.SEARCH_GET_PLAYLIST % self.spotify_id()
+        response_json, status_code = utils.request(
+            self._session,
+            request_type='GET',
+            endpoint=endpoint,
+        )
+        if status_code != 200:
+            raise utils.SpotifyError(status_code, response_json)
+
+        self._raw = response_json
+
+
+    def raw(self):
+        """ Returns the raw playlist data.
+
+        Makes a call to refresh() to update raw data before returning it.
+
+        Returns:
+            A dict representing a raw playlist object from the Spotify Web API.
+
+        Calls:
+            GET /v1/playlists/{playlist_id}
+        """
+        self.refresh()
+        return deepcopy(self._raw)
 
 
     def owner(self):
@@ -70,6 +105,15 @@ class Playlist:
             A string HREF.
         """
         return self._raw['href']
+
+
+    def name(self):
+        """ Returns the name of the playlist.
+
+        Returns:
+            A string name.
+        """
+        return self._raw['name']
 
 
     def spotify_id(self):
@@ -507,22 +551,18 @@ class Playlist:
 
 
     def __str__(self):
-        """ Return a printable representation of the playlist. """
         return self._raw['name']
 
 
     def __repr__(self):
-        """ Return a printable representation of the playlist. """
         return str(self)
 
 
     def __len__(self):
-        """ Return the number of tracks in the playlist. """
         return len(self._tracks)
 
 
     def __getitem__(self, key):
-        """ Return the specified element of the playlist. """
         if not isinstance(key, int):
             raise TypeError(key)
         if key < 0:
@@ -530,6 +570,18 @@ class Playlist:
         if key < 0 or key >= len(self):
             raise IndexError(key)
         return self._tracks[key]
+
+
+    def __eq__(self, other):
+        return utils.spotifython_eq(self, other)
+
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+
+    def __hash__(self):
+        return utils.spotifython_hash(self)
 
 
 # pylint: disable=wrong-import-position
