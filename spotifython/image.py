@@ -33,11 +33,20 @@ class Image:
         return str(self)
 
 
+    def url(self):
+        """ Get the image's url
+
+        Returns:
+            str: the url
+        """
+        return self._raw['url']
+
+
     def width(self):
         """ Get the width of the image in pixels
 
         Returns:
-            (int): the width in pixels, if known
+            int: the width in pixels, if known
             None: if the width is not known
         """
         return self._raw.get('width', None)
@@ -47,7 +56,7 @@ class Image:
         """ Get the height of the image in pixels
 
         Returns:
-            (int): the height in pixels, if known
+            int: the height in pixels, if known
             None: if the height is not known
         """
         return self._raw.get('height', None)
