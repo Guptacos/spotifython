@@ -17,11 +17,10 @@ class Playlist:
     """ A Playlist object.
 
     Functions requiring specific token scopes will specify the required scope.
+    Use caution when comparing the equality of two playlists; two equal
+    playlists might have different data and therefore require a call to
+    refresh() before they are functionally identical objects.
     """
-    # TODO add disclaimer about equivalence and stale data
-    # TODO add raw function with disclaimer about updating object data
-    # TODO add refresh
-    # TODO use get_field
 
     # TODO store only static fields
     def __init__(self, session, info):
@@ -44,6 +43,40 @@ class Playlist:
                 if 'track' not in item:
                     raise ValueError('Track information missing')
                 self._tracks.append(Track(session, item.get('track', {})))
+
+
+    def refresh(self):
+        """ Refreshes the playlist data.
+
+        Calls:
+            GET /v1/playlists/{playlist_id}
+        """
+        endpoint = Endpoints.BASE_URI
+        endpoint += Endpoints.SEARCH_GET_PLAYLIST % self.spotify_id()
+        response_json, status_code = utils.request(
+            self._session,
+            request_type='GET',
+            endpoint=endpoint,
+        )
+        if status_code != 200:
+            raise utils.SpotifyError(status_code, response_json)
+
+        self._raw = response_json
+
+
+    def raw(self):
+        """ Returns the raw playlist data.
+
+        Makes a call to refresh() to update raw data before returning it.
+
+        Returns:
+            A dict representing a raw playlist object from the Spotify Web API.
+
+        Calls:
+            GET /v1/playlists/{playlist_id}
+        """
+        self.refresh()
+        return deepcopy(self._raw)
 
 
     def owner(self):
