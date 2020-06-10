@@ -32,8 +32,8 @@ class User:
     def __init__(self, session, info):
         """ Get an instance of User
 
-        This constructor should never be called by the client. To get an
-        instance of User, use Session.get_users()
+        This constructor should never be called by the client. To get a
+        User by its id, use Session.get_users() or Session.current_user().
 
         Args:
             session: an instance of sp.Session

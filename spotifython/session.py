@@ -20,13 +20,16 @@ class Session:
     """
 
     def __init__(self, token, timeout=const.DEFAULT_REQUEST_TIMEOUT):
-        """ This object should be constructed by the user to instantiate the
-        session of Spotify Web API usage.
+        """ Create a new Spotify Session
+
+        This is the only constructor that should be explicitly called by the
+        client. Use it to start a Session with the Spotify web API.
 
         Args:
-            token: str, Spotify API authentication token
-            timeout: (Optional) int, timeout value for each request made to
-                Spotify's API
+            token (str): Spotify API authentication token
+            timeout (int): timeout value for each request made to Spotify's API.
+                Default 10. This library uses exponential backoff with a
+                timeout; this parameter is the hard timeout.
 
         Raises:
             TypeError:  if incorrectly typed parameters are given.

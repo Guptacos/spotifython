@@ -133,8 +133,7 @@ def request(session,
     # total: max number of retries
     # backoff_factor: for exponential backoff. will wait 0.5,1,2,4,8,16,32 etc.
     # with total = 7 and backoff = 1, will wait 32 sec for last retry, 64 total
-    retry_strategy = Retry(total=7,
-                           backoff_factor=1)
+    retry_strategy = Retry(total=7, backoff_factor=1)
 
     # Apply the retry strategy
     adapter = HTTPAdapter(max_retries=retry_strategy)

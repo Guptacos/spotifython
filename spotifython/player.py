@@ -54,10 +54,13 @@ class Player:
 
 
     def __init__(self, session, user):
-        """ Should only be called from within the User class
+        """ Get an instance of Player
+
+        This constructor should never be called by the client. To get an
+        instance of Player, use User.player().
 
         Args:
-            session: a Spotifython instance
+            session: a Session instance
             user: the User object the Player is associated with
         """
         self._session = session

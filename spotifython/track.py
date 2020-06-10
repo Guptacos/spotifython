@@ -23,12 +23,14 @@ class Track:
     def __init__(self, session, info):
         """ Get an instance of Track
 
-        This constructor should never be called by the client. To get an
-        instance of Track, use Session.get_tracks()
+        This constructor should never be called by the client. To get a
+        Track by its id, use Session.get_tracks(). To get a Track from another
+        object, use appropriate methods such as Album.tracks(),
+        Playlist.tracks(), etc.
 
         Args:
             session: a Session instance
-            info: the track's information
+            info (dict): the track's information. Must contain 'id'.
         """
         # Validate inputs
         if 'id' not in info:

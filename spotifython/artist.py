@@ -18,17 +18,23 @@ class Artist:
     """
 
     def __init__(self, session, info):
-        """ User should never call this constructor. As a result, they should
-        never have access to the artist_info structure prior to creating an
-        Artist.
+        """ Get an instance of Artist
+
+        This constructor should never be called by the client. To get an
+        Artist by their id, use Session.get_artists(). To get an Artist from
+        another object, use appropriate methods such as Track.artists(),
+        Album.artists(), etc.
 
         Args:
-            session: a Spotifython session instance
-            artist_info: a dictionary containing known values about the artist
+            session: a Session instance
+            info (dict): the artist's information. Must contain 'id'.
         """
         # TODO: add type checking for session
         if not isinstance(info, dict):
             raise TypeError('artist_info should be dict')
+
+        if 'id' not in info:
+            raise ValueError('Artist id not in info')
 
         self._session = session
         self._raw = info
