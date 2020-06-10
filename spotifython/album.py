@@ -35,7 +35,7 @@ class Album:
 
         Args:
             session: a Session instance
-            info: the album's information
+            info: the album's information. Must contain 'id'.
         """
         # Validate inputs
         if 'id' not in info:
@@ -381,10 +381,11 @@ class Copyright:
         """ Get an instance of Copyright
 
         This constructor should never be called by the client. To get an
-        instance of Copyright, use Track.copyrights()
+        instance of Copyright, use Album.copyrights()
 
         Args:
-            info: the copyright's information
+            info (dict): the copyright's information. Must contain 'text' and
+                'type'.
         """
         # Validate info
         if 'text' not in info or 'type' not in info:

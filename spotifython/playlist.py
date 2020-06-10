@@ -25,17 +25,24 @@ class Playlist:
 
     # TODO store only static fields
     def __init__(self, session, info):
-        """ Playlist constructor that should never be called directly by the
-            user.
+        """ Get an instance of Playlist
+
+        This constructor should never be called by the client. To get a
+        Playlist by its id, use Session.get_playlists(). To get a Playlist from
+        another object, use appropriate methods such as User.get_following(),
+        User.get_playlists, etc.
 
         Args:
-            session: The Spotifython session object used to create this object.
-            info: The dict with playlist data produced from a Spotify API call.
+            session: a Session instance
+            info (dict): the playlist's information. Must contain 'owner' and
+                'id'.
         """
         self._raw = deepcopy(info)
         self._session = session
         if 'owner' not in info:
             raise ValueError('Playlist owner information missing')
+        if 'id' not in info:
+            raise ValueError('Playlist id missing')
         self._owner = User(session, info['owner'])
         self._tracks = []
         tracks = info.get('tracks', {})

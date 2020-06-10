@@ -14,10 +14,11 @@ class Image:
         """ Get an instance of Image
 
         This constructor should never be called by the client. To get an
-        instance of Image, use Album.images() or User.image()
+        instance of Image, use another object's image methods, such as
+        Album.images(), User.image(), etc.
 
         Args:
-            info: the image's information
+            info (dict): the image's information. Must contain 'url'.
         """
         if 'url' not in info:
             raise ValueError('Image class init with no url')
