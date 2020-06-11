@@ -160,7 +160,7 @@ class Artist:
         Calls endpoints:
             - GET     /v1/artists/{id}
         """
-        endpoint = Endpoints.ARTIST_GET_BY_ID % self.spotify_id()
+        endpoint = Endpoints.ARTIST_GET_DATA % self.spotify_id()
         response_json, status_code = utils.request(
             session=self._session,
             request_type=const.REQUEST_GET,
