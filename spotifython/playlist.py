@@ -278,10 +278,11 @@ class Playlist:
 
     # TODO test the response from this endpoint and clarify usage
     def image(self):
-        """ Returns the playlist cover image.
+        """ Get the the playlist cover image.
 
         Returns:
-            The string URL of the cover image.
+            Image: an image object if the Playlist has a cover image.
+            None: if the Playlist has no cover image.
 
         Calls endpoints:
             PUT /v1/playlists/{playlist_id}
@@ -296,7 +297,10 @@ class Playlist:
         if status_code != 200:
             raise utils.SpotifyError(status_code, response_json)
 
-        return response_json[0]['url']
+        if len(response_json) > 1:
+            raise utils.SpotifyError('Playlist has more than one cover image!')
+
+        return None if len(response_json) == 0 else Image(response_json[0])
 
 
     def tracks(self, start=0, num_tracks=None):
@@ -515,13 +519,13 @@ class Playlist:
 
 
     # TODO test this, no example in web api reference
-    def replace_image(self, image):
+    def replace_image(self, path):
         """ Replace the playlist cover image.
 
         The image must be a JPEG and can be at most 256 KB in size.
 
         Args:
-            image: A string containing the filename of the image to use as the
+            path: A string containing the path to the image to use as the
                 playlist cover image. The image must be a JPEG up to 256 KB.
 
         Required token scopes:
@@ -535,17 +539,20 @@ class Playlist:
         """
         endpoint = Endpoints.BASE_URI
         endpoint += Endpoints.PLAYLIST_IMAGES % self.spotify_id()
-        if not any(ext in image for ext in ['.jpg', '.jpeg']):
+        if not (path.endswith('.jpg') or path.endswith('.jpeg')):
             raise ValueError('The image must be a JPEG')
+
         body = []
-        with open(image, 'rb') as image_file:
-            body.append(base64.b64encode(image_file.read()))
+        with open(path, 'rb') as fp:
+            body.append(base64.b64encode(fp.read()))
+
         response_json, status_code = utils.request(
             self._session,
             request_type='PUT',
             endpoint=endpoint,
             body=body
         )
+
         if status_code != 202:
             raise utils.SpotifyError(status_code, response_json)
 
