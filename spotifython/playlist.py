@@ -1,7 +1,4 @@
-""" The Playlist class.
-
-This class represents a playlist as defined by Spotify.
-"""
+""" The Playlist class. """
 
 # standard library imports
 from copy import deepcopy
@@ -14,18 +11,24 @@ import spotifython.constants as const
 import spotifython.utils as utils
 
 class Playlist:
-    """ A Playlist object.
+    """ Represents a Spotify playlist tied to a unique Spotify id.
 
-    Functions requiring specific token scopes will specify the required scope.
-    Use caution when comparing the equality of two playlists; it only depends
-    on the spotify id of each playlist. Two equal playlists might have
-    different data and therefore would require a call to refresh() before they
-    could be treated as functionally identical objects.
+    Use methods here to get information about and modify a Playlist.
+
+    Note: Playlist equality may behave unexpectedly, as it only depends on each
+        Playslist's Spotify id. If 1 Playlist object has stale data, the two
+        could have the same Spotify id, but have different internal
+        representations of the contents of the Playlist.
+
+        This could cause len(playlist), iterating through the playlist, etc. to
+        behave unexpectedly.
+
+        To ensure a Playlist's data is up to date, use Playlist.refresh().
     """
 
     # TODO store only static fields
     def __init__(self, session, info):
-        """ Get an instance of Playlist
+        """ Get an instance of Playlist.
 
         This constructor should never be called by the client. To get a
         Playlist by its id, use Session.get_playlists(). To get a Playlist from
@@ -245,8 +248,7 @@ class Playlist:
 
 
     def update_visibility(self, visibility):
-        """ Updates the playlist public/private visibility and collaborative
-            access.
+        """ Updates whether the playlist is public/private/collaborative.
 
         Args:
             visibility: One of [sp.PUBLIC, sp.PRIVATE, sp.PRIVATE_COLLAB]
@@ -419,7 +421,10 @@ class Playlist:
 
 
     # TODO test overlapping source/dest
-    def reorder_tracks(self, source_index, dest_index, number=1):
+    def reorder_tracks(self,
+                       source_index,
+                       dest_index,
+                       number=1):
         """ Move one or more tracks to another position in the playlist.
 
         Moves the first number tracks starting at source_index to before the

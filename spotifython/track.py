@@ -1,4 +1,4 @@
-""" Track class """
+""" Track class. """
 
 # Standard library imports
 import copy
@@ -10,7 +10,7 @@ import spotifython.utils as utils
 
 
 class Track:
-    """ Represents a Spotify track / song tied to a unique Spotify id
+    """ Represents a Spotify track / song tied to a unique Spotify id.
 
     Use methods here to get information about a Track.
 
@@ -21,7 +21,7 @@ class Track:
 
 
     def __init__(self, session, info):
-        """ Get an instance of Track
+        """ Get an instance of Track.
 
         This constructor should never be called by the client. To get a
         Track by its id, use Session.get_tracks(). To get a Track from another
@@ -72,7 +72,7 @@ class Track:
 
 
     def __len__(self):
-        """ Get the length of the track
+        """ Get the length of the track.
 
         Returns:
             int: the length of the track in milliseconds
@@ -84,7 +84,7 @@ class Track:
 
 
     def _update_fields(self):
-        """ Update self._raw using the Track id
+        """ Update self._raw using the Track id.
 
         Calls endpoints:
             GET     /v1/tracks/{id}
@@ -108,7 +108,7 @@ class Track:
 
 
     def spotify_id(self):
-        """ Get the id of this Track
+        """ Get the id of this Track.
 
         Returns:
             str: the Track's Spotify id
@@ -117,7 +117,7 @@ class Track:
 
 
     def album(self):
-        """ Get the Album this Track is on
+        """ Get the Album this Track is on.
 
         Returns:
             Album: a Spotifython Album object
@@ -133,7 +133,7 @@ class Track:
 
 
     def artists(self):
-        """ Get the Artists for this Track
+        """ Get the Artists for this Track.
 
         Returns:
             List[Artist]: a list of Spotifython Artist objects
@@ -161,7 +161,7 @@ class Track:
 
 
     def name(self):
-        """ Get the name of the Track
+        """ Get the name of the Track.
 
         Returns:
             str: the name of the Track as it appears on Spotify
@@ -173,7 +173,7 @@ class Track:
 
 
     def popularity(self):
-        """ Get the popularity of the Track
+        """ Get the popularity of the Track.
 
         The popularity is between 0 and 100 (inclusive), with 100 being the most
         popular. This number is calculated in Spotify's backend.
@@ -188,7 +188,7 @@ class Track:
 
 
     def disc_number(self):
-        """ Get the Track's disc number (0 indexed)
+        """ Get the Track's disc number (0 indexed).
 
         The number of the disc on which this Track appears. This is usually 0,
         unless an album has multiple discs.
@@ -209,7 +209,7 @@ class Track:
 
 
     def track_number(self):
-        """ Get the Track's number (0 indexed)
+        """ Get the Track's number (0 indexed).
 
         This is the track's number in the album. If an album has several discs,
         the track number is the number of this Track on the disc it appears.
@@ -235,7 +235,7 @@ class Track:
 
 
     def explicit(self):
-        """ Get whether the Track is explicit
+        """ Get whether the Track is explicit.
 
         Returns:
             bool: True if the track has explicit lyrics, and False otherwise
@@ -247,7 +247,7 @@ class Track:
 
 
     def uri(self):
-        """ Get the Track's uri
+        """ Get the Track's uri.
 
         Returns:
             str: the Spotify uri for this Track
@@ -259,7 +259,7 @@ class Track:
 
 
     def href(self):
-        """ Get the Track's href
+        """ Get the Track's href.
 
         Returns:
             str: a link to the Web API endpoint providing full Track details.
@@ -273,7 +273,7 @@ class Track:
     # TODO: If Spotify ever freezes the audio features, may be worth making into
     #       an object.
     def audio_features(self):
-        """ Get the audio features for this Track
+        """ Get the audio features for this Track.
 
         For more information on Track audio features, see here:
         https://developer.spotify.com/documentation/web-api/reference/tracks/get-audio-features/
@@ -300,7 +300,7 @@ class Track:
     # TODO: If Spotify ever freezes the audio analysis, may be worth making into
     #       an object.
     def audio_analysis(self):
-        """ Get the audio analysis for this Track
+        """ Get the audio analysis for this Track.
 
         The Audio Analysis describes the track’s structure and musical content,
         including rhythm, pitch, and timbre. All information is precise to the

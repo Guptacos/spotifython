@@ -1,4 +1,4 @@
-""" Album class """
+""" Album class. """
 
 # Standard library imports
 import copy
@@ -12,7 +12,7 @@ from spotifython.image import Image
 
 
 class Album:
-    """ Represents a Spotify album tied to a unique Spotify id
+    """ Represents a Spotify album tied to a unique Spotify id.
 
     Use methods here to get information about an Album.
 
@@ -28,7 +28,7 @@ class Album:
 
 
     def __init__(self, session, info):
-        """ Get an instance of Album
+        """ Get an instance of Album.
 
         This constructor should never be called by the client. To get an
         instance of Album, use Session.get_albums()
@@ -75,8 +75,7 @@ class Album:
 
 
     def __eq__(self, other):
-        """ 2 Albums are equal if they have the same Spotify id
-        """
+        """ 2 Albums are equal if they have the same Spotify id. """
         return utils.spotifython_eq(self, other)
 
 
@@ -85,13 +84,12 @@ class Album:
 
 
     def __hash__(self):
-        """ 2 equivalent Albums will return the same hashcode
-        """
+        """ 2 equivalent Albums will return the same hashcode. """
         return utils.spotifython_hash(self)
 
 
     def __len__(self):
-        """ Get the length of the album
+        """ Get the length of the album.
 
         Returns:
             int: the number of tracks in the album
@@ -104,7 +102,7 @@ class Album:
 
 
     def __getitem__(self, key):
-        """ Allows you to get a Track in an Album as if the Album were a list
+        """ Allows you to get a Track in an Album as if the Album were a list.
 
         Usage:
             a = Album()
@@ -124,7 +122,7 @@ class Album:
 
 
     def _update_fields(self):
-        """ Update self._raw using the Album id
+        """ Update self._raw using the Album id.
 
         Calls endpoints:
             GET     /v1/albums/{id}
@@ -148,7 +146,7 @@ class Album:
 
 
     def _update_tracks(self):
-        """ Update self._tracks using the Album id
+        """ Update self._tracks using the Album id.
 
         Calls endpoints:
             GET     /v1/albums/{id}/tracks
@@ -167,7 +165,7 @@ class Album:
 
 
     def spotify_id(self):
-        """ Get the id of this Track
+        """ Get the id of this Track.
 
         Returns:
             str: the Track's Spotify id
@@ -176,7 +174,7 @@ class Album:
 
 
     def type(self):
-        """ Get the type of this Album
+        """ Get the type of this Album.
 
         Returns:
             One of:
@@ -197,7 +195,7 @@ class Album:
 
 
     def artists(self):
-        """ Get the artists who wrote this Album
+        """ Get the artists who wrote this Album.
 
         Returns:
             A list of Artist objects. Can have 1 or more Artists.
@@ -230,7 +228,7 @@ class Album:
 
 
     def copyrights(self):
-        """ Get the copyrights statements for this album
+        """ Get the copyrights statements for this album.
 
         Returns:
             List[Copyright]: a list of Copyright objects
@@ -243,7 +241,7 @@ class Album:
 
 
     def genres(self):
-        """ Get the genres for this album as categorized by Spotify
+        """ Get the genres for this album as categorized by Spotify.
 
         Returns:
             List[str]: a list of genre names. Could be empty if the album is not
@@ -256,7 +254,7 @@ class Album:
 
 
     def href(self):
-        """ Get the Album's href
+        """ Get the Album's href.
 
         Returns:
             str: a link to the Web API endpoint providing full Album details.
@@ -268,7 +266,7 @@ class Album:
 
 
     def uri(self):
-        """ Get the Album's uri
+        """ Get the Album's uri.
 
         Returns:
             str: the Spotify uri for this Album
@@ -280,7 +278,7 @@ class Album:
 
 
     def images(self):
-        """ Get the Album's cover art in various sizes, widest first
+        """ Get the Album's cover art in various sizes, widest first.
 
         Returns:
             List[Image]: a list of Image objects
@@ -293,7 +291,7 @@ class Album:
 
 
     def label(self):
-        """ The label for this Album
+        """ The label for this Album.
 
         Returns:
             str: the name of the label
@@ -305,7 +303,7 @@ class Album:
 
 
     def name(self):
-        """ Get the name of the Album
+        """ Get the name of the Album.
 
         Returns:
             str: the name of the Album as it appears on Spotify
@@ -317,7 +315,7 @@ class Album:
 
 
     def popularity(self):
-        """ Get the popularity of the Album
+        """ Get the popularity of the Album.
 
         The popularity is between 0 and 100 (inclusive), with 100 being the most
         popular. This number is calculated using the popularity of each Track.
@@ -362,7 +360,7 @@ class Album:
 
 
     def tracks(self):
-        """ Get the Tracks in the Album
+        """ Get the Tracks in the Album.
 
         Returns:
             List[Track]: the Album's Tracks
@@ -378,7 +376,7 @@ class Copyright:
     """ Container class representing a single copyright """
 
     def __init__(self, info):
-        """ Get an instance of Copyright
+        """ Get an instance of Copyright.
 
         This constructor should never be called by the client. To get an
         instance of Copyright, use Album.copyrights()
@@ -411,7 +409,7 @@ class Copyright:
 
 
     def text(self):
-        """ Get the text describing the copyright
+        """ Get the text describing the copyright.
 
         Returns:
             (str): the copyright information
@@ -420,7 +418,7 @@ class Copyright:
 
 
     def type(self):
-        """ Get the type of the copyright
+        """ Get the type of the copyright.
 
         Sound recordings (performances) and musical compositions (original
         works) are considered separate things for copyright purposes.

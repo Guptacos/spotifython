@@ -1,9 +1,4 @@
-""" User class
-
-This class represents a Player object, which is tied to a Spotifython User
-object.
-
-"""
+""" Player class. """
 
 # Local imports
 import spotifython.constants as const
@@ -16,10 +11,10 @@ KEYSTRING = 'Spotify response missing data'
 
 
 class Player:
-    """ Interact with a user's playback, such as pausing / playing the current
-        song, modifying the queue, etc.
+    """ Represents a Player object tied to a Spotifython User object.
 
-    Getting an instance of Player should only be done using User.player()
+    Use methods here to Interact with a user's playback, such as pausing
+    / playing the current song, modifying the queue, etc.
 
     Shared args:
         device_id: the device the command should target.
@@ -54,7 +49,7 @@ class Player:
 
 
     def __init__(self, session, user):
-        """ Get an instance of Player
+        """ Get an instance of Player.
 
         This constructor should never be called by the client. To get an
         instance of Player, use User.player().
@@ -98,6 +93,7 @@ class Player:
                      market=const.TOKEN_REGION,
                      should_raise_error=True):
         """ Helper function for the getter methods.
+
         Wraps calling the player endpoint and handling a missing key.
 
         Args:
@@ -153,13 +149,12 @@ class Player:
 
 
     def user(self):
-        """ Get the User associated with this player
-        """
+        """ Get the User associated with this player. """
         return self._user
 
 
     def skip(self, device_id=None):
-        """ Skip the current song in the playback
+        """ Skip to the next song in the playback.
 
         Returns:
             None
@@ -185,7 +180,7 @@ class Player:
 
 
     def previous(self, device_id=None):
-        """ Skip to the previous song.
+        """ Skip to the previous song in the playback.
 
         Note: will skip to the previous song in the playback regardless of where
             in the current song playback is.
@@ -214,7 +209,7 @@ class Player:
 
 
     def pause(self, device_id=None):
-        """ Pause the current playback
+        """ Pause the current playback.
 
         Returns:
             None
@@ -243,7 +238,7 @@ class Player:
 
 
     def resume(self, device_id=None):
-        """ Resume the current playback
+        """ Resume the current playback.
 
         Returns:
             None
@@ -273,8 +268,11 @@ class Player:
 
     # TODO: Future support: position in track
     # TODO: manual testing once Session is merged / can easily get Artist etc.
-    def play(self, item, offset=0, device_id=None):
-        """ Change the current track and context for the player
+    def play(self,
+             item,
+             offset=0,
+             device_id=None):
+        """ Change the current track and context for the player.
 
         If device_id is None and no active device exists, raises SpotifyError
 
@@ -285,9 +283,9 @@ class Player:
                 Ignored if item is not an Album or Playlist.
                 0 <= offset < len(item)
 
-        Note: playback will start at the beginning of the track.  Use in
+        Note: playback will start at the beginning of the track. Use in
             combination with Player.set_playback_position to start elsewhere in
-            the item.
+            the track.
 
         Returns:
             None
@@ -329,7 +327,7 @@ class Player:
 
 
     def is_playing(self):
-        """ Check if the current playback is playing (not paused)
+        """ Check if the current playback is playing (not paused).
 
         Uses the currently active device, if one exists.
 
@@ -346,7 +344,7 @@ class Player:
 
 
     def is_paused(self):
-        """ Check if the current playback is paused
+        """ Check if the current playback is paused.
 
         Uses the currently active device, if one exists.
 
@@ -364,7 +362,7 @@ class Player:
 
     # Note for me: in the future, add 'additional_types' to support episodes.
     def currently_playing(self, market=const.TOKEN_REGION):
-        """ Get the currently playing track in the playback
+        """ Get the currently playing track in the playback.
 
         Uses the currently active device, if one exists.
 
@@ -395,7 +393,7 @@ class Player:
 
 
     def context(self, market=const.TOKEN_REGION):
-        """ Get the currently playing context for the playback
+        """ Get the currently playing context for the playback.
 
         Uses the currently active device, if one exists.
 
@@ -442,7 +440,7 @@ class Player:
 
     # Note for me: in the future add a separate device abstraction
     def available_devices(self):
-        """ Get all devices currently available
+        """ Get all devices currently available.
 
         Returns:
             A list of strings, where each is a device id.
@@ -474,7 +472,7 @@ class Player:
 
 
     def get_active_device(self):
-        """ Get the currently active device
+        """ Get the currently active device.
 
         Returns:
             The device id of the active device, if a device is active.
@@ -496,8 +494,10 @@ class Player:
         return device['id']
 
 
-    def set_active_device(self, device_id, force_play=const.KEEP_PLAY_STATE):
-        """ Transfer playback to a different available device
+    def set_active_device(self,
+                          device_id,
+                          force_play=const.KEEP_PLAY_STATE):
+        """ Transfer playback to a different available device.
 
         Args:
             force_play: one of:
@@ -532,7 +532,7 @@ class Player:
 
 
     def get_shuffle(self):
-        """ Get the current shuffle state of the playback
+        """ Get the current shuffle state of the playback.
 
         Uses the currently active device, if one exists.
 
@@ -549,7 +549,7 @@ class Player:
 
 
     def set_shuffle(self, shuffle_state, device_id=None):
-        """ Set the shuffle state of the active device
+        """ Set the shuffle state of the active device.
 
         Args:
             shuffle_state: (bool)
@@ -582,7 +582,7 @@ class Player:
 
 
     def get_playback_position(self):
-        """ Get the current position in the currently playing track in ms
+        """ Get the current position in the currently playing track in ms.
 
         Uses the currently active device, if one exists.
 
@@ -600,7 +600,7 @@ class Player:
 
 
     def set_playback_position(self, position, device_id=None):
-        """ Set the current position in the currently playing track in ms
+        """ Set the current position in the currently playing track in ms.
 
         Args:
             position: (int) the position (in ms) as an int. Must be
@@ -636,7 +636,7 @@ class Player:
 
 
     def get_volume(self):
-        """ Get the current volume for the playback
+        """ Get the current volume for the playback.
 
         Returns:
             The volume (in percent) as an int from 0 to 100 inclusive.
@@ -655,7 +655,7 @@ class Player:
 
 
     def set_volume(self, volume, device_id=None):
-        """ Set the current volume for the playback
+        """ Set the current volume for the playback.
 
         Args:
             volume: (int) volume (in percent) as an int from 0 to 100 inclusive
@@ -689,7 +689,7 @@ class Player:
 
 
     def get_repeat(self):
-        """ Get the repeat state for the current playback
+        """ Get the repeat state for the current playback.
 
         Uses the currently active device, if one exists.
 
@@ -716,7 +716,7 @@ class Player:
 
 
     def set_repeat(self, mode, device_id=None):
-        """ Set the repeat state for the current playback
+        """ Set the repeat state for the current playback.
 
         Args:
             mode: one of
@@ -759,7 +759,7 @@ class Player:
 
     # Note for me: add episodes at some point
     def enqueue(self, item, device_id=None):
-        """ Add an item to the end of the queue
+        """ Add an item to the end of the queue.
 
         Args:
             item: the item to add to the queue. One of:

@@ -1,7 +1,4 @@
-""" Artist class
-
-This class represents an Artist object, tied to a Spotify user id.
-"""
+""" Artist class. """
 
 # Local imports
 import spotifython.constants as const
@@ -14,11 +11,11 @@ import spotifython.utils as utils
 class Artist:
     """ Artist class
 
-    This class represents an Artist object, tied to a Spotify user id.
+    This class represents an Artist object, tied to a Spotify artist id.
     """
 
     def __init__(self, session, info):
-        """ Get an instance of Artist
+        """ Get an instance of Artist.
 
         This constructor should never be called by the client. To get an
         Artist by their id, use Session.get_artists(). To get an Artist from
@@ -77,7 +74,7 @@ class Artist:
     # Type: is an artist. we don't need to include this.
 
     def genres(self):
-        """ Getter for the genre of an artist.
+        """ Get the genres Spotify has defined for this artist.
 
         Returns:
             A List[str] of the genres associated with the artist.
@@ -85,7 +82,7 @@ class Artist:
         return utils.get_field(self, 'genres')
 
     def href(self):
-        """ Getter for the href for an artist.
+        """ Get this artist's href.
 
         Returns:
             A str of the Web API endpoint providing full details of the artist.
@@ -93,7 +90,7 @@ class Artist:
         return utils.get_field(self, 'href')
 
     def spotify_id(self):
-        """ Getter for the spotify id for an artist.
+        """ Get this artist's Spotify id.
 
         Returns:
             A str of the artist's Spotify ID.
@@ -101,7 +98,7 @@ class Artist:
         return utils.get_field(self, 'id')
 
     def name(self):
-        """ Getter for the name for an artist.
+        """ Get this artist's name.
 
         Returns:
             A str of the artist name.
@@ -109,7 +106,7 @@ class Artist:
         return utils.get_field(self, 'name')
 
     def popularity(self):
-        """ Getter for the popularity for an artist.
+        """ Get this artist's popularity.
 
         Returns:
             An int of the popularity of the artist.
@@ -117,7 +114,7 @@ class Artist:
         return utils.get_field(self, 'popularity')
 
     def uri(self):
-        """ Getter for the uri for an artist.
+        """ Get this artist's uri.
 
         Returns:
             A str of the Spotify URI for the artist.
@@ -160,9 +157,8 @@ class Artist:
     def albums(self,
                search_limit=None,
                include_groups=None,
-               market=const.TOKEN_REGION
-               ):
-        """ Gets the albums associated with the current Spotify artist.
+               market=const.TOKEN_REGION):
+        """ Get the albums associated with the current Spotify artist.
 
         Args:
             search_limit: (Optional) int, the maximum number of results
@@ -231,9 +227,8 @@ class Artist:
 
     def top_tracks(self,
                    market=const.TOKEN_REGION,
-                   search_limit=10,
-                   ):
-        """ Gets the top tracks associated with the current Spotify artist.
+                   search_limit=10):
+        """ Get the top tracks associated with the current Spotify artist.
 
         Args:
             market: str, an ISO 3166-1 alpha-2 country code or the string
@@ -298,11 +293,8 @@ class Artist:
 
         return self._top_tracks
 
-    def related_artists(self,
-                        search_limit=20,
-                        ):
-        """ Gets Spotify catalog information about artists similar to a
-        given artist.
+    def related_artists(self, search_limit=20):
+        """ Get artists similar to this artist, as defined by Spotify.
 
         Args:
             search_limit: (Optional) int, the maximum number of results

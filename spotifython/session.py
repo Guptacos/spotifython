@@ -1,8 +1,4 @@
-""" Session class
-
-This class represents an interactive Spotify session, tied to a Spotify
-API token.
-"""
+""" Session class. """
 
 # Standard library imports
 import math
@@ -13,14 +9,14 @@ from spotifython.endpoints import Endpoints
 import spotifython.utils as utils
 
 class Session:
-    """ Session class
+    """ Represents an interactive Spotify session, tied to a Spotify API token.
 
-    This class represents an interactive Spotify session, tied to a Spotify
-    API token.
+    Use methods here to deal with authentication, searching for objects, and
+    getting objects by their ids.
     """
 
     def __init__(self, token, timeout=const.DEFAULT_REQUEST_TIMEOUT):
-        """ Create a new Spotify Session
+        """ Create a new Spotify Session.
 
         This is the only constructor that should be explicitly called by the
         client. Use it to start a Session with the Spotify web API.
@@ -45,9 +41,9 @@ class Session:
         self._token = token
         self._timeout = timeout
 
+
     def reauthenticate(self, token):
-        """
-        Updates the stored Spotify authentication token for this instance.
+        """ Updates the stored Spotify authentication token for this instance.
 
         Args:
             token: str, the new Spotify authentication token.
@@ -57,6 +53,7 @@ class Session:
 
         self._token = token
 
+
     def token(self):
         """ Getter for the token provided by the client.
 
@@ -64,6 +61,7 @@ class Session:
             A str containing the token.
         """
         return self._token
+
 
     def timeout(self):
         """ Getter for the timeout provided by the client.
@@ -73,23 +71,25 @@ class Session:
         """
         return self._timeout
 
+
     def __str__(self):
         # Guarantee that the IDs of different objects in memory are different
         # Avoids exposing the token as plaintext for no reason, since that is
         # the other possible indicator of object identity.
         return f'Session<${id(self)}>'
 
+
     def __repr__(self):
         return self.__str__()
 
-    class SearchResult:
-        """ SearchResult class
 
-        This class represents the results of a Spotify API search call.
-        """
+    class SearchResult:
+        """ Represents the results of a Spotify API search call. """
 
         def __init__(self, search_result):
             """ User should never call this constructor.
+
+            Get an instance of SearchResult by using Session.search()
 
             Internally, the search result will perform all necessary API calls
             to get the desired number of search results (up to search limit).
@@ -106,6 +106,7 @@ class Session:
             self._playlists = search_result.get('playlist', list())
             self._tracks = search_result.get('track', list())
 
+
         # Field accessors
         def albums(self):
             """ Getter for the albums returned by the search query.
@@ -115,6 +116,7 @@ class Session:
             """
             return self._albums
 
+
         def artists(self):
             """ Getter for the artists returned by the search query.
 
@@ -123,6 +125,7 @@ class Session:
             """
             return self._artists
 
+
         def playlists(self):
             """ Getter for the playlist returned by the search query.
 
@@ -130,6 +133,7 @@ class Session:
                 A list of Playlist objects.
             """
             return self._playlists
+
 
         def tracks(self):
             """ Getter for the tracks returned by the search query.
@@ -151,10 +155,8 @@ class Session:
                types,
                limit,
                market=const.TOKEN_REGION,
-               include_external_audio=False
-               ):
-        """
-        Searches for content with the given query.
+               include_external_audio=False):
+        """ Searches for content with the given query.
 
         Args:
             query: str, search query keywords and optional field filters and
@@ -319,12 +321,11 @@ class Session:
 
         return self.SearchResult(result)
 
+
     def get_albums(self,
                    album_ids,
-                   market=const.TOKEN_REGION
-                   ):
-        """
-        Gets the albums with the given Spotify album ids.
+                   market=const.TOKEN_REGION):
+        """ Gets the albums with the given Spotify album ids.
 
         Args:
             album_ids: str or List[str], a string or list of strings of the
@@ -396,11 +397,9 @@ class Session:
 
         return result if len(result) != 1 else result[0]
 
-    def get_artists(self,
-                    artist_ids
-                    ):
-        """
-        Gets the artists with the given Spotify artists ids.
+
+    def get_artists(self, artist_ids):
+        """ Gets the artists with the given Spotify artists ids.
 
         Args:
             artist_ids: str or List[str], the Spotify artist ids to search for.
@@ -459,12 +458,11 @@ class Session:
 
         return result if len(result) != 1 else result[0]
 
+
     def get_tracks(self,
                    track_ids,
-                   market=const.TOKEN_REGION
-                   ):
-        """
-        Gets the tracks with the given Spotify track ids.
+                   market=const.TOKEN_REGION):
+        """ Gets the tracks with the given Spotify track ids.
 
         Args:
             track_ids: str or List[str], the Spotify track ids to search for.
@@ -534,11 +532,9 @@ class Session:
 
         return result if len(result) != 1 else result[0]
 
-    def get_users(self,
-                  user_ids
-                  ):
-        """
-        Gets the users with the given Spotify user ids.
+
+    def get_users(self, user_ids):
+        """ Gets the users with the given Spotify user ids.
 
         Args:
             user_ids: str or List[str], the Spotify user id to search for.
@@ -590,9 +586,9 @@ class Session:
 
         return result if len(result) != 1 else result[0]
 
+
     def current_user(self):
-        """ Gets the user associated with the current Spotify API
-        authentication key.
+        """ Gets the user associated with the current Spotify API token.
 
         If the user-read-email scope is authorized, the returned JSON will
         include the email address that was entered when the user created their
@@ -631,13 +627,12 @@ class Session:
 
         return User(self, response_json)
 
+
     def get_playlists(self,
                       playlist_ids,
                       fields=None,
-                      market=const.TOKEN_REGION
-                      ):
-        """
-        Gets the tracks with the given Spotify playlist ids.
+                      market=const.TOKEN_REGION):
+        """ Gets the tracks with the given Spotify playlist ids.
 
         Args:
             playlist_ids: str or List[str], the Spotify playlist ids to

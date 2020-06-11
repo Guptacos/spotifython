@@ -1,6 +1,6 @@
-""" Container for the Spotify API endpoints
+""" Container for the Spotify API endpoints.
 
-This class should not be touched by the client
+This class should not be used by the client.
 """
 
 #pylint: disable=missing-class-docstring, too-few-public-methods
