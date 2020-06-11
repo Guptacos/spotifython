@@ -45,6 +45,10 @@ exclude_patterns = []
 
 # -- Options for HTML output -------------------------------------------------
 
+# If true, the current module name will be prepended to all description
+# unit titles (such as .. function::).
+add_module_names = False
+
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #

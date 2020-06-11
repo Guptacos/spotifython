@@ -11,27 +11,39 @@ KEYSTRING = 'Spotify response missing data'
 
 
 class Player:
+    #pylint: disable=line-too-long
     """ Represents a Player object tied to a Spotifython User object.
 
     Use methods here to Interact with a user's playback, such as pausing
     / playing the current song, modifying the queue, etc.
 
+    Do not use the constructor. To get an instance of Player, use
+    :meth:`User.player() <spotifython.user.User.player>`.
+
     Shared args:
-        device_id: the device the command should target.
-            The given id must be a device listed in player.available_devices().
-            If the id is invalid, response.content() will be set to None, and
-            response.status() will contain an error code.
+        - **device_id**: the device the command should target.  The given id
+          must be a device listed in
+          :meth:`Player.available_devices() <available_devices>`.
 
-            Defaults to using the currently active device, which is what you
-            will want most of the time.
+          Defaults to using the currently active device, which is what you will
+          want most of the time.
 
-        position: an integer that always represents milliseconds.
+        - **position** (int): always represents milliseconds.
+        - **market** (str): a 2 letter country code as defined
+          `here <https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2>`__. Used for
+          `track relinking <https://developer.spotify.com/documentation/general/guides/track-relinking-guide/>`__.
+
+          If sp.TOKEN_REGION (default) is given, will use appropriate country
+          code for user based on their auth token and location.
 
     Raises:
         TypeError:  if incorrectly typed parameters are given.
         ValueError: if parameters with illegal values are given.
         SpotifyError: if there is no active or available device and no device_id
-            is given.
+            is given, or if the provided device is invalid.  See this `github
+            issue <https://github.com/spotify/web-api/issues/1588>`__ for more
+            information.
+
         SpotifyError: if the action is disallowed.
             Note that some actions that should be allowed (such as pausing while
             paused) are difficult to implement because the Spotify player API is
@@ -49,10 +61,7 @@ class Player:
 
 
     def __init__(self, session, user):
-        """ Get an instance of Player.
-
-        This constructor should never be called by the client. To get an
-        instance of Player, use User.player().
+        """ Get an instance of Player. Client should not use the constructor!
 
         Args:
             session: a Session instance
@@ -64,23 +73,28 @@ class Player:
 
     # Format should be 'Player for user <%s>' with user_id
     def __str__(self):
+        """ Returns the name of the owning User. """
         return 'Player for %s' % str(self._user)
 
 
     def __repr__(self):
+        """ Returns the name of the owning User. """
         return str(self)
 
 
     def __eq__(self, other):
+        """ Two players are equal if they belong to the same User. """
         #pylint: disable=unidiomatic-typecheck
         return type(self) == type(other) and self._user == other._user
 
 
     def __ne__(self, other):
+        """ Two players are not equal if they belong to different Users. """
         return not self == other
 
 
     def __hash__(self):
+        """ Two equivalent players will return the same hashcode. """
         hash_str = self.__class__.__name__
         hash_str += str(hash(self._user))
         return hash(hash_str)
@@ -98,7 +112,7 @@ class Player:
 
         Args:
             key: the key to get from the currently playing context
-            market: used in track relinking
+            market: see the :class:`top level documentation <Player>`
             should_raise_error:
                 if False: returns None when no device available
                 if True: raises SpotifyError when no device available
@@ -112,10 +126,10 @@ class Player:
             NetworkError: for misc network failures
 
         Calls endpoints:
-            GET    /v1/me/player
+            - GET    /v1/me/player
 
         Required token scopes:
-            user-read-playback-state
+            - user-read-playback-state
         """
         response_json, status_code = utils.request(
             self._session,
@@ -160,10 +174,10 @@ class Player:
             None
 
         Calls endpoints:
-            POST    /v1/me/player/next
+            - POST    /v1/me/player/next
 
         Required token scopes:
-            user-modify-playback-state
+            - user-modify-playback-state
         """
         uri_params = None if device_id is None else {'device_id': device_id}
 
@@ -182,17 +196,18 @@ class Player:
     def previous(self, device_id=None):
         """ Skip to the previous song in the playback.
 
-        Note: will skip to the previous song in the playback regardless of where
+        Note:
+            Will skip to the previous song in the playback regardless of where
             in the current song playback is.
 
         Returns:
             None
 
         Calls endpoints:
-            POST    /v1/me/player/previous
+            - POST    /v1/me/player/previous
 
         Required token scopes:
-            user-modify-playback-state
+            - user-modify-playback-state
         """
         uri_params = None if device_id is None else {'device_id': device_id}
 
@@ -215,10 +230,10 @@ class Player:
             None
 
         Calls endpoints:
-            PUT     /v1/me/player/pause
+            - PUT     /v1/me/player/pause
 
         Required token scopes:
-            user-modify-playback-state
+            - user-modify-playback-state
 
         Raises:
             SpotifyError: if playback is not playing (or already paused)
@@ -244,10 +259,10 @@ class Player:
             None
 
         Calls endpoints:
-            PUT     /v1/me/player/play
+            - PUT     /v1/me/player/play
 
         Required token scopes:
-            user-modify-playback-state
+            - user-modify-playback-state
 
         Raises:
             SpotifyError: if playback is already playing
@@ -274,16 +289,19 @@ class Player:
              device_id=None):
         """ Change the current track and context for the player.
 
-        If device_id is None and no active device exists, raises SpotifyError
-
         Args:
-            item: an instance of sp.Track, sp.Album, sp.Playlist, or sp.Artist.
-            offset: a non-negative integer representing the position in item to
-                start playback.
-                Ignored if item is not an Album or Playlist.
-                0 <= offset < len(item)
+            item: an instance of:
 
-        Note: playback will start at the beginning of the track. Use in
+                - sp.Track
+                - sp.Album
+                - sp.Playlist
+                - or sp.Artist.
+
+            offset (int): the position in item to start playback. Ignored if
+                item is not an Album or Playlist. 0 <= offset < len(item).
+
+        Note:
+            Playback will start at the beginning of the track. Use in
             combination with Player.set_playback_position to start elsewhere in
             the track.
 
@@ -291,10 +309,10 @@ class Player:
             None
 
         Calls endpoints:
-            PUT     /v1/me/player/play
+            - PUT     /v1/me/player/play
 
         Required token scopes:
-            user-modify-playback-state
+            - user-modify-playback-state
         """
         # Validate inputs
         if type(item) not in [Track, Album, Playlist, Artist]:
@@ -335,10 +353,13 @@ class Player:
             True if playing, else False
 
         Calls endpoints:
-            GET    /v1/me/player
+            - GET    /v1/me/player
 
         Required token scopes:
-            user-read-playback-state
+            - user-read-playback-state
+
+        Raises:
+            SpotifyError: if there is no active device.
         """
         return self._player_data('is_playing')
 
@@ -352,10 +373,13 @@ class Player:
             True if paused, else False
 
         Calls endpoints:
-            GET    /v1/me/player
+            - GET    /v1/me/player
 
         Required token scopes:
-            user-read-playback-state
+            - user-read-playback-state
+
+        Raises:
+            SpotifyError: if there is no active device.
         """
         return not self.is_playing()
 
@@ -367,26 +391,20 @@ class Player:
         Uses the currently active device, if one exists.
 
         Args:
-            market: (str) a 2 letter country code as defined here:
-                https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
-                Used for track relinking:
-                https://developer.spotify.com/documentation/general/guides/track-relinking-guide/
-
-                if sp.TOKEN_REGION (default) is given, will use appropriate
-                country code for user based on their auth token and location.
+            market: see the :class:`top level documentation <Player>`
 
         Returns:
-            A Track object if there is a track playing
-            None if nothing is playing
+            Union[Track, None]: A Track object if there is a track playing, else
+            None.
 
         Calls endpoints:
-            GET    /v1/me/player
+            - GET    /v1/me/player
 
             Does NOT use GET /v1/me/player/currently-playing
             The data returned at that endpoint is a subset of /v1/me/player
 
         Required token scopes:
-            user-read-playback-state
+            - user-read-playback-state
         """
         item = self._player_data('item', market)
         return Track(self._session, item)
@@ -398,23 +416,17 @@ class Player:
         Uses the currently active device, if one exists.
 
         Args:
-            market: (str) a 2 letter country code as defined here:
-                https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
-                Used for track relinking:
-                https://developer.spotify.com/documentation/general/guides/track-relinking-guide/
-
-                if sp.TOKEN_REGION (default) is given, will use appropriate
-                country code for user based on their auth token and location.
+            market: see the :class:`top level documentation <Player>`
 
         Returns:
-            An Album, Artist, or Playlist if there is a context for the playback
-            None if there is no context
+            An Album, Artist, or Playlist if there is a context for the
+            playback, else None if there is no context
 
         Calls endpoints:
-            GET    /v1/me/player
+            - GET    /v1/me/player
 
         Required token scopes:
-            user-read-playback-state
+            - user-read-playback-state
         """
         context = self._player_data('context', market)
         if context is None:
@@ -443,13 +455,13 @@ class Player:
         """ Get all devices currently available.
 
         Returns:
-            A list of strings, where each is a device id.
+            List[str]: All available device ids.
 
         Calls endpoints:
-            GET     /v1/me/player/devices
+            - GET     /v1/me/player/devices
 
         Required token scopes:
-            user-read-playback-state
+            - user-read-playback-state
         """
         response_json, status_code = utils.request(
             self._session,
@@ -475,14 +487,14 @@ class Player:
         """ Get the currently active device.
 
         Returns:
-            The device id of the active device, if a device is active.
-            None if there is no active device.
+            Union[str, None]: The device id of the active device, if a device is
+            active, else None.
 
         Calls endpoints:
-            GET     /v1/me/player
+            - GET     /v1/me/player
 
         Required token scopes:
-            user-read-playback-state
+            - user-read-playback-state
         """
         device = self._player_data('device', should_raise_error=False)
         if device is None:
@@ -501,17 +513,18 @@ class Player:
 
         Args:
             force_play: one of:
-                sp.FORCE_PLAY: resume playback after transfering to new device
-                sp.KEEP_PLAY_STATE: keep the current playback state.
+
+                - sp.FORCE_PLAY: resume playback after transfering to new device
+                - sp.KEEP_PLAY_STATE: keep the current playback state.
 
         Returns:
             None
 
         Calls endpoints:
-            PUT     /v1/me/player
+            - PUT     /v1/me/player
 
         Required token scopes:
-            user-modify-playback-state
+            - user-modify-playback-state
         """
         if force_play not in [const.FORCE_PLAY, const.KEEP_PLAY_STATE]:
             raise ValueError(force_play)
@@ -537,13 +550,13 @@ class Player:
         Uses the currently active device, if one exists.
 
         Returns:
-            True if shuffle is enabled else False
+            bool: True if shuffle is enabled else False
 
         Calls endpoints:
-            GET    /v1/me/player
+            - GET    /v1/me/player
 
         Required token scopes:
-            user-read-playback-state
+            - user-read-playback-state
         """
         return self._player_data('shuffle_state')
 
@@ -552,18 +565,17 @@ class Player:
         """ Set the shuffle state of the active device.
 
         Args:
-            shuffle_state: (bool)
-                True to set shuffle to on
-                False to set shuffle to off
+            shuffle_state (bool): True to set shuffle to on, False to set
+                shuffle to off
 
         Returns:
             None
 
         Calls endpoints:
-            PUT     /v1/me/player/shuffle
+            - PUT     /v1/me/player/shuffle
 
         Required token scopes:
-            user-modify-playback-state
+            - user-modify-playback-state
         """
         uri_params = {'state': shuffle_state}
         if device_id is not None:
@@ -587,13 +599,13 @@ class Player:
         Uses the currently active device, if one exists.
 
         Returns:
-            The position (in ms) as an int.
+            int: The position (in ms).
 
         Calls endpoints:
-            GET    /v1/me/player
+            - GET    /v1/me/player
 
         Required token scopes:
-            user-read-playback-state
+            - user-read-playback-state
         """
         result = self._player_data('progress_ms')
         return int(result)
@@ -603,18 +615,17 @@ class Player:
         """ Set the current position in the currently playing track in ms.
 
         Args:
-            position: (int) the position (in ms) as an int. Must be
-                non-negative. If greater than the len of the track, will play
-                the next song.
+            position (int): the position (in ms). Must be non-negative. If
+                greater than the len of the track, will play the next song.
 
         Returns:
             None
 
         Calls endpoints:
-            PUT     /v1/me/player/seek
+            - PUT     /v1/me/player/seek
 
         Required token scopes:
-            user-modify-playback-state
+            - user-modify-playback-state
         """
         if position < 0:
             raise ValueError(position)
@@ -639,13 +650,13 @@ class Player:
         """ Get the current volume for the playback.
 
         Returns:
-            The volume (in percent) as an int from 0 to 100 inclusive.
+            int: The volume (in percent) from 0 to 100 inclusive.
 
         Calls endpoints:
-            GET    /v1/me/player
+            - GET    /v1/me/player
 
         Required token scopes:
-            user-read-playback-state
+            - user-read-playback-state
         """
         device = self._player_data('device')
         if 'volume_percent' not in device:
@@ -658,16 +669,16 @@ class Player:
         """ Set the current volume for the playback.
 
         Args:
-            volume: (int) volume (in percent) as an int from 0 to 100 inclusive
+            volume (int): volume (in percent) from 0 to 100 inclusive
 
         Returns:
             None
 
         Calls endpoints:
-            PUT     /v1/me/player/volume
+            - PUT     /v1/me/player/volume
 
         Required token scopes:
-            user-modify-playback-state
+            - user-modify-playback-state
         """
         if volume < 0 or volume > 100:
             raise ValueError(volume)
@@ -694,13 +705,17 @@ class Player:
         Uses the currently active device, if one exists.
 
         Returns:
-            One of sp.TRACKS, sp.CONTEXT, sp.OFF
+            One of
+
+            - sp.TRACKS
+            - sp.CONTEXT
+            - sp.OFF
 
         Calls endpoints:
-            GET    /v1/me/player
+            - GET    /v1/me/player
 
         Required token scopes:
-            user-read-playback-state
+            - user-read-playback-state
         """
         result = self._player_data('repeat_state')
 
@@ -719,19 +734,20 @@ class Player:
         """ Set the repeat state for the current playback.
 
         Args:
-            mode: one of
-                sp.TRACKS: repeat the current track
-                sp.CONTEXT: repeat the current context (playlist, album, etc.)
-                sp.OFF: turn repeat off
+            mode: one of:
+
+                - sp.TRACKS: repeat the current track
+                - sp.CONTEXT: repeat the current context (playlist, album, etc.)
+                - sp.OFF: turn repeat off
 
         Returns:
             None
 
         Calls endpoints:
-            PUT     /v1/me/player/repeat
+            - PUT     /v1/me/player/repeat
 
         Required token scopes:
-            user-modify-playback-state
+            - user-modify-playback-state
         """
         if mode not in [const.TRACKS, const.CONTEXT, const.OFF]:
             raise ValueError(mode)
@@ -763,24 +779,26 @@ class Player:
 
         Args:
             item: the item to add to the queue. One of:
-                Album
-                Track
-                Playlist
-
-            Note that if a playlist is added, the order of added songs may be
-            inconsistent.
+                - Album
+                - Track
+                - Playlist
 
         Returns:
             None
 
-        Note: when adding an Album or Playlist, this method can fail partway
+        Note:
+            If a playlist is added, the order of added songs may be
+            inconsistent.
+
+        Note:
+            When adding an Album or Playlist, this method can fail partway
             through, resulting in only some Tracks being added to the queue.
 
         Calls endpoints:
-            POST    /v1/me/player/queue
+            - POST    /v1/me/player/queue
 
         Required token scopes:
-            user-modify-playback-state
+            - user-modify-playback-state
         """
         if type(item) not in [Album, Track, Playlist]:
             raise ValueError(item)

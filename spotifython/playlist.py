@@ -13,10 +13,15 @@ import spotifython.utils as utils
 class Playlist:
     """ Represents a Spotify playlist tied to a unique Spotify id.
 
-    Use methods here to get information about and modify a Playlist.
+    Do not use the constructor. To get a Playlist by its id, use
+    :meth:`Session.get_playlists() <spotifython.session.Session.get_playlists>`.
+    To get a Playlist from another object, use appropriate methods such as
+    :meth:`User.get_following() <spotifython.user.User.get_following>`,
+    :meth:`User.get_playlists <spotifython.user.User.get_playlists>`, etc.
 
-    Note: Playlist equality may behave unexpectedly, as it only depends on each
-        Playslist's Spotify id. If 1 Playlist object has stale data, the two
+    Note:
+        Playlist equality may behave unexpectedly, as it only depends on each
+        Playslist's Spotify id. If one Playlist object has stale data, the two
         could have the same Spotify id, but have different internal
         representations of the contents of the Playlist.
 
@@ -28,15 +33,11 @@ class Playlist:
 
     # TODO store only static fields
     def __init__(self, session, info):
-        """ Get an instance of Playlist.
-
-        This constructor should never be called by the client. To get a
-        Playlist by its id, use Session.get_playlists(). To get a Playlist from
-        another object, use appropriate methods such as User.get_following(),
-        User.get_playlists, etc.
+        """ Get an instance of Playlist. Client should not use the constructor!
 
         Args:
             session: a Session instance
+
             info (dict): the playlist's information. Must contain 'owner' and
                 'id'.
         """
@@ -56,8 +57,74 @@ class Playlist:
                 self._tracks.append(Track(session, item.get('track', {})))
 
 
+    def __str__(self):
+        """ Returns the track name. """
+        return f' Playlist {self.name()}'
+
+
+    def __repr__(self):
+        """ Returns the track name and Spotify id. """
+        return str(self) + f' with id <{self.spotify_id()}>'
+
+
+    def __len__(self):
+        """
+        Returns:
+            int: The number of tracks in the playlist
+        """
+        return len(self._tracks)
+
+
+    def __getitem__(self, key):
+        """ Allows you to get a track in the playlist as if it were a list.
+
+        Example::
+
+            p = Playlist()
+            track = p[2]
+
+        Args:
+            key (int, slice): the index into the playlist. The key can be any
+                index or slice that that is a valid index into a list of length
+                len(playlist).
+
+        Returns:
+            Track: The track at index "key"
+        """
+        if not isinstance(key, int):
+            raise TypeError(key)
+        if key < 0:
+            key += len(self)
+        if key < 0 or key >= len(self):
+            raise IndexError(key)
+        return self._tracks[key]
+
+
+    def __eq__(self, other):
+        """ Two playlists are equal if they have the same Spotify id. """
+        return utils.spotifython_eq(self, other)
+
+
+    def __ne__(self, other):
+        """ Two playlists are not equal if they have different Spotify ids. """
+        return not self.__eq__(other)
+
+
+    def __hash__(self):
+        """ Two equivalent playlists will return the same hashcode. """
+        return utils.spotifython_hash(self)
+
+
+    def spotify_id(self):
+        """
+        Returns:
+            str: The Spotify id of this album.
+        """
+        return self._raw['id']
+
+
     def refresh(self):
-        """ Refreshes the playlist data.
+        """ Refreshes the internal playlist data.
 
         Calls:
             GET /v1/playlists/{playlist_id}
@@ -77,10 +144,12 @@ class Playlist:
     def raw(self):
         """ Returns the raw playlist data.
 
-        Makes a call to refresh() to update raw data before returning it.
+        Note:
+            Makes a call to refresh() to update raw data before returning it.
 
         Returns:
-            A dict representing a raw playlist object from the Spotify Web API.
+            dict: The JSON object representing a raw playlist object from the
+            Spotify Web API.
 
         Calls:
             GET /v1/playlists/{playlist_id}
@@ -90,48 +159,36 @@ class Playlist:
 
 
     def owner(self):
-        """ Returns the owner of the playlist.
-
+        """
         Returns:
-            A User object.
+            User: The owner of the playlist.
         """
         return self._owner
 
 
     def uri(self):
-        """ Returns the URI of the playlist.
-
+        """
         Returns:
-            A string URI.
+            str: The playlist's Spotify uri.
         """
         return self._raw['uri']
 
 
     def href(self):
-        """ Returns the HREF of the playlist.
+        """ Gets the playlist's href.
 
         Returns:
-            A string HREF.
+            str: A link to the Web API endpoint providing full playlist details.
         """
         return self._raw['href']
 
 
     def name(self):
-        """ Returns the name of the playlist.
-
+        """
         Returns:
-            A string name.
+            str: The name of the Playlist as it appears on Spotify.
         """
         return self._raw['name']
-
-
-    def spotify_id(self):
-        """ Returns the Spotify ID of the playlist.
-
-        Returns:
-            A string ID.
-        """
-        return self._raw['id']
 
 
     def add_tracks(self, tracks, position=None):
@@ -139,6 +196,7 @@ class Playlist:
 
         Args:
             tracks: A Track object or list of Track objects to be added.
+
             position: An integer specifying the 0-indexed position in the
                 playlist to insert tracks. A negative integer will be evaluated
                 from the end of the playlist as negative indices behave in
@@ -147,12 +205,12 @@ class Playlist:
                 playlist instead.
 
         Required token scopes:
-            playlist-modify-public: If the playlist is public.
-            playlist-modify-private: If the playlist is private or
-                collaborative.
+            - playlist-modify-public: If the playlist is public.
+            - playlist-modify-private: If the playlist is private or
+              collaborative.
 
         Calls endpoints:
-            POST /v1/playlists/{playlist_id}/tracks
+            - POST /v1/playlists/{playlist_id}/tracks
         """
         endpoint = Endpoints.PLAYLIST_TRACKS % self.spotify_id()
         body = {}
@@ -189,18 +247,18 @@ class Playlist:
 
 
     def update_name(self, name):
-        """ Updates the playlist name.
+        """ Updates the playlist's name as it appears on Spotify.
 
         Args:
-            name: A string containing the new name of this playlist.
+            name (str): the new name of this playlist.
 
         Required token scopes:
-            playlist-modify-public: If the playlist is public.
-            playlist-modify-private: If the playlist is private or
-                collaborative.
+            - playlist-modify-public: If the playlist is public.
+            - playlist-modify-private: If the playlist is private or
+              collaborative.
 
         Calls endpoints:
-            PUT /v1/playlists/{playlist_id}
+            - PUT /v1/playlists/{playlist_id}
         """
         endpoint = Endpoints.PLAYLIST % self.spotify_id()
         if not isinstance(name, str):
@@ -218,19 +276,18 @@ class Playlist:
 
 
     def update_description(self, description):
-        """ Updates the playlist description.
+        """ Updates the playlist description as it appears on Spotify.
 
         Args:
-            description: A string containing the new description of this
-                playlist.
+            description (str): the new new description of this playlist.
 
         Required token scopes:
-            playlist-modify-public: If the playlist is public.
-            playlist-modify-private: If the playlist is private or
-                collaborative.
+            - playlist-modify-public: If the playlist is public.
+            - playlist-modify-private: If the playlist is private or
+              collaborative.
 
         Calls endpoints:
-            PUT /v1/playlists/{playlist_id}
+            - PUT /v1/playlists/{playlist_id}
         """
         endpoint = Endpoints.PLAYLIST % self.spotify_id()
         if not isinstance(description, str):
@@ -251,16 +308,19 @@ class Playlist:
         """ Updates whether the playlist is public/private/collaborative.
 
         Args:
-            visibility: One of [sp.PUBLIC, sp.PRIVATE, sp.PRIVATE_COLLAB]
-                containing the new visibility of this playlist.
+            visibility: One of:
+
+                - sp.PUBLIC
+                - sp.PRIVATE
+                - sp.PRIVATE_COLLAB
 
         Required token scopes:
-            playlist-modify-public: If the playlist is public.
-            playlist-modify-private: If the playlist is private or
-                collaborative.
+            - playlist-modify-public: If the playlist is public.
+            - playlist-modify-private: If the playlist is private or
+              collaborative.
 
         Calls endpoints:
-            PUT /v1/playlists/{playlist_id}
+            - PUT /v1/playlists/{playlist_id}
         """
         endpoint = Endpoints.PLAYLIST % self.spotify_id()
         body = {}
@@ -281,14 +341,15 @@ class Playlist:
 
 
     # TODO test the response from this endpoint and clarify usage
+    # TODO: can the image be none?
     def image(self):
-        """ Returns the playlist cover image.
+        """ Get the playlist's cover image.
 
         Returns:
-            The string URL of the cover image.
+            str: The string URL of the cover image.
 
         Calls endpoints:
-            PUT /v1/playlists/{playlist_id}
+            - PUT /v1/playlists/{playlist_id}
         """
         endpoint = Endpoints.PLAYLIST_IMAGES % self.spotify_id()
         response_json, status_code = utils.request(
@@ -316,16 +377,17 @@ class Playlist:
                 must be a valid index into a list of length len(playlist). Can
                 be omitted to return tracks starting from the first song in the
                 playlist.
+
             num_tracks: A nonnegative integer specifying the number of tracks
                 to return. If num_tracks is greater than len(playlist) or if
                 num_tracks is omitted, returns as many tracks as are present at
                 start.
 
         Returns:
-            A list of Track objects.
+            List[Track]: The tracks specified by the arguments.
 
         Calls endpoints:
-            GET /v1/playlists/{playlist_id}/tracks
+            - GET /v1/playlists/{playlist_id}/tracks
         """
         endpoint = Endpoints.PLAYLIST_TRACKS % self.spotify_id()
         if not isinstance(start, int):
@@ -362,18 +424,19 @@ class Playlist:
             tracks: A Track or list of Track objects to be removed from the
                 playlist. All tracks must be present in the playlist. All
                 occurrences of these tracks will be removed.
+
             positions: An integer or list of integers specifying the
                 nonnegative 0-indexed positions of tracks to be removed from
                 the playlist. Positions must be valid indices into a list of
                 len(playlist). Only tracks in these positions will be removed.
 
         Required token scopes:
-            playlist-modify-public: If the playlist is public.
-            playlist-modify-private: If the playlist is private or
-                collaborative.
+            - playlist-modify-public: If the playlist is public.
+            - playlist-modify-private: If the playlist is private or
+              collaborative.
 
         Calls endpoints:
-            DELETE /v1/playlists/{playlist_id}/tracks
+            - DELETE /v1/playlists/{playlist_id}/tracks
         """
         endpoint = Endpoints.PLAYLIST_TRACKS % self.spotify_id()
         body = {}
@@ -437,21 +500,23 @@ class Playlist:
                 from the end of the playlist as negative indices behave in
                 lists. This must be a valid index into a list of length
                 len(playlist).
+
             dest_index: An integer specifying the 0-indexed position of the
                 track before which the other tracks will be moved. A negative
                 integer will be evaluated from the end of the playlist as
                 negative indices behave in lists. This must be a valid index
                 into a list of length len(playlist).
+
             number: A positive integer specifying the number of tracks to be
                 moved. Number may not be larger than len(playlist).
 
         Required token scopes:
-            playlist-modify-public: If the playlist is public.
-            playlist-modify-private: If the playlist is private or
-                collaborative.
+            - playlist-modify-public: If the playlist is public.
+            - playlist-modify-private: If the playlist is private or
+              collaborative.
 
         Calls endpoints:
-            PUT /v1/playlists/{playlist_id}/tracks
+            - PUT /v1/playlists/{playlist_id}/tracks
         """
         endpoint = Endpoints.PLAYLIST_TRACKS % self.spotify_id()
         if not isinstance(source_index, int):
@@ -490,16 +555,18 @@ class Playlist:
         """ Replace all of the tracks in the playlist.
 
         Args:
-            tracks: A list of Track objects to populate the playlist. All
-                previously present tracks will be removed.
+            tracks (List[Track]): The tracks to populate the playlist.
+
+        Warning:
+            All previously present tracks in the playlist will be removed.
 
         Required token scopes:
-            playlist-modify-public: If the playlist is public.
-            playlist-modify-private: If the playlist is private or
-                collaborative.
+            - playlist-modify-public: If the playlist is public.
+            - playlist-modify-private: If the playlist is private or
+              collaborative.
 
         Calls endpoints:
-            PUT /v1/playlists/{playlist_id}/tracks
+            - PUT /v1/playlists/{playlist_id}/tracks
         """
         endpoint = Endpoints.PLAYLIST_TRACKS % self.spotify_id()
         if not all([isinstance(track, Track) for track in tracks]):
@@ -520,20 +587,21 @@ class Playlist:
     def replace_image(self, image):
         """ Replace the playlist cover image.
 
-        The image must be a JPEG and can be at most 256 KB in size.
+        Note:
+            The image must be a JPEG and can be at most 256 KB in size.
 
         Args:
             image: A string containing the filename of the image to use as the
                 playlist cover image. The image must be a JPEG up to 256 KB.
 
         Required token scopes:
-            ugc-image-upload
-            playlist-modify-public: If the playlist is public.
-            playlist-modify-private: If the playlist is private or
-                collaborative.
+            - ugc-image-upload
+            - playlist-modify-public: If the playlist is public.
+            - playlist-modify-private: If the playlist is private or
+              collaborative.
 
         Calls endpoints:
-            PUT /v1/playlists/{playlist_id}/images
+            - PUT /v1/playlists/{playlist_id}/images
         """
         endpoint = Endpoints.PLAYLIST_IMAGES % self.spotify_id()
         if not any(ext in image for ext in ['.jpg', '.jpeg']):
@@ -549,40 +617,6 @@ class Playlist:
         )
         if status_code != 202:
             raise utils.SpotifyError(status_code, response_json)
-
-
-    def __str__(self):
-        return self._raw['name']
-
-
-    def __repr__(self):
-        return str(self)
-
-
-    def __len__(self):
-        return len(self._tracks)
-
-
-    def __getitem__(self, key):
-        if not isinstance(key, int):
-            raise TypeError(key)
-        if key < 0:
-            key += len(self)
-        if key < 0 or key >= len(self):
-            raise IndexError(key)
-        return self._tracks[key]
-
-
-    def __eq__(self, other):
-        return utils.spotifython_eq(self, other)
-
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-
-    def __hash__(self):
-        return utils.spotifython_hash(self)
 
 
 # pylint: disable=wrong-import-position

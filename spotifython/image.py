@@ -6,15 +6,15 @@ import copy
 class Image:
     """ Container class representing a Spotify image
 
-    Use methods here to get information about an Image.
+    Do not use the constructor. To get an
+    instance of Image, use another object's image methods, such as
+    :meth:`Album.images() <spotifython.album.Album.images>`,
+    :meth:`Playlist.image() <spotifython.playlist.Playlist.image>`,
+    :meth:`User.image() <spotifython.user.User.image>`, etc.
     """
 
     def __init__(self, info):
-        """ Get an instance of Image.
-
-        This constructor should never be called by the client. To get an
-        instance of Image, use another object's image methods, such as
-        Album.images(), User.image(), etc.
+        """ Get an instance of Image. Client should not use the constructor!
 
         Args:
             info (dict): the image's information. Must contain 'url'.
@@ -26,37 +26,34 @@ class Image:
 
 
     def __str__(self):
+        """ Returns the image url. """
         return self._raw['url']
 
 
     def __repr__(self):
+        """ Returns the image url. """
         return str(self)
 
 
     def url(self):
-        """ Get the image's url.
-
+        """
         Returns:
-            str: the url
+            str: The image's url.
         """
         return self._raw['url']
 
 
     def width(self):
-        """ Get the width of the image in pixels.
-
+        """
         Returns:
-            int: the width in pixels, if known
-            None: if the width is not known
+            Union[int, None]: The width in pixels, if known.
         """
         return self._raw.get('width', None)
 
 
     def height(self):
-        """ Get the height of the image in pixels.
-
+        """
         Returns:
-            int: the height in pixels, if known
-            None: if the height is not known
+            Union[int, None]: The height in pixels, if known.
         """
         return self._raw.get('height', None)
