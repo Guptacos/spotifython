@@ -46,7 +46,7 @@ class Session:
         """ Updates the stored Spotify authentication token for this instance.
 
         Args:
-            token: str, the new Spotify authentication token.
+            token (str): the new Spotify authentication token.
         """
         if not isinstance(token, str):
             raise TypeError('token should be string')
@@ -55,41 +55,53 @@ class Session:
 
 
     def token(self):
-        """ Getter for the token provided by the client.
-
+        """
         Returns:
-            A str containing the token.
+            str: The token associated with this session.
         """
         return self._token
 
 
     def timeout(self):
-        """ Getter for the timeout provided by the client.
-
+        """
         Returns:
-            An int containing the provided timeout.
+            int: The timeout associated with this session.
         """
         return self._timeout
 
 
     def __str__(self):
+        """ Returns the Session's id.
+
+        Note:
+            This is NOT the token, but the unique Python identifier for this
+            object.
+        """
         # Guarantee that the IDs of different objects in memory are different
         # Avoids exposing the token as plaintext for no reason, since that is
         # the other possible indicator of object identity.
-        return f'Session<${id(self)}>'
+        return f'Session <${id(self)}>'
 
 
     def __repr__(self):
+        """ Returns the Session's id.
+
+        Note:
+            This is NOT the token, but the unique Python identifier for this
+            object.
+        """
         return self.__str__()
 
 
     class SearchResult:
-        """ Represents the results of a Spotify API search call. """
+        """ Represents the results of a Spotify API search call.
+
+        Do not use the constructor. To get a SearchResult, use
+        :meth:`Session.search() <spotifython.session.Session.search>`
+        """
 
         def __init__(self, search_result):
-            """ User should never call this constructor.
-
-            Get an instance of SearchResult by using Session.search()
+            """ Get an instance of SearchResult. Client should not use this!
 
             Internally, the search result will perform all necessary API calls
             to get the desired number of search results (up to search limit).
@@ -100,7 +112,6 @@ class Session:
                     corresponding object type. For example, the key 'artist'
                     maps to a list of Artist objects.
             """
-
             self._albums = search_result.get('album', list())
             self._artists = search_result.get('artist', list())
             self._playlists = search_result.get('playlist', list())
@@ -109,37 +120,37 @@ class Session:
 
         # Field accessors
         def albums(self):
-            """ Getter for the albums returned by the search query.
-
+            """
             Returns:
-                A list of Album objects.
+                List[Album]: Any albums returned by the Spotify search. Could be
+                empty.
             """
             return self._albums
 
 
         def artists(self):
-            """ Getter for the artists returned by the search query.
-
+            """
             Returns:
-                A list of Artist objects.
+                List[Artist]: Any artists returned by the Spotify search. Could
+                be empty.
             """
             return self._artists
 
 
         def playlists(self):
-            """ Getter for the playlist returned by the search query.
-
+            """
             Returns:
-                A list of Playlist objects.
+                List[Playlist]: Any playlists returned by the Spotify search.
+                Could be empty.
             """
             return self._playlists
 
 
         def tracks(self):
-            """ Getter for the tracks returned by the search query.
-
+            """
             Returns:
-                A list of Track objects.
+                List[Track]: Any tracks returned by the Spotify search.  Could
+                be empty.
             """
             return self._tracks
 
@@ -150,57 +161,68 @@ class Session:
     # pylint: disable=too-many-arguments, too-many-locals, too-many-branches
     # TODO: unfortunately this function has to be kind of long to accomodate the
     # logic required. Refactor this in the future.
+
+    # TODO: 'optional field filters and operators' What are these? Provide
+    #       a link and / or example.
+    # TODO: why are the enums search_type_x instead of just sp.ARTISTS etc.?
     def search(self,
                query,
                types,
                limit,
                market=const.TOKEN_REGION,
                include_external_audio=False):
-        """ Searches for content with the given query.
+        """ Searches Spotify for content with the given query.
 
         Args:
-            query: str, search query keywords and optional field filters and
+            query (str): search query keywords and optional field filters and
                 operators.
-            types: str or List[str], singular search type or a list of the types
-                of results to search for.
-                Valid arguments are sp.SEARCH_TYPE_ALBUM,
-                sp.SEARCH_TYPE_ARTIST, sp.SEARCH_TYPE_PLAYLIST, and
-                sp.SEARCH_TYPE_TRACK.
-                Note: shows and episodes will be supported in a future release.
-            limit: int, the maximum number of results to return.
-            market: (Optional) str, An ISO 3166-1 alpha-2 country code or the
+
+            types: type(s) of results to search for. One of:
+
+                - sp.SEARCH_TYPE_ALBUM,
+                - sp.SEARCH_TYPE_ARTIST
+                - sp.SEARCH_TYPE_PLAYLIST
+                - sp.SEARCH_TYPE_TRACK
+                - List: can contain multiple of the above.
+
+            limit (int): the maximum number of results to return.
+
+            market (str): An ISO 3166-1 alpha-2 country code or the
                 string sp.TOKEN_REGION. If a country code is specified,
                 only artists, albums, and tracks with content that is playable
                 in that market is returned.
+
                 Note:
-                - Playlist results are not affected by the market parameter.
-                - If market is set to sp.TOKEN_REGION, and a valid access
-                token is specified in the request header, only content playable
-                in the country associated with the user account, is returned.
-                - If market is set to None, no market is passed to Spotify's Web
-                API, and its default behavior is invoked.
-            include_external_audio: (Optional) bool, If true,
-                the response will include any relevant audio content that is
-                hosted externally. By default external content is filtered out
-                from responses.
+                    - Playlist results are not affected by the market parameter.
+                    - If market is set to sp.TOKEN_REGION, and a valid access
+                      token is specified in the request header, only content
+                      playable in the country associated with the user account,
+                      is returned.
+                    - If market is set to None, no market is passed to Spotify's
+                      Web API, and its default behavior is invoked.
+
+            include_external_audio (bool): If true, the response will include
+                any relevant audio content that is hosted externally. By default
+                external content is filtered out from responses.
+
+        Note:
+            Shows and Episodes will be supported in a future release.
 
         Returns:
-            Returns a SearchResult if the request succeeded.
-            On failure or partial failure, throws an HTTPError.
+            SearchResult: The results from the Spotify search.
 
-        Exceptions:
-            TypeError for invalid types in any argument.
-            ValueError if query type or market is invalid.
-                TODO: how to validate?
-            ValueError if limit is > 2000: this is the Spotify API's
-                search limit.
-            HTTPError if failure or partial failure.
+        Raises:
+            TypeError: for invalid types in any argument.
+            ValueError: if query type or market is invalid. TODO: validate?
+            ValueError: if limit is > 2000: this is the Spotify API's search
+                limit.
+            HTTPError: if failure or partial failure.
 
         Required token scopes:
-            user-read-private
+            - user-read-private
 
         Calls endpoints:
-            GET   /v1/search
+            - GET   /v1/search
         """
 
         # Search limit is a required field due to the offset + limit being 2000,
@@ -325,34 +347,28 @@ class Session:
     def get_albums(self,
                    album_ids,
                    market=const.TOKEN_REGION):
-        """ Gets the albums with the given Spotify album ids.
+        """ Gets the albums with the given Spotify ids.
 
         Args:
-            album_ids: str or List[str], a string or list of strings of the
-                Spotify album ids to search for.
-            market: (Optional) str, an ISO 3166-1 alpha-2 country code or the
-                string sp.TOKEN_REGION.
-                Provide this parameter if you want to apply Track Relinking.
-                If market is set to None, no market is passed to Spotify's Web
-                API, and its default behavior is invoked.
+            album_ids (str, List[str]): The Spotify album id(s) to get.
+            market (str): an ISO 3166-1 alpha-2 country code or the string
+                sp.TOKEN_REGION. Provide this parameter if you want to apply
+                Track Relinking. If market is set to None, no market is passed
+                to Spotify's Web API, and its default behavior is invoked.
 
         Returns:
-            Returns an Album or List[Album] if the request succeeded.
-            On failure or partial failure, throws an HTTPError.
+            Union[Album, List[Album]]: The requested album(s).
 
-        Exceptions:
-            TypeError for invalid types in any argument.
-            ValueError if market type is invalid. TODO
-            HTTPError if failure or partial failure.
-
-        Required token scopes:
-            None
+        Raises:
+            TypeError: for invalid types in any argument.
+            ValueError: if market type is invalid. TODO
+            HTTPError: if failure or partial failure.
 
         Calls endpoints:
-            GET   /v1/albums
+            - GET   /v1/albums
 
         Note: the following endpoint is not used.
-            GET   /v1/albums/{id}
+            - GET   /v1/albums/{id}
         """
 
         # Type/Argument validation
@@ -399,27 +415,23 @@ class Session:
 
 
     def get_artists(self, artist_ids):
-        """ Gets the artists with the given Spotify artists ids.
+        """ Gets the artists with the given Spotify ids.
 
         Args:
-            artist_ids: str or List[str], the Spotify artist ids to search for.
+            artist_ids (str, List[str): The Spotify artist id(s) to get.
 
         Returns:
-            Returns an Artist or List[Artists] if the request succeeded.
-            On failure or partial failure, throws an HTTPError.
+            Union[Album, List[Album]]: The requested artist(s).
 
-        Exceptions:
-            TypeError for invalid types in any argument.
-            HTTPError if failure or partial failure.
-
-        Required token scopes:
-            None
+        Raises:
+            TypeError: for invalid types in any argument.
+            HTTPError: if failure or partial failure.
 
         Calls endpoints:
-            GET   /v1/artists
+            - GET   /v1/artists
 
         Note: the following endpoint is not used.
-            GET   /v1/artists/{id}
+            - GET   /v1/artists/{id}
         """
 
         # Type validation
@@ -462,33 +474,28 @@ class Session:
     def get_tracks(self,
                    track_ids,
                    market=const.TOKEN_REGION):
-        """ Gets the tracks with the given Spotify track ids.
+        """ Gets the tracks with the given Spotify ids.
 
         Args:
-            track_ids: str or List[str], the Spotify track ids to search for.
-            market: (Optional) An ISO 3166-1 alpha-2 country code or the string
-                sp.TOKEN_REGION.
-                Provide this parameter if you want to apply Track Relinking.
-                If market is set to None, no market is passed to Spotify's Web
-                API, and its default behavior is invoked.
+            track_ids (str, List[str]): The Spotify track id(s) to get.
+            market (str): An ISO 3166-1 alpha-2 country code or the string
+                sp.TOKEN_REGION. Provide this parameter if you want to apply
+                Track Relinking. If market is set to None, no market is passed
+                to Spotify's Web API, and its default behavior is invoked.
 
         Returns:
-            Returns a Track or List[Track] if the request succeeded.
-            On failure or partial failure, throws an HTTPError.
+            Union[Track, List[Track]]: The requested track(s).
 
-        Exceptions:
-            TypeError for invalid types in any argument.
-            ValueError if market type is invalid. TODO
-            HTTPError if failure or partial failure.
-
-        Required token scopes:
-            None
+        Raises:
+            TypeError: for invalid types in any argument.
+            ValueError: if market type is invalid. TODO
+            HTTPError: if failure or partial failure.
 
         Calls endpoints:
-            GET   /v1/tracks
+            - GET   /v1/tracks
 
         Note: the following endpoint is not used.
-            GET   /v1/tracks/{id}
+            - GET   /v1/tracks/{id}
         """
 
         # Type validation
@@ -533,138 +540,37 @@ class Session:
         return result if len(result) != 1 else result[0]
 
 
-    def get_users(self, user_ids):
-        """ Gets the users with the given Spotify user ids.
-
-        Args:
-            user_ids: str or List[str], the Spotify user id to search for.
-
-        Returns:
-            Returns a User or List[User] if the request succeeded.
-            On failure or partial failure, throws an HTTPError.
-
-        Exceptions:
-            TypeError for invalid types in any argument.
-            HTTPError if failure or partial failure.
-
-        Required token scopes:
-            None
-
-        Calls endpoints:
-            GET	/v1/users/{user_id}
-        """
-
-        # Type validation
-        if not isinstance(user_ids, str) and\
-            not all(isinstance(x, str) for x in user_ids):
-            raise TypeError('user_ids should be str or list of str')
-
-        if isinstance(user_ids, str):
-            user_ids = list('user_ids should be str')
-
-        # Construct params for API call
-        uri_params = dict()
-
-        # Each API call can return at most 1 user. Therefore there is no need
-        # to batch this query.
-        result = list()
-        for user_id in user_ids:
-            # Execute requests
-            # TODO: Partial failure - if user with user_id does not exist,
-            # status_code is 404
-            response_json, status_code = utils.request(
-                session=self,
-                request_type=const.REQUEST_GET,
-                endpoint=Endpoints.SEARCH_GET_USER % user_id,
-                uri_params=uri_params
-            )
-
-            if status_code != 200:
-                raise utils.SpotifyError(status_code, response_json)
-
-            result.append(User(self, response_json))
-
-        return result if len(result) != 1 else result[0]
-
-
-    def current_user(self):
-        """ Gets the user associated with the current Spotify API token.
-
-        If the user-read-email scope is authorized, the returned JSON will
-        include the email address that was entered when the user created their
-        Spotify account. This email address is unverified; do not assume that
-        the email address belongs to the user.
-
-        Returns:
-            Returns a User if the request succeeded. On failure or partial
-            failure, throws an HTTPError.
-
-        Exceptions:
-            ValueError if the Spotify API key is not valid.
-            ValueError if the response is empty.
-            HTTPError if failure or partial failure.
-
-        Required token scopes:
-            user-read-private
-            user-read-email
-
-        Calls endpoints:
-            GET /v1/me
-        """
-
-        # Construct params for API call
-        endpoint = Endpoints.SEARCH_CURRENT_USER
-
-        # Execute requests
-        response_json, status_code = utils.request(
-            session=self,
-            request_type=const.REQUEST_GET,
-            endpoint=endpoint
-        )
-
-        if status_code != 200:
-            raise utils.SpotifyError(status_code, response_json)
-
-        return User(self, response_json)
-
-
+    # TODO: what the heck are fields?
     def get_playlists(self,
                       playlist_ids,
                       fields=None,
                       market=const.TOKEN_REGION):
-        """ Gets the tracks with the given Spotify playlist ids.
+        """ Gets the playlist(s) with the given Spotify ids.
 
         Args:
-            playlist_ids: str or List[str], the Spotify playlist ids to
-                search for.
-            fields: (Optional) str, filters for the query: a comma-separated
-                list of the fields to return.
-                If omitted, all fields are returned. A dot separator can be used
-                to specify non-reoccurring fields, while parentheses can be used
-                to specify reoccurring fields within objects. Use multiple
-                parentheses to drill down into nested objects.
-                Fields can be excluded by prefixing them with an exclamation
-                mark.
-            market: (Optional) str, an ISO 3166-1 alpha-2 country code or the
-                string sp.TOKEN_REGION.
-                Provide this parameter if you want to apply Track Relinking.
-                If market is set to None, no market is passed to Spotify's
-                Web API.
+            playlist_ids (str, List[str]): The Spotify playlist ids to get.
+            fields (str): filters for the query: a comma-separated list of the
+                fields to return.  If omitted, all fields are returned. A dot
+                separator can be used to specify non-reoccurring fields, while
+                parentheses can be used to specify reoccurring fields within
+                objects. Use multiple parentheses to drill down into nested
+                objects.  Fields can be excluded by prefixing them with an
+                exclamation mark.
+            market (str): an ISO 3166-1 alpha-2 country code or the string
+                sp.TOKEN_REGION. Provide this parameter if you want to apply
+                Track Relinking. If market is set to None, no market is passed
+                to Spotify's Web API.
 
         Returns:
-            Returns a Playlist or List[Playlist] if the request succeeded.
-            On failure or partial failure, throws an HTTPError.
+            Union[Playlist, List[Playlist]]: The requested playlist(s)
 
-        Exceptions:
-            TypeError for invalid types in any argument.
-            ValueError if market type is invalid. TODO
-            HTTPError if failure or partial failure.
-
-        Required token scopes:
-            None
+        Raises:
+            TypeError: for invalid types in any argument.
+            ValueError: if market type is invalid. TODO
+            HTTPError: if failure or partial failure.
 
         Calls endpoints:
-            GET	/v1/playlists/{playlist_id}
+            - GET	/v1/playlists/{playlist_id}
         """
 
         # Note: additional_types is also a valid request param - it
@@ -708,6 +614,87 @@ class Session:
             result.append(Playlist(self, response_json))
 
         return result if len(result) != 1 else result[0]
+
+
+    def get_users(self, user_ids):
+        """ Gets the users with the given Spotify ids.
+
+        Args:
+            user_ids (str, List[str]): The Spotify user id(s) to get.
+
+        Returns:
+            Union[User, List[User]]: The requested user(s).
+
+        Raises:
+            TypeError: for invalid types in any argument.
+            HTTPError: if failure or partial failure.
+
+        Calls endpoints:
+            - GET	/v1/users/{user_id}
+        """
+
+        # Type validation
+        if not isinstance(user_ids, str) and\
+            not all(isinstance(x, str) for x in user_ids):
+            raise TypeError('user_ids should be str or list of str')
+
+        if isinstance(user_ids, str):
+            user_ids = list('user_ids should be str')
+
+        # Construct params for API call
+        uri_params = dict()
+
+        # Each API call can return at most 1 user. Therefore there is no need
+        # to batch this query.
+        result = list()
+        for user_id in user_ids:
+            # Execute requests
+            # TODO: Partial failure - if user with user_id does not exist,
+            # status_code is 404
+            response_json, status_code = utils.request(
+                session=self,
+                request_type=const.REQUEST_GET,
+                endpoint=Endpoints.SEARCH_GET_USER % user_id,
+                uri_params=uri_params
+            )
+
+            if status_code != 200:
+                raise utils.SpotifyError(status_code, response_json)
+
+            result.append(User(self, response_json))
+
+        return result if len(result) != 1 else result[0]
+
+
+    def current_user(self):
+        """
+        Returns:
+            User: The user associated with the current Spotify API token.
+
+        Raises:
+            ValueError: if the Spotify API key is not valid.
+            ValueError: if the response is empty.
+            HTTPError: if failure or partial failure.
+
+        Calls endpoints:
+            - GET /v1/me
+        """
+
+        # Construct params for API call
+        endpoint = Endpoints.SEARCH_CURRENT_USER
+
+        # Execute requests
+        response_json, status_code = utils.request(
+            session=self,
+            request_type=const.REQUEST_GET,
+            endpoint=endpoint
+        )
+
+        if status_code != 200:
+            raise utils.SpotifyError(status_code, response_json)
+
+        return User(self, response_json)
+
 
 # pylint: disable=wrong-import-position
 from spotifython.album import Album

@@ -14,32 +14,32 @@ from spotifython.image import Image
 class Album:
     """ Represents a Spotify album tied to a unique Spotify id.
 
-    Use methods here to get information about an Album.
+    Do not use the constructor. To get an instance of Album, use
+    :meth:`Session.get_albums() <spotifython.session.Session.get_albums>`.
+
+    Required token scopes:
+        - None: the methods in the Album class require a token, but the token
+          needs no scopes.
 
     Note:
         The Album class does not currently support track relinking using market
         codes. As such, ``__len__()``, ``__getitem___()``, and ``tracks()``
-        are not relinked
-
-    Required token scopes:
-        None: the methods in the Album class require a token, but the token
-            needs no scopes.
+        are not relinked.
     """
 
 
     def __init__(self, session, info):
-        """ Get an instance of Album.
-
-        This constructor should never be called by the client. To get an
-        instance of Album, use Session.get_albums()
+        """ Get an instance of Album. Client should not use the constructor!
 
         Args:
-            session: a Session instance
+            session: a Session instance.
             info: the album's information. Must contain 'id'.
         """
         # Validate inputs
         if 'id' not in info:
             raise ValueError('Album id not in info')
+
+        # TODO: need to make sure name is here.
 
         # Defensively copy
         info = copy.deepcopy(info)
@@ -67,52 +67,57 @@ class Album:
 
 
     def __str__(self):
+        """ Returns the album name. """
         return f'Album {self.name()}'
 
 
     def __repr__(self):
+        """ Returns the album name and Spotify id. """
         return str(self) + f' with id <{self.spotify_id()}>'
 
 
     def __eq__(self, other):
-        """ 2 Albums are equal if they have the same Spotify id. """
+        """ Two albums are equal if they have the same Spotify id. """
         return utils.spotifython_eq(self, other)
 
 
     def __ne__(self, other):
+        """ Two albums are not equal if they have different Spotify ids. """
         return not self.__eq__(other)
 
 
     def __hash__(self):
-        """ 2 equivalent Albums will return the same hashcode. """
+        """ Two equivalent albums will return the same hashcode. """
         return utils.spotifython_hash(self)
 
 
     def __len__(self):
-        """ Get the length of the album.
-
+        """
         Returns:
-            int: the number of tracks in the album
+            int: The number of tracks in the album.
 
         Calls endpoints:
-            GET     /v1/albums/{id}/tracks
+            - GET     /v1/albums/{id}/tracks
         """
         self._update_tracks()
         return len(self._tracks)
 
 
     def __getitem__(self, key):
-        """ Allows you to get a Track in an Album as if the Album were a list.
+        """ Allows you to get a track in an album as if the album were a list.
 
-        Usage:
+        Example::
+
             a = Album()
             track = a[2]
 
         Args:
-            key (int): the index into the album. 0 <= key < len(Album)
+            key (int, slice): the index into the album. The key can be any index
+                or slice that that is a valid index into a list of length
+                len(album).
 
         Returns:
-            The Track at index "key"
+            Track: The track at index "key".
         """
         # Make sure we have tracks to get items from
         self._update_tracks()
@@ -122,10 +127,10 @@ class Album:
 
 
     def _update_fields(self):
-        """ Update self._raw using the Album id.
+        """ Update self._raw using the album id.
 
         Calls endpoints:
-            GET     /v1/albums/{id}
+            - GET     /v1/albums/{id}
         """
 
         response_json, status_code = utils.request(
@@ -146,10 +151,10 @@ class Album:
 
 
     def _update_tracks(self):
-        """ Update self._tracks using the Album id.
+        """ Update self._tracks using the album id.
 
         Calls endpoints:
-            GET     /v1/albums/{id}/tracks
+            - GET     /v1/albums/{id}/tracks
         """
 
         # Only populate tracks if necessary
@@ -165,26 +170,25 @@ class Album:
 
 
     def spotify_id(self):
-        """ Get the id of this Track.
-
+        """
         Returns:
-            str: the Track's Spotify id
+            str: The Spotify id of this album.
         """
         return self._id
 
 
     def type(self):
-        """ Get the type of this Album.
+        """ Get the type of this album.
 
         Returns:
-            One of:
+            One of
 
-                * sp.SINGLE
-                * sp.COMPILATION
-                * sp.ALBUMS
+            - sp.SINGLE
+            - sp.COMPILATION
+            - sp.ALBUMS
 
         Calls endpoints:
-            GET     /v1/albums/{id}
+            - GET     /v1/albums/{id}
         """
         types = {
             'single': const.SINGLE,
@@ -195,13 +199,12 @@ class Album:
 
 
     def artists(self):
-        """ Get the artists who wrote this Album.
-
+        """
         Returns:
-            A list of Artist objects. Can have 1 or more Artists.
+            List[Artist]: The artist(s) who wrote this album.
 
         Calls endpoints:
-            GET     /v1/albums/{id}
+            - GET     /v1/albums/{id}
         """
         if self._artists is not None:
             return self._artists
@@ -213,28 +216,27 @@ class Album:
 
 
     def available_markets(self):
-        """ Get the country codes of the markets this Album is available in.
+        """ Get the country codes of the markets this album is available in.
 
-        The Album is considered available in a market when at least one of its
-        Tracks is available in that market.
+        The album is considered available in a market when at least one of its
+        tracks is available in that market.
 
         Returns:
-            List[str]: a list of the available country codes
+            List[str]: A list of the available country codes.
 
         Calls endpoints:
-            GET     /v1/albums/{id}
+            - GET     /v1/albums/{id}
         """
         return utils.get_field(self, 'available_markets')
 
 
     def copyrights(self):
-        """ Get the copyrights statements for this album.
-
+        """
         Returns:
-            List[Copyright]: a list of Copyright objects
+            List[Copyright]: The copyright statement(s) for this album.
 
         Calls endpoints:
-            GET     /v1/albums/{id}
+            - GET     /v1/albums/{id}
         """
         result = utils.get_field(self, 'copyrights')
         return [Copyright(elem) for elem in result]
@@ -244,100 +246,95 @@ class Album:
         """ Get the genres for this album as categorized by Spotify.
 
         Returns:
-            List[str]: a list of genre names. Could be empty if the album is not
-                yet classified.
+            List[str]: A list of genre names. Could be empty if the album is not
+            yet classified.
 
         Calls endpoints:
-            GET     /v1/albums/{id}
+            - GET     /v1/albums/{id}
         """
         return utils.get_field(self, 'genres')
 
 
     def href(self):
-        """ Get the Album's href.
+        """ Get the album's href.
 
         Returns:
-            str: a link to the Web API endpoint providing full Album details.
+            str: A link to the Web API endpoint providing full album details.
 
         Calls endpoints:
-            GET     /v1/albums/{id}
+            - GET     /v1/albums/{id}
         """
         return utils.get_field(self, 'href')
 
 
     def uri(self):
-        """ Get the Album's uri.
-
+        """
         Returns:
-            str: the Spotify uri for this Album
+            str: The album's Spotify uri.
 
         Calls endpoints:
-            GET     /v1/albums/{id}
+            - GET     /v1/albums/{id}
         """
         return utils.get_field(self, 'uri')
 
 
     def images(self):
-        """ Get the Album's cover art in various sizes, widest first.
-
+        """
         Returns:
-            List[Image]: a list of Image objects
+            List[Image]: The album's cover art in various sizes, widest first.
 
         Calls endpoints:
-            GET     /v1/albums/{id}
+            - GET     /v1/albums/{id}
         """
         result = utils.get_field(self, 'images')
         return [Image(elem) for elem in result]
 
 
     def label(self):
-        """ The label for this Album.
-
+        """
         Returns:
-            str: the name of the label
+            str: The name of the label for this album.
 
         Calls endpoints:
-            GET     /v1/albums/{id}
+            - GET     /v1/albums/{id}
         """
         return utils.get_field(self, 'label')
 
 
     def name(self):
-        """ Get the name of the Album.
-
+        """
         Returns:
-            str: the name of the Album as it appears on Spotify
+            str: The name of the album as it appears on Spotify.
 
         Calls endpoints:
-            GET     /v1/albums/{id}
+            - GET     /v1/albums/{id}
         """
         return utils.get_field(self, 'name')
 
 
     def popularity(self):
-        """ Get the popularity of the Album.
-
-        The popularity is between 0 and 100 (inclusive), with 100 being the most
-        popular. This number is calculated using the popularity of each Track.
+        """ Get the popularity of the album as calculated by Spotify.
 
         Returns:
-            int: the popularity of the Album as calculated by Spotify
+            int: The popularity between 0 and 100 (inclusive), with 100 being
+            the most popular. This number is calculated using the popularity of
+            each track.
 
         Calls endpoints:
-            GET     /v1/albums/{id}
+            - GET     /v1/albums/{id}
         """
         return utils.get_field(self, 'popularity')
 
 
     def release_date(self):
-        """ The date the Album was first released.
+        """ The date the album was **first** released.
 
         Returns:
-            A tuple with up to 3 ints. The tuple will be one of the following:
+            A tuple with up to 3 ints. The tuple will be one of the following
 
-                * (year,)
-                * (year, month)
-                * (year, month, day)
+            - (year,)
+            - (year, month)
+            - (year, month, day)
 
         Note:
             If the album was first released in March 2010 in Europe, and
@@ -345,11 +342,11 @@ class Album:
             this function will return the March 2010 date.
 
             We considered instead returning a Python datetime.date object.
-            However since Spotify may not return a month / day, we cannot use
+            However since Spotify may not return a month or day, we cannot use
             a datetime.date object.
 
         Calls endpoints:
-            GET     /v1/albums/{id}
+            - GET     /v1/albums/{id}
         """
         # Spotify returns date in format Y-M-D
         date = utils.get_field(self, 'release_date').split('-')
@@ -360,26 +357,26 @@ class Album:
 
 
     def tracks(self):
-        """ Get the Tracks in the Album.
-
+        """
         Returns:
-            List[Track]: the Album's Tracks
+            List[Track]: The tracks in the album.
 
         Calls endpoints:
-            GET     /v1/albums/{id}/tracks
+            - GET     /v1/albums/{id}/tracks
         """
         self._update_tracks()
         return self._tracks
 
 
 class Copyright:
-    """ Container class representing a single copyright """
+    """ Container class representing a single copyright.
+
+    Do not use the constructor. To get an instance of Copyright, use
+    :meth:`Album.copyrights() <spotifython.album.Album.copyrights>`.
+    """
 
     def __init__(self, info):
-        """ Get an instance of Copyright.
-
-        This constructor should never be called by the client. To get an
-        instance of Copyright, use Album.copyrights()
+        """ Get an instance of Copyright. Client should not use the constructor!
 
         Args:
             info (dict): the copyright's information. Must contain 'text' and
@@ -401,18 +398,19 @@ class Copyright:
 
 
     def __str__(self):
+        """ Returns the text of the copyright """
         return self.text()
 
 
     def __repr__(self):
+        """ Returns the text of the copyright """
         return str(self)
 
 
     def text(self):
-        """ Get the text describing the copyright.
-
+        """
         Returns:
-            (str): the copyright information
+            str: The text describing the copyright.
         """
         return self._text
 
@@ -424,10 +422,10 @@ class Copyright:
         works) are considered separate things for copyright purposes.
 
         Returns:
-            One of:
+            One of
 
-                * sp.SOUND_RECORDING
-                * sp.COMPOSITION
+            - sp.SOUND_RECORDING
+            - sp.COMPOSITION
         """
         return self._type
 

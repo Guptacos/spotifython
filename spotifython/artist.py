@@ -9,18 +9,26 @@ import spotifython.utils as utils
 # pylint: disable = too-many-branches
 
 class Artist:
-    """ Artist class
+    """ Represents an Artist object, tied to a Spotify artist id.
 
-    This class represents an Artist object, tied to a Spotify artist id.
+    Do not use the constructor. To get an Artist by their id, use
+    :meth:`Session.get_artists() <spotifython.session.Session.get_artists>`. To
+    get an Artist from another object, use appropriate methods such as
+    :meth:`Track.artists() <spotifython.track.Track.artists>`,
+    :meth:`Album.artists() <spotifython.album.Album.artists>`, etc.
+
+    Raises:
+        TypeError: for invalid argument types.
+        ValueError: for arguments that violate stated requirements.
+        HTTPError: for web request errors or partial failures.
+
+    Required token scopes:
+        - None: the methods in the Artist class require a token, but the token
+          needs no scopes.
     """
 
     def __init__(self, session, info):
-        """ Get an instance of Artist.
-
-        This constructor should never be called by the client. To get an
-        Artist by their id, use Session.get_artists(). To get an Artist from
-        another object, use appropriate methods such as Track.artists(),
-        Album.artists(), etc.
+        """ Get an instance of Artist. Client should not use the constructor!
 
         Args:
             session: a Session instance
@@ -32,6 +40,8 @@ class Artist:
 
         if 'id' not in info:
             raise ValueError('Artist id not in info')
+
+        # TODO: need to make sure user is here.
 
         self._session = session
         self._raw = info
@@ -49,18 +59,23 @@ class Artist:
     ##################################
 
     def __str__(self):
+        """ Returns the artist name. """
         return self.name()
 
     def __repr__(self):
-        return self.__str__()
+        """ Returns the artist name and Spotify id. """
+        return str(self) + f' with id <{self.spotify_id()}>'
 
     def __eq__(self, other):
+        """ Two artists are equal if they have the same Spotify id. """
         return utils.spotifython_eq(self, other)
 
     def __ne__(self, other):
+        """ Two artists are not equal if they have different Spotify ids. """
         return not self.__eq__(other)
 
     def __hash__(self):
+        """ Two equivalent artists wll return the same hashcode. """
         return utils.spotifython_hash(self)
 
     ##################################
@@ -74,50 +89,65 @@ class Artist:
     # Type: is an artist. we don't need to include this.
 
     def genres(self):
-        """ Get the genres Spotify has defined for this artist.
+        """ Get the genres for this artist as categorized by Spotify.
 
         Returns:
-            A List[str] of the genres associated with the artist.
+            List[str]: A list of genre names. Could be empty if the artist is
+            not yet classified.
+
+        Calls endpoints:
+            - GET     /v1/artists/{id}
         """
         return utils.get_field(self, 'genres')
 
     def href(self):
-        """ Get this artist's href.
+        """ Get the artist's href.
 
         Returns:
-            A str of the Web API endpoint providing full details of the artist.
+            str: A link to the Web API endpoint providing full artist details.
+
+        Calls endpoints:
+            - GET     /v1/artists/{id}
         """
         return utils.get_field(self, 'href')
 
     def spotify_id(self):
-        """ Get this artist's Spotify id.
-
+        """
         Returns:
-            A str of the artist's Spotify ID.
+            str: The Spotify id of this artist.
         """
         return utils.get_field(self, 'id')
 
     def name(self):
-        """ Get this artist's name.
-
+        """
         Returns:
-            A str of the artist name.
+            str: The name of the artist as it appears on Spotify.
+
+        Calls endpoints:
+            - GET     /v1/artists/{id}
         """
         return utils.get_field(self, 'name')
 
     def popularity(self):
-        """ Get this artist's popularity.
+        """ Get the popularity of the artist as calculated by Spotify.
 
         Returns:
-            An int of the popularity of the artist.
+            int: The popularity between 0 and 100 (inclusive), with 100 being
+            the most popular. This number is calculated using the popularity of
+            all the artist's tracks.
+
+        Calls endpoints:
+            - GET     /v1/artists/{id}
         """
         return utils.get_field(self, 'popularity')
 
     def uri(self):
-        """ Get this artist's uri.
-
+        """
         Returns:
-            A str of the Spotify URI for the artist.
+            str: The artist's Spotify uri.
+
+        Calls endpoints:
+            - GET     /v1/artists/{id}
         """
         return utils.get_field(self, 'uri')
 
@@ -127,11 +157,8 @@ class Artist:
         Raises:
             ValueError if artist id not present in the raw object data.
 
-        Required token scopes:
-            None
-
         Calls endpoints:
-            GET     /v1/artists/{id}
+            - GET     /v1/artists/{id}
         """
         endpoint = Endpoints.ARTIST_GET_BY_ID % self.spotify_id()
         response_json, status_code = utils.request(
@@ -158,40 +185,35 @@ class Artist:
                search_limit=None,
                include_groups=None,
                market=const.TOKEN_REGION):
-        """ Get the albums associated with the current Spotify artist.
+        """ Get the albums associated with the artist.
 
         Args:
-            search_limit: (Optional) int, the maximum number of results
-                to return.
-            include_groups: (Optional) List[str], a list of keywords
-                that will be used to filter the response. If not supplied,
-                all album types will be returned.
-                Valid values are: sp.ARTIST_ALBUM, sp.ARTIST_SINGLE,
-                sp.ARTIST_APPEARS_ON, sp.ARTIST_COMPILATION
-            market: (Optional) str, An ISO 3166-1 alpha-2 country code or the
-                string sp.TOKEN_REGION.
-                Supply this parameter to limit the response to one particular
-                geographical market. If this value is None, results will be
-                returned for all countries and you are likely to get duplicate
-                results per album, one for each country in which the album
-                is available!
+            search_limit (int): the maximum number of results to return.
+            include_groups (List[]): a list of keywords that will be used to
+                filter the response. If not supplied, all album types will be
+                returned. Valid values are:
+
+                - sp.ARTIST_ALBUM
+                - sp.ARTIST_SINGLE
+                - sp.ARTIST_APPEARS_ON
+                - sp.ARTIST_COMPILATION
+
+            market (str): an ISO 3166-1 alpha-2 country code or the string
+                sp.TOKEN_REGION. Supply this parameter to limit the response to
+                one particular geographical market. If this value is None,
+                results will be returned for all countries and you are likely to
+                get duplicate results per album, one for each country in which
+                the album is available!
 
         Returns:
-            A List[Album] if the request succeeded.
-
-        Raises:
-            TypeError for invalid types in any argument.
-            ValueError for invalid market.
-                TODO: is this even necessary, will raise ex
-            HTTPError for web request errors or partial failures.
-
-        Required token scopes:
-            None
+            List[Album]: The artist's albums.
 
         Calls endpoints:
-            GET	/v1/artists/{id}/albums
+            - GET	/v1/artists/{id}/albums
         """
 
+        # TODO: limit can't be None, see paginate_get. These params need
+        # validation
         # Type validation
         if search_limit is not None and not isinstance(search_limit, int):
             raise TypeError('search_limit should be None or int')
@@ -231,29 +253,19 @@ class Artist:
         """ Get the top tracks associated with the current Spotify artist.
 
         Args:
-            market: str, an ISO 3166-1 alpha-2 country code or the string
+            market (str): an ISO 3166-1 alpha-2 country code or the string
                 sp.TOKEN_REGION.
-            search_limit: int, the maximum number of results to return.
+            search_limit (int): the maximum number of results to return. Must be
+                between 1 and 10, inclusive (this is Spotify's limit).
 
         Returns:
-            A List[Track] if the request succeeded.
-
-        Raises:
-            TypeError for invalid types in any argument.
-            ValueError if market is None.
-            ValueError for invalid market.
-                TODO: is this even necessary, will raise ex
-            ValueError if search_limit is > 10: this is the Spotify API's search
-                limit.
-            HTTPError for web request errors.
-
-        Required token scopes:
-            None
+            List[Track]: The artist's top tracks.
 
         Calls endpoints:
-            GET	/v1/artists/{id}/top-tracks
+            - GET	/v1/artists/{id}/top-tracks
         """
 
+        # TODO: need to fix market requirements. Can be None.
         # Note: This search limit is not part of the API, Spotify always returns
         # up to 10. Market query param is 'country' in the API but named marked
         # for consistency
@@ -297,28 +309,20 @@ class Artist:
         """ Get artists similar to this artist, as defined by Spotify.
 
         Args:
-            search_limit: (Optional) int, the maximum number of results
-                to return.
+            search_limit (int): the maximum number of results to return. Must be
+                between 1 and 20, inclusive (this is Spotify's limit).
 
         Returns:
-            A response object containing a List[Artist] if the request
-            succeeded.
-
-        Raises:
-            TypeError for invalid types in any argument.
-            ValueError if search_limit is > 20: this is the Spotify API's
-                search limit.
-            HTTPError for web request errors.
-
-        Required token scopes:
-            None
+            List[Artist]: The artists related to this artist.
 
         Calls endpoints:
-            GET	/v1/artists/{id}/related-artists
+            - GET	/v1/artists/{id}/related-artists
         """
 
         # This search limit is not part of the API, Spotify always returns up to
         # 20.
+
+        # TODO: limit can't be None...
 
         # Type validation
         if search_limit is not None and not isinstance(search_limit, int):

@@ -58,6 +58,7 @@ class TestArtist(unittest.TestCase):
         pass
 
     # Test __str__, __repr__
+    @unittest.skip('Not yet implemented')
     def test_str_overloads(self):
         self.assertTrue(self.artist == self.artist)
         self.assertTrue(False)

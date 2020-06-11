@@ -1,4 +1,6 @@
 """ User class. """
+# TODO: We need a better solution than ignoring the problem...
+#pylint: disable=too-many-lines
 
 # Standard library imports
 import copy
@@ -17,23 +19,26 @@ class User:
     """ Represents a Spotify user tied to a unique Spotify id.
 
     Use methods here to interact with a User, such as reading / modifying the
-    library and following artists.
+    library, following artists, etc.
+
+    Do not use the constructor. To get a User by its id, use
+    :meth:`Session.get_users() <spotifython.session.Session.get_users>` or
+    :meth:`Session.current_user() <spotifython.session.Session.current_user>`.
 
     Raises:
         TypeError:  if incorrectly typed parameters are given.
         ValueError: if parameters with illegal values are given.
 
-    Unsupported:
+    Note:
+        The following are unsupported by this class
 
-        * external_urls
-        * followers: unsupported by Spotify, see https://developer.spotify.com/documentation/web-api/reference/object-model/#followers-object
+        - external_urls
+        - followers of the current user: unsupported by Spotify, see their
+          `documentation <https://developer.spotify.com/documentation/web-api/reference/object-model/#followers-object>`__.
     """
 
     def __init__(self, session, info):
-        """ Get an instance of User.
-
-        This constructor should never be called by the client. To get a
-        User by its id, use Session.get_users() or Session.current_user().
+        """ Get an instance of User. Client should not use the constructor!
 
         Args:
             session: an instance of sp.Session
@@ -53,18 +58,24 @@ class User:
             self._update_fields()
 
     def __str__(self):
+        """ Returns the user display name. """
+        # TODO: make sure display name is there
         return f'User <{self.name()}>'
 
     def __repr__(self):
-        return f'{str(self)} with id <{self.spotify_id()}>'
+        """ Returns the user display name and Spotify id. """
+        return str(self) + f' with id <{self.spotify_id()}>'
 
     def __eq__(self, other):
+        """ Two users are equal if they have the same Spotify id. """
         return utils.spotifython_eq(self, other)
 
     def __ne__(self, other):
+        """ Two users are not equal if they have different Spotify ids. """
         return not self.__eq__(other)
 
     def __hash__(self):
+        """ Two equivalent users will return the same hashcode. """
         return utils.spotifython_hash(self)
 
 
@@ -115,7 +126,7 @@ class User:
                 information.
 
         Calls endpoints:
-            GET     /v1/me
+            - GET     /v1/me
         """
         if key not in self._raw:
             self._update_fields()
@@ -157,46 +168,43 @@ class User:
 
 
     def spotify_id(self):
-        """ Get the id of this user.
-
+        """
         Returns:
-            The same id that this user was created with as a string.
+            str: The Spotify id of this user.
         """
         return self._id
 
 
     def name(self):
-        """ Get the User's display name.
-
+        """
         Returns:
-            str: the display name of the User as it appears on Spotify
+            str: The user's display name as it appears on Spotify
 
         Calls endpoints:
-            GET     /v1/users/{id}
+            - GET     /v1/users/{id}
         """
         return utils.get_field(self, 'display_name')
 
 
     def href(self):
-        """ Get the User's href.
+        """ Get the user's href.
 
         Returns:
-            str: a link to the Web API endpoint containing the User's profile.
+            str: a link to the Web API endpoint containing the user's profile.
 
         Calls endpoints:
-            GET     /v1/users/{id}
+            - GET     /v1/users/{id}
         """
         return utils.get_field(self, 'href')
 
 
     def uri(self):
-        """ Get the User's uri.
-
+        """
         Returns:
-            str: the Spotify uri for this User
+            str: the user's Spotify uri.
 
         Calls endpoints:
-            GET     /v1/users/{id}
+            - GET     /v1/users/{id}
         """
         return utils.get_field(self, 'uri')
 
@@ -205,11 +213,11 @@ class User:
         """ Get the User's profile picture.
 
         Returns:
-            Image: an image object if the User has a profile picture
-            None: if the User has no profile picture.
+            Union[Image, None]: An image object if the User has a profile
+            picture, else None.
 
         Calls endpoints:
-            GET     /v1/users/{id}
+            - GET     /v1/users/{id}
         """
         result = utils.get_field(self, 'images')
 
@@ -223,34 +231,33 @@ class User:
         """ Get the User's country code.
 
         Returns:
-            str: an ISO alpha-2 country code
+            str: An ISO alpha-2 country code.
 
         Calls endpoints:
-            GET     /v1/me
+            - GET     /v1/me
 
         Required token scopes:
-            user-read-private
+            - user-read-private
 
         Raises:
-            AuthenticationError: if this User is not the User who made the token
+            AuthenticationError: if this user is not the one who made the token.
         """
         return self._get_private_field('country')
 
 
     def email(self):
-        """ Get the User's email address.
-
+        """
         Returns:
-            str: the email address associated with the account
+            str: The email address associated with the account.
 
         Calls endpoints:
-            GET     /v1/me
+            - GET     /v1/me
 
         Required token scopes:
-            user-read-email
+            - user-read-email
 
         Raises:
-            AuthenticationError: if this User is not the User who made the token
+            AuthenticationError: if this User is not the one who made the token.
         """
         return self._get_private_field('email')
 
@@ -259,33 +266,35 @@ class User:
         """ Get the User's account subscription.
 
         Returns:
-            str: the account's subscription, such as 'premium', 'free', etc.
+            str: The account's subscription, such as 'premium', 'free', etc.
 
         Note: Spotify does not define all possible subscription types, so
             instead of returning an enum (like many other methods in the
-            library), it returns the raw string. See the 'product' field here:
-            https://developer.spotify.com/documentation/web-api/reference/users-profile/get-current-users-profile/
+            library), it returns the raw string. See the 'product' field
+            `here <https://developer.spotify.com/documentation/web-api/reference/users-profile/get-current-users-profile/>`__.
+
         Calls endpoints:
-            GET     /v1/me
+            - GET     /v1/me
 
         Required token scopes:
-            user-read-private
+            - user-read-private
 
         Raises:
-            AuthenticationError: if this User is not the User who made the token
+            AuthenticationError: if this User is not the one who made the token.
         """
         return self._get_private_field('product')
 
 
     def player(self):
-        """ Get the player object for this user.
+        """ This is how client code should access a player.
 
-        This is how client code should access a player. For example:
+        Example::
+
             u = sp.get_user(user_id)
             u.player().pause()
 
         Returns:
-            A Player object.
+            Player: The player object for this user.
         """
         return self._player
 
@@ -297,24 +306,27 @@ class User:
         """ Get the top artists or tracks for the user over a time range.
 
         Args:
-            top_type: get top items of this type. One of:
-                sp.ARTISTS
-                sp.TRACKS
-            limit: (int) max number of items to return. Must be positive.
+            top_type: Get top items of this type. One of:
+
+                - sp.ARTISTS
+                - sp.TRACKS
+
+            limit (int): Max number of items to return. Must be positive.
             time_range: get top items for this time range. One of:
-                sp.LONG (several years)
-                sp.MEDIUM (about 6 months)
-                sp.SHORT (about 4 weeks)
+
+                - sp.LONG (several years)
+                - sp.MEDIUM (about 6 months)
+                - sp.SHORT (about 4 weeks)
 
         Returns:
-            A list of artists or a list of tracks, depending on top_type
+            A list of artists or a list of tracks, depending on top_type.
             Could return an empty list.
 
         Required token scopes:
-            user-top-read
+            - user-top-read
 
         Calls endpoints:
-            GET     /v1/me/top/{type}
+            - GET     /v1/me/top/{type}
 
         Note: Spotify defines "top items" using internal metrics.
         """
@@ -348,26 +360,25 @@ class User:
 
 
     def recently_played(self, limit=50):
-        """ Get the user's recently played tracks.
-
+        """
         Args:
-            limit: (int) max number of items to return. Must be between 1 and
+            limit (int): Max number of items to return. Must be between 1 and
                 50, inclusive.
 
         Returns:
-            A list of tracks. Could be empty.
+            List[Tracks]: The user's recently played tracks. Could be empty.
 
         Required token scopes:
-            user-read-recently-played
+            - user-read-recently-played
 
         Calls endpoints:
-            GET     /v1/me/player/recently-played
+            - GET     /v1/me/player/recently-played
 
         Note:
-            * The 'before' and 'after' functionalities are not supported.
-            * Does not return the time the tracks were played
-            * A track must be played for >30s to be included in the history.
-              Tracks played while in a 'private session' not recorded.
+            - The 'before' and 'after' functionalities are not supported.
+            - Does not return the time the tracks were played
+            - A track must be played for >30s to be included in the history.
+              Tracks played while in a 'private session' are not recorded.
         """
         # Validate arguments
         if limit <= 0 or limit > 50:
@@ -393,24 +404,25 @@ class User:
 
 
     def get_playlists(self, limit=const.MAX_PLAYLISTS):
-        """ Get the playlists the user has in their library.
-
+        """
         Args:
-            limit: (int) the max number of items to return. Must be between
+            limit (int): The max number of items to return. Must be between
                 1 and 100,000 inclusive. Default is 100,000.
 
         Returns:
-            A list of playlists. Could be empty.
+            List[Playlist]: The playlists the user has in their library. Could
+            be empty.
 
-        Note: this includes both playlists owned by this user and playlists
+        Note:
+            This includes both playlists owned by this user and playlists
             that this user follows but are owned by others.
 
         Required token scopes:
-            playlist-read-private
-            playlist-read-collaborative
+            - playlist-read-private
+            - playlist-read-collaborative
 
         Calls endpoints:
-            GET     /v1/users/{user_id}/playlists
+            - GET     /v1/users/{user_id}/playlists
 
         To get only playlists this user follows, use get_following(sp.PLAYLISTS)
         """
@@ -436,24 +448,26 @@ class User:
         """ Create a new playlist owned by the current user.
 
         Args:
-            name: (str) The name for the new playlist. Does not need to be
+            name (str): The name for the new playlist. Does not need to be
                 unique; a user may have several playlists with the same name.
-            visibility: how other users interact with this playlist. One of:
-                    sp.PUBLIC: publicly viewable, not collaborative
-                    sp.PRIVATE: not publicly viewable, not collaborative
-                    sp.PRIVATE_COLLAB: not publicly viewable, collaborative
-            description: (str) viewable description of the playlist.
+            visibility: How other users interact with this playlist. One of:
+
+                    - sp.PUBLIC: publicly viewable, not collaborative
+                    - sp.PRIVATE: not publicly viewable, not collaborative
+                    - sp.PRIVATE_COLLAB: not publicly viewable, collaborative
+
+            description (str): The viewable description of the playlist.
 
         Returns:
-            The newly created Playlist object. Note that this function modifies
-            the user's library.
+            Playlist: The newly created Playlist object. Note that this function
+            modifies the user's library.
 
         Required token scopes:
-            playlist-modify-public
-            playlist-modify-private
+            - playlist-modify-public
+            - playlist-modify-private
 
         Calls endpoints:
-            POST    /v1/users/{user_id}/playlists
+            - POST    /v1/users/{user_id}/playlists
         """
         # Validate inputs
         if visibility not in [const.PUBLIC,
@@ -492,19 +506,19 @@ class User:
             other: check if current user is following 'other'. Other must be
                 one of the following:
 
-                    * Artist
-                    * User
-                    * Playlist
-                    * List: can contain multiple of the above types
+                    - Artist
+                    - User
+                    - Playlist
+                    - List: can contain multiple of the above types
 
         Required token scopes:
-            user-follow-read
-            playlist-read-private
-            playlist-read-collaborative
+            - user-follow-read
+            - playlist-read-private
+            - playlist-read-collaborative
 
         Calls endpoints:
-            GET     /v1/me/following/contains
-            GET     /v1/users/{user_id}/playlists
+            - GET     /v1/me/following/contains
+            - GET     /v1/users/{user_id}/playlists
 
         Returns:
             List of tuples. Each tuple has an input object and whether the user
@@ -579,19 +593,19 @@ class User:
             limit: (int) the max number of items to return. If None,
                 will return all. Must be positive.
                 If follow_type == sp.PLAYLISTS, must be <= 100,000
-                See here: https://developer.spotify.com/documentation/web-api/reference/playlists/get-list-users-playlists/
+                See `here <https://developer.spotify.com/documentation/web-api/reference/playlists/get-list-users-playlists/>`__.
 
         Returns:
             List of follow_type objects. Could be empty.
 
         Required token scopes:
-            user-follow-read
-            playlist-read-private
-            playlist-read-collaborative
+            - user-follow-read
+            - playlist-read-private
+            - playlist-read-collaborative
 
         Calls endpoints:
-            GET     /v1/me/following
-            GET     /v1/users/{user_id}/playlists
+            - GET     /v1/me/following
+            - GET     /v1/users/{user_id}/playlists
 
         Calls functions:
             self.get_playlists() if follow_type == sp.PLAYLISTS
@@ -599,7 +613,7 @@ class User:
         Raises:
             ValueError: if sp.USERS is passed in. The Spotify web api does not
                 currently allow you to access this information.
-                For more info: https://github.com/spotify/web-api/issues/4
+                See `here <https://github.com/spotify/web-api/issues/4>`__.
         """
         # Validate follow_type
         if follow_type not in [const.ARTISTS, const.PLAYLISTS]:
@@ -723,12 +737,14 @@ class User:
 
         Args:
             other: follow 'other'. Other must be one of the following:
-                    Artist
-                    User
-                    Playlist
-                    List: can contain multiple of the above types
 
-        Note: does not currently support privately following playlists. Any
+                - Artist
+                - User
+                - Playlist
+                - List: can contain multiple of the above types
+
+        Note:
+            Does not currently support privately following playlists. Any
             playlists followed will be automatically added to the user's public
             playlists.
 
@@ -736,13 +752,13 @@ class User:
             None
 
         Required token scopes:
-            user-follow-modify
-            playlist-modify-public
-            playlist-modify-private
+            - user-follow-modify
+            - playlist-modify-public
+            - playlist-modify-private
 
         Calls endpoints:
-            PUT     /v1/me/following
-            PUT     /v1/playlists/{playlist_id}/followers
+            - PUT     /v1/me/following
+            - PUT     /v1/playlists/{playlist_id}/followers
         """
         self._follow_unfollow_help(other, const.REQUEST_PUT)
 
@@ -752,22 +768,23 @@ class User:
 
         Args:
             other: unfollow 'other'. Other must be one of the following:
-                    Artist
-                    User
-                    Playlist
-                    List: can contain multiple of the above types
+
+                - Artist
+                - User
+                - Playlist
+                - List: can contain multiple of the above types
 
         Returns:
             None
 
         Required token scopes:
-            user-follow-modify
-            playlist-modify-public
-            playlist-modify-private
+            - user-follow-modify
+            - playlist-modify-public
+            - playlist-modify-private
 
         Calls endpoints:
-            DELETE  /v1/me/following
-            DELETE  /v1/playlists/{playlist_id}/followers
+            - DELETE  /v1/me/following
+            - DELETE  /v1/playlists/{playlist_id}/followers
         """
         self._follow_unfollow_help(other, const.REQUEST_DELETE)
 
@@ -780,20 +797,20 @@ class User:
             other: check if the current user has 'other' saved to the library.
                 Other must be one of the following:
 
-                    * Track
-                    * Album
-                    * List: can contain multiple of the above types
+                    - Track
+                    - Album
+                    - List: can contain multiple of the above types
 
         Returns:
             List of tuples. Each tuple has an input object and whether the user
             has that object saved.
 
         Required token scopes:
-            user-library-read
+            - user-library-read
 
         Calls endpoints:
-            GET     /v1/me/albums/contains
-            GET     /v1/me/tracks/contains
+            - GET     /v1/me/albums/contains
+            - GET     /v1/me/tracks/contains
         """
         # Validate input
         if not isinstance(other, list):
@@ -846,6 +863,7 @@ class User:
         return zipped_tracks + zipped_albums
 
 
+    # TODO: format market docstring
     def get_saved(self,
                   saved_type,
                   limit=None,
@@ -854,10 +872,13 @@ class User:
 
         Args:
             saved_type: one of:
-                sp.ALBUMS
-                sp.TRACKS
-            limit: (int) the max number of items to return. If None,
-                will return all. Must be positive.
+
+                - sp.ALBUMS
+                - sp.TRACKS
+
+            limit (int): the max number of items to return. If None, will return
+                all. Must be positive.
+
             market: a 2 letter country code as defined here:
                 https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
                 Used for track relinking:
@@ -870,11 +891,11 @@ class User:
             List of saved_type objects. Could be empty.
 
         Required token scopes:
-            user-library-read
+            - user-library-read
 
         Calls endpoints:
-            GET     /v1/me/albums
-            GET     /v1/me/tracks
+            - GET     /v1/me/albums
+            - GET     /v1/me/tracks
 
         """
         # Validate inputs
@@ -951,19 +972,20 @@ class User:
 
         Args:
             other: the object(s) to save. Other must be one of the following:
-                    Track
-                    Album
-                    List: can contain multiple of the above types
+
+                - Track
+                - Album
+                - List: can contain multiple of the above types
 
         Returns:
             None
 
         Required token scopes:
-            user-library-modify
+            - user-library-modify
 
         Calls endpoints:
-            PUT     /v1/me/albums
-            PUT     /v1/me/tracks
+            - PUT     /v1/me/albums
+            - PUT     /v1/me/tracks
         """
         self._save_remove_help(other, const.REQUEST_PUT)
 
@@ -973,19 +995,19 @@ class User:
 
         Args:
             other: the object(s) to remove. Other must be one of the following:
-                    Track
-                    Album
-                    List: can contain multiple of the above types
+                - Track
+                - Album
+                - List: can contain multiple of the above types
 
         Returns:
             None
 
         Required token scopes:
-            user-library-modify
+            - user-library-modify
 
         Calls endpoints:
-            DELETE  /v1/me/albums
-            DELETE  /v1/me/tracks
+            - DELETE  /v1/me/albums
+            - DELETE  /v1/me/tracks
         """
         self._save_remove_help(other, const.REQUEST_DELETE)
 
