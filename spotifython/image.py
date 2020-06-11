@@ -1,17 +1,16 @@
-""" Image class """
+""" Image class. """
 
 # Standard library imports
 import copy
 
-
 class Image:
     """ Container class representing a Spotify image
 
-    Use methods here to get information about an Image
+    Use methods here to get information about an Image.
     """
 
     def __init__(self, info):
-        """ Get an instance of Image
+        """ Get an instance of Image.
 
         This constructor should never be called by the client. To get an
         instance of Image, use another object's image methods, such as
@@ -35,7 +34,7 @@ class Image:
 
 
     def url(self):
-        """ Get the image's url
+        """ Get the image's url.
 
         Returns:
             str: the url
@@ -44,7 +43,7 @@ class Image:
 
 
     def width(self):
-        """ Get the width of the image in pixels
+        """ Get the width of the image in pixels.
 
         Returns:
             int: the width in pixels, if known
@@ -54,7 +53,7 @@ class Image:
 
 
     def height(self):
-        """ Get the height of the image in pixels
+        """ Get the height of the image in pixels.
 
         Returns:
             int: the height in pixels, if known

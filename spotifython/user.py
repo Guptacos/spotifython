@@ -1,4 +1,4 @@
-""" User class """
+""" User class. """
 
 # Standard library imports
 import copy
@@ -14,7 +14,7 @@ from spotifython.image import Image
 # TODO: what to do about partial success on batch operations?
 class User:
     #pylint: disable=line-too-long
-    """ Represents a Spotify user tied to a unique Spotify id
+    """ Represents a Spotify user tied to a unique Spotify id.
 
     Use methods here to interact with a User, such as reading / modifying the
     library and following artists.
@@ -30,7 +30,7 @@ class User:
     """
 
     def __init__(self, session, info):
-        """ Get an instance of User
+        """ Get an instance of User.
 
         This constructor should never be called by the client. To get a
         User by its id, use Session.get_users() or Session.current_user().
@@ -69,7 +69,7 @@ class User:
 
 
     def _update_fields(self):
-        """ Update self._raw using the User id
+        """ Update self._raw using the User id.
 
         Calls endpoints:
             GET     /v1/users/{id}
@@ -157,7 +157,7 @@ class User:
 
 
     def spotify_id(self):
-        """ Get the id of this user
+        """ Get the id of this user.
 
         Returns:
             The same id that this user was created with as a string.
@@ -166,7 +166,7 @@ class User:
 
 
     def name(self):
-        """ Get the User's display name
+        """ Get the User's display name.
 
         Returns:
             str: the display name of the User as it appears on Spotify
@@ -178,7 +178,7 @@ class User:
 
 
     def href(self):
-        """ Get the User's href
+        """ Get the User's href.
 
         Returns:
             str: a link to the Web API endpoint containing the User's profile.
@@ -190,7 +190,7 @@ class User:
 
 
     def uri(self):
-        """ Get the User's uri
+        """ Get the User's uri.
 
         Returns:
             str: the Spotify uri for this User
@@ -202,7 +202,7 @@ class User:
 
 
     def image(self):
-        """ Get the User's profile picture
+        """ Get the User's profile picture.
 
         Returns:
             Image: an image object if the User has a profile picture
@@ -220,7 +220,7 @@ class User:
 
 
     def country(self):
-        """ Get the User's country code
+        """ Get the User's country code.
 
         Returns:
             str: an ISO alpha-2 country code
@@ -238,7 +238,7 @@ class User:
 
 
     def email(self):
-        """ Get the User's email address
+        """ Get the User's email address.
 
         Returns:
             str: the email address associated with the account
@@ -256,7 +256,7 @@ class User:
 
 
     def subscription(self):
-        """ Get the User's account subscription
+        """ Get the User's account subscription.
 
         Returns:
             str: the account's subscription, such as 'premium', 'free', etc.
@@ -278,7 +278,7 @@ class User:
 
 
     def player(self):
-        """ Get the player object for this user
+        """ Get the player object for this user.
 
         This is how client code should access a player. For example:
             u = sp.get_user(user_id)
@@ -348,7 +348,7 @@ class User:
 
 
     def recently_played(self, limit=50):
-        """ Get the user's recently played tracks
+        """ Get the user's recently played tracks.
 
         Args:
             limit: (int) max number of items to return. Must be between 1 and
@@ -393,7 +393,7 @@ class User:
 
 
     def get_playlists(self, limit=const.MAX_PLAYLISTS):
-        """ Get the playlists the user has in their library
+        """ Get the playlists the user has in their library.
 
         Args:
             limit: (int) the max number of items to return. Must be between
@@ -433,7 +433,7 @@ class User:
                         name,
                         visibility=const.PUBLIC,
                         description=None):
-        """ Create a new playlist owned by the current user
+        """ Create a new playlist owned by the current user.
 
         Args:
             name: (str) The name for the new playlist. Does not need to be
@@ -486,7 +486,7 @@ class User:
 
     # TODO: checking return of tuple funcs means ret[0][1] for 1 elem...
     def is_following(self, other):
-        """ Check if the current user is following something
+        """ Check if the current user is following something.
 
         Args:
             other: check if current user is following 'other'. Other must be
@@ -570,7 +570,7 @@ class User:
                       follow_type,
                       limit=None):
         #pylint: disable=line-too-long
-        """ Get all follow_type objects the current user is following
+        """ Get all follow_type objects the current user is following.
 
         Args:
             follow_type: one of:
@@ -666,6 +666,7 @@ class User:
 
     def _follow_unfollow_help(self, other, request_type):
         """ follow and unfollow are identical, except for the request type.
+
         This function implements that functionality to remove duplicate code.
         """
         # Validate input
@@ -718,7 +719,7 @@ class User:
                 raise utils.SpotifyError(status_code, response_json)
 
     def follow(self, other):
-        """ Follow one or more things
+        """ Follow one or more things.
 
         Args:
             other: follow 'other'. Other must be one of the following:
@@ -747,7 +748,7 @@ class User:
 
 
     def unfollow(self, other):
-        """ Unfollow one or more things
+        """ Unfollow one or more things.
 
         Args:
             other: unfollow 'other'. Other must be one of the following:
@@ -773,7 +774,7 @@ class User:
 
     # TODO: checking return of tuple funcs means ret[0][1] for 1 elem...
     def has_saved(self, other):
-        """ Check if the user has one or more things saved to their library
+        """ Check if the user has one or more things saved to their library.
 
         Args:
             other: check if the current user has 'other' saved to the library.
@@ -849,7 +850,7 @@ class User:
                   saved_type,
                   limit=None,
                   market=const.TOKEN_REGION):
-        """ Get all saved_type objects the user has saved to their library
+        """ Get all saved_type objects the user has saved to their library.
 
         Args:
             saved_type: one of:
@@ -903,6 +904,7 @@ class User:
     def _save_remove_help(self, other, request_type):
         """ save and remove are identical, except for the request type and
         return codes.
+
         This function implements that functionality to remove duplicate code.
         """
         # Validate input
@@ -945,7 +947,7 @@ class User:
 
 
     def save(self, other):
-        """ Save one or more things to the user's library
+        """ Save one or more things to the user's library.
 
         Args:
             other: the object(s) to save. Other must be one of the following:
@@ -967,7 +969,7 @@ class User:
 
 
     def remove(self, other):
-        """ Remove one or more things from the user's library
+        """ Remove one or more things from the user's library.
 
         Args:
             other: the object(s) to remove. Other must be one of the following:

@@ -1,7 +1,4 @@
-"""
-Helper utilities for the spotifython library. These should not be used by client
-code.
-"""
+""" Helper methods for spotifython. These shouldn't be used by the client. """
 
 # Standard library imports
 import math
@@ -27,18 +24,15 @@ from spotifython.endpoints import Endpoints
 # Exceptions
 #pylint: disable=unnecessary-pass, line-too-long, protected-access
 class AuthenticationError(Exception):
-    """ Used when the token fails to authenticate with Spotify
-    """
+    """ Used when the token fails to authenticate with Spotify. """
     pass
 
 class NetworkError(Exception):
-    """ Used when the network fails
-    """
+    """ Used when the network fails. """
     pass
 
 class SpotifyError(Exception):
-    """ Used when Spotify fails for an unknown reason
-    """
+    """ Used when Spotify fails for an unknown reason. """
     pass
 
 def get_field(obj, field):
@@ -103,6 +97,7 @@ def request(session,
             body=None,
             uri_params=None):
     """ Does HTTP request with retry to a Spotify endpoint.
+
     This method should return a tuple (response_json, status_code) if the
     request is executed, and raises an Exception if the request type is invalid.
 
@@ -198,7 +193,8 @@ def paginate_get(session,
                  uri_params=None,
                  body=None):
     #pylint: disable=too-many-arguments
-    """ Used to get a large number of objects from Spotify
+    """ Used to get a large number of objects from Spotify.
+
     Note: does a GET request
 
     E.g: getting all of a user's saved songs. In this case, Spotify limits
@@ -261,7 +257,7 @@ def paginate_get(session,
 ##################################
 
 def create_batches(elems, batch_size=const.SPOTIFY_PAGE_SIZE):
-    """ Break list into batches of max len 'batch_size'
+    """ Break list into batches of max len 'batch_size'.
 
     Args:
         elems: the list of elements to split
@@ -303,7 +299,8 @@ def spotifython_hash(obj):
     return hash(obj.__class__.__name__ + obj.spotify_id())
 
 def separate(elems, filter_type):
-    """ Filter out all objects of type 'filter_type' from elems """
+    """ Filter out all objects of type 'filter_type' from elems. """
+
     filter_func = lambda elem: isinstance(elem, filter_type)
     return list(filter(filter_func, elems))
 
