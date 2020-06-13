@@ -7,3 +7,4 @@ spotifython package
    :glob:
 
    classes/*
+   terms
