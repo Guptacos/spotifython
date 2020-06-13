@@ -863,7 +863,7 @@ class User:
         return zipped_tracks + zipped_albums
 
 
-    # TODO: format market docstring
+    # TODO: fix market, only use if saved_type is sp.TRACKS
     def get_saved(self,
                   saved_type,
                   limit=None,
@@ -879,13 +879,10 @@ class User:
             limit (int): the max number of items to return. If None, will return
                 all. Must be positive.
 
-            market: a 2 letter country code as defined here:
-                https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
-                Used for track relinking:
-                https://developer.spotify.com/documentation/general/guides/track-relinking-guide/
-
-                if sp.TOKEN_REGION (default) is given, will use appropriate
-                country code for user based on their auth token and location.
+            market (str): a :term:`market code <Market>` used for :term:`track
+                relinking <Track Relinking>`. Only used if saved_type is
+                sp.TRACKS (relinked albums are not yet supported by
+                spotifython).
 
         Returns:
             List of saved_type objects. Could be empty.

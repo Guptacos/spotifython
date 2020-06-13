@@ -22,9 +22,9 @@ class Album:
           needs no scopes.
 
     Note:
-        The Album class does not currently support track relinking using market
-        codes. As such, ``__len__()``, ``__getitem___()``, and ``tracks()``
-        are not relinked.
+        The Album class does not currently support :term:`track relinking <Track
+        Relinking>` using :term:`market <Market>` codes. As such, ``__len__()``,
+        ``__getitem___()``, and ``tracks()`` are not relinked.
     """
 
 
@@ -216,7 +216,8 @@ class Album:
 
 
     def available_markets(self):
-        """ Get the country codes of the markets this album is available in.
+        """ Get the country codes of the :term:`markets <Market>` this album is
+        available in.
 
         The album is considered available in a market when at least one of its
         tracks is available in that market.

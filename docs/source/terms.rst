@@ -35,5 +35,5 @@ further resources for reading.
 
       If sp.TOKEN_REGION is given, will use the appropriate country code for the
       client based on the user's authorization token and location.
-      
+
       See `here <https://developer.spotify.com/documentation/general/guides/track-relinking-guide/>`__ for more information.
