@@ -20,7 +20,7 @@ class Player:
     Do not use the constructor. To get an instance of Player, use
     :meth:`User.player() <spotifython.user.User.player>`.
 
-    Shared args:
+    Shared Args:
         - **device_id**: the device the command should target.  The given id
           must be a device listed in
           :meth:`Player.available_devices() <available_devices>`.
@@ -29,9 +29,8 @@ class Player:
           want most of the time.
 
         - **position** (int): always represents milliseconds.
-        - **market** (str): a 2 letter country code as defined
-          `here <https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2>`__. Used for
-          `track relinking <https://developer.spotify.com/documentation/general/guides/track-relinking-guide/>`__.
+        - **market** (str): a :term:`market code <Market>` or sp.TOKEN_REGION,
+          used for :term:`track relinking <Track Relinking>`.
 
           If sp.TOKEN_REGION (default) is given, will use appropriate country
           code for user based on their auth token and location.
@@ -112,7 +111,7 @@ class Player:
 
         Args:
             key: the key to get from the currently playing context
-            market: see the :class:`top level documentation <Player>`
+            market: see the :class:`shared args documentation <Player>`
             should_raise_error:
                 if False: returns None when no device available
                 if True: raises SpotifyError when no device available
@@ -391,7 +390,7 @@ class Player:
         Uses the currently active device, if one exists.
 
         Args:
-            market: see the :class:`top level documentation <Player>`
+            market: see the :class:`shared args documentation <Player>`
 
         Returns:
             Union[Track, None]: A Track object if there is a track playing, else
@@ -416,7 +415,7 @@ class Player:
         Uses the currently active device, if one exists.
 
         Args:
-            market: see the :class:`top level documentation <Player>`
+            market: see the :class:`shared args documentation <Player>`
 
         Returns:
             An Album, Artist, or Playlist if there is a context for the

@@ -187,26 +187,20 @@ class Session:
 
             limit (int): the maximum number of results to return.
 
-            market (str): An ISO 3166-1 alpha-2 country code or the
-                string sp.TOKEN_REGION. If a country code is specified,
-                only artists, albums, and tracks with content that is playable
-                in that market is returned.
-
-                Note:
-                    - Playlist results are not affected by the market parameter.
-                    - If market is set to sp.TOKEN_REGION, and a valid access
-                      token is specified in the request header, only content
-                      playable in the country associated with the user account,
-                      is returned.
-                    - If market is set to None, no market is passed to Spotify's
-                      Web API, and its default behavior is invoked.
+            market (str): a :term:`market code <Market>` or sp.TOKEN_REGION,
+                used for :term:`track relinking <Track Relinking>`. If None, no
+                market is passed to Spotify's Web API, and its default behavior
+                is invoked.
 
             include_external_audio (bool): If true, the response will include
                 any relevant audio content that is hosted externally. By default
                 external content is filtered out from responses.
 
         Note:
-            Shows and Episodes will be supported in a future release.
+            - Shows and Episodes will be supported in a future release.
+            - Playlist seasrch results are not affected by the market parameter.
+            - If market is not None, only content playable in the specified
+              is returned.
 
         Returns:
             SearchResult: The results from the Spotify search.
@@ -351,10 +345,10 @@ class Session:
 
         Args:
             album_ids (str, List[str]): The Spotify album id(s) to get.
-            market (str): an ISO 3166-1 alpha-2 country code or the string
-                sp.TOKEN_REGION. Provide this parameter if you want to apply
-                Track Relinking. If market is set to None, no market is passed
-                to Spotify's Web API, and its default behavior is invoked.
+            market (str): a :term:`market code <Market>` or sp.TOKEN_REGION,
+                used for :term:`track relinking <Track Relinking>`. If None, no
+                market is passed to Spotify's Web API, and its default behavior
+                is invoked.
 
         Returns:
             Union[Album, List[Album]]: The requested album(s).
@@ -478,10 +472,10 @@ class Session:
 
         Args:
             track_ids (str, List[str]): The Spotify track id(s) to get.
-            market (str): An ISO 3166-1 alpha-2 country code or the string
-                sp.TOKEN_REGION. Provide this parameter if you want to apply
-                Track Relinking. If market is set to None, no market is passed
-                to Spotify's Web API, and its default behavior is invoked.
+            market (str): a :term:`market code <Market>` or sp.TOKEN_REGION,
+                used for :term:`track relinking <Track Relinking>`. If None, no
+                market is passed to Spotify's Web API, and its default behavior
+                is invoked.
 
         Returns:
             Union[Track, List[Track]]: The requested track(s).
@@ -556,10 +550,10 @@ class Session:
                 objects. Use multiple parentheses to drill down into nested
                 objects.  Fields can be excluded by prefixing them with an
                 exclamation mark.
-            market (str): an ISO 3166-1 alpha-2 country code or the string
-                sp.TOKEN_REGION. Provide this parameter if you want to apply
-                Track Relinking. If market is set to None, no market is passed
-                to Spotify's Web API.
+            market (str): a :term:`market code <Market>` or sp.TOKEN_REGION,
+                used for :term:`track relinking <Track Relinking>`. If None, no
+                market is passed to Spotify's Web API, and its default behavior
+                is invoked.
 
         Returns:
             Union[Playlist, List[Playlist]]: The requested playlist(s)

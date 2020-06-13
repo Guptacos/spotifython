@@ -198,12 +198,13 @@ class Artist:
                 - sp.ARTIST_APPEARS_ON
                 - sp.ARTIST_COMPILATION
 
-            market (str): an ISO 3166-1 alpha-2 country code or the string
-                sp.TOKEN_REGION. Supply this parameter to limit the response to
-                one particular geographical market. If this value is None,
-                results will be returned for all countries and you are likely to
-                get duplicate results per album, one for each country in which
-                the album is available!
+            market (str): a :term:`market code <Market>` or sp.TOKEN_REGION,
+                used for :term:`track relinking <Track Relinking>`.
+
+        Note:
+            If market is None, results will be returned for all countries and
+            you are likely to get duplicate results per album, one for each
+            country in which the album is available!
 
         Returns:
             List[Album]: The artist's albums.
@@ -253,8 +254,8 @@ class Artist:
         """ Get the top tracks associated with the current Spotify artist.
 
         Args:
-            market (str): an ISO 3166-1 alpha-2 country code or the string
-                sp.TOKEN_REGION.
+            market (str): a :term:`market code <Market>` or sp.TOKEN_REGION,
+                used for :term:`track relinking <Track Relinking>`.
             search_limit (int): the maximum number of results to return. Must be
                 between 1 and 10, inclusive (this is Spotify's limit).
 

@@ -151,7 +151,8 @@ class Track:
     def available_markets(self):
         """
         Returns:
-            List[str]: A list of the country codes this track is available in.
+            List[str]: A list of the :term:`markets <Market>` this track is
+            available in.
 
         Calls endpoints:
             - GET     /v1/tracks/{id}
