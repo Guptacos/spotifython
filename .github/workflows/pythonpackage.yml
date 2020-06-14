@@ -32,4 +32,4 @@ jobs:
         make lint
     - name: Test with unittest
       run: |
-        python -m unittest discover -s test
+        make test
