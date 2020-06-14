@@ -22,12 +22,17 @@ Last updated: May 25, 2020
 # Standard library imports
 import unittest
 from unittest.mock import patch
+import sys, logging
+
+logger = logging.getLogger()
+logger.level = logging.DEBUG
 
 # Local imports
 from tests.help_lib import get_dummy_data
 import spotifython.constants as const
+import spotifython.utils as utils
 
-USER_ID = 'deadbeef'
+ARTIST_ID = 'deadbeef'
 TOKEN = 'feebdaed'
 
 class TestArtist(unittest.TestCase):
@@ -37,11 +42,10 @@ class TestArtist(unittest.TestCase):
     def setUp(self):
         # Note: since we're mocking Spotify and never actually using the token,
         # we can put any string here for the token.
-        self.session = sp(TOKEN)
-        self.artist = Artist(self.session, get_dummy_data(const.ARTISTS, 1)[0])
+        self.session = Session(TOKEN)
 
         # Mock the sp._request method so that we never actually reach Spotify
-        self.patcher = patch.object(sp, '_request', autospec=True)
+        self.patcher = patch.object(utils, 'request', autospec=True)
 
         # Add cleanup to unmock sp._request. Cleanup always called after trying
         # to execute a test, even if the test or setUp errors out / fails.
@@ -50,31 +54,57 @@ class TestArtist(unittest.TestCase):
         # Create the actual mock object
         self.request_mock = self.patcher.start()
 
+        # Logging can be added using print() now
+        self.stream_handler = logging.StreamHandler(sys.stdout)
+        logger.addHandler(self.stream_handler)
 
     # This function is called after every test_* function. Use it to clean up
     # any resources initialized by the setUp function. Only include it if you
     # actually need to clean up resources.
     def tearDown(self):
-        pass
+        logger.removeHandler(self.stream_handler)
 
     # Test __str__, __repr__
     @unittest.skip('Not yet implemented')
     def test_str_overloads(self):
-        self.assertTrue(self.artist == self.artist)
-        self.assertTrue(False)
+        artist = get_dummy_data(const.ARTISTS, limit=1, to_obj=True)[0]
+        self.assertTrue(isinstance(artist.__str__(), str))
+        self.assertTrue(isinstance(artist.__repr__(), str))
 
     # Test __eq__, __ne__, __hash__
-    @unittest.skip('Not yet implemented')
     def test_equality_overloads(self):
-        self.assertTrue(False)
+        artists = get_dummy_data(const.ARTISTS, limit=2, to_obj=True)
+        self.assertTrue(artists[0] != artists[1])
+        self.assertTrue(artists[0] == artists[0])
+        self.assertTrue(artists[1] == artists[1])
 
     # Test genres(), href(), spotify_id(), name(), popularity(), uri() when
     # their corresponding fields are present
-    @unittest.skip('Not yet implemented')
     def test_field_accessors(self):
-        self.assertTrue(False)
+        artists = get_dummy_data(const.ARTISTS, limit=2, to_obj=True)
+        artist_0, artist_1 = artists[0], artists[1]
+
+        self.assertTrue(all(
+            (isinstance(genre, str) for genre in x.genres()) for x in [artist_0, artist_1])
+        )
+        self.assertTrue(all(
+            isinstance(x.href(), str) for x in [artist_0, artist_1])
+        )
+        self.assertTrue(all(
+            isinstance(x.spotify_id(), str) for x in [artist_0, artist_1])
+        )
+        self.assertTrue(all(
+            isinstance(x.name(), str) for x in [artist_0, artist_1])
+        )
+        self.assertTrue(all(
+            isinstance(x.popularity(), int) for x in [artist_0, artist_1])
+        )
+        self.assertTrue(all(
+            isinstance(x.uri(), str) for x in [artist_0, artist_1])
+        )
 
     # Test _update_fields()
+    # TODO: how to mock this?
     @unittest.skip('Not yet implemented')
     def test_update_fields(self):
         self.assertTrue(False)
@@ -106,4 +136,4 @@ from spotifython.player import Player
 from spotifython.playlist import Playlist
 from spotifython.track import Track
 from spotifython.user import User
-from spotifython.session import Session as sp
+from spotifython.session import Session
