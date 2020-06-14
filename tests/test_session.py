@@ -22,25 +22,30 @@ Last updated: May 30, 2020
 # Standard library imports
 import unittest
 from unittest.mock import patch
+import sys, logging
+
+logger = logging.getLogger()
+logger.level = logging.DEBUG
 
 # Local imports
 from tests.help_lib import get_dummy_data
 import spotifython.constants as const
+import spotifython.utils as utils
 
 USER_ID = 'deadbeef'
 TOKEN = 'feebdaed'
 
-class TestSession(unittest.TestCase):
+class TestArtist(unittest.TestCase):
 
     # This function is called before every test_* function. Anything that is
     # needed by every test_* function should be stored in "self" here.
     def setUp(self):
         # Note: since we're mocking Spotify and never actually using the token,
         # we can put any string here for the token.
-        self.session = sp(TOKEN)
+        self.session = Session(TOKEN)
 
         # Mock the sp._request method so that we never actually reach Spotify
-        self.patcher = patch.object(sp, '_request', autospec=True)
+        self.patcher = patch.object(utils, 'request', autospec=True)
 
         # Add cleanup to unmock sp._request. Cleanup always called after trying
         # to execute a test, even if the test or setUp errors out / fails.
@@ -49,11 +54,15 @@ class TestSession(unittest.TestCase):
         # Create the actual mock object
         self.request_mock = self.patcher.start()
 
+        # Logging can be added using print() now
+        self.stream_handler = logging.StreamHandler(sys.stdout)
+        logger.addHandler(self.stream_handler)
+
     # This function is called after every test_* function. Use it to clean up
     # any resources initialized by the setUp function. Only include it if you
     # actually need to clean up resources.
     def tearDown(self):
-        pass
+        logger.removeHandler(self.stream_handler)
 
     # Test __str__, __repr__
     @unittest.skip('Not yet implemented')
