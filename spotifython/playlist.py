@@ -363,7 +363,7 @@ class Playlist:
         return response_json[0]['url']
 
 
-    def tracks(self, start=0, num_tracks=None):
+    def tracks(self, start=0, num_tracks=None, market=const.TOKEN_REGION):
         """ Returns one or more tracks in the playlist.
 
         Returns the specified number of tracks in the playlist starting at the
@@ -382,6 +382,13 @@ class Playlist:
                 to return. If num_tracks is greater than len(playlist) or if
                 num_tracks is omitted, returns as many tracks as are present at
                 start.
+            market: A 2 letter country code as defined here:
+                https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
+                Used for track relinking:
+                https://developer.spotify.com/documentation/general/guides/track-relinking-guide/
+
+                If omitted, will use the appropriate country code based on the
+                auth token and location.
 
         Returns:
             List[Track]: The tracks specified by the arguments.
@@ -404,8 +411,10 @@ class Playlist:
                 raise ValueError(f'Invalid num_tracks: {num_tracks}')
         if not num_tracks:
             num_tracks = sys.maxsize
+        uri_params = {}
+        uri_params['market'] = market
         tracks = utils.paginate_get(self._session, num_tracks, Track,
-                                    endpoint)
+                                    endpoint, uri_params=uri_params)
         return tracks[start:]
 
     # TODO test this in practice, what does it actually mean? Nobody knows.
