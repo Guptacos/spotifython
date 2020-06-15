@@ -34,7 +34,7 @@ TOKEN = 'feebdaed'
 class TestArtist(unittest.TestCase):
 
     # This function is called before every test_* function. Anything that is
-    # needed by every test_* function should be stored in "self" here.
+    # needed by every test_* function should be stored in 'self' here.
     def setUp(self):
         # Note: since we're mocking Spotify and never actually using the token,
         # we can put any string here for the token.
@@ -113,7 +113,39 @@ class TestArtist(unittest.TestCase):
     # Test albums()
     @unittest.skip('Not yet implemented')
     def test_albums(self):
-        self.assertTrue(False)
+        expected_albums = get_dummy_data(const.ALBUMS, limit=100)
+        self.request_mock.side_effect = [
+            {
+                'href': 'href_uri',
+                'items': expected_albums[:50],
+                'limit': 50,
+                'next': null,
+                'offset': 100,
+                'previous': 'previous_uri',
+                'total': 100,
+            },
+            {
+                'href': 'href_uri',
+                'items': expected_albums[50:100],
+                'limit': 50,
+                'next': null,
+                'offset': 100,
+                'previous': 'previous_uri',
+                'total': 100,
+            },
+            {
+                'href': 'href_uri',
+                'items': [],
+                'limit': 50,
+                'next': null,
+                'offset': 100,
+                'previous': 'previous_uri',
+                'total': 100,
+            }
+        ]
+        artist = get_dummy_data(const.ARTISTS, limit=1, to_obj=True)[0]
+        albums = artist.albums()
+        self.assertEqual(albums, expected_albums)
 
     # Test top_tracks()
     def test_top_tracks(self):
