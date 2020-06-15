@@ -22,10 +22,6 @@ Last updated: May 25, 2020
 # Standard library imports
 import unittest
 from unittest.mock import patch
-import sys, logging
-
-logger = logging.getLogger()
-logger.level = logging.DEBUG
 
 # Local imports
 from tests.help_lib import get_dummy_data
@@ -54,15 +50,11 @@ class TestArtist(unittest.TestCase):
         # Create the actual mock object
         self.request_mock = self.patcher.start()
 
-        # Logging can be added using print() now
-        self.stream_handler = logging.StreamHandler(sys.stdout)
-        logger.addHandler(self.stream_handler)
-
     # This function is called after every test_* function. Use it to clean up
     # any resources initialized by the setUp function. Only include it if you
     # actually need to clean up resources.
     def tearDown(self):
-        logger.removeHandler(self.stream_handler)
+        pass
 
     # Test __str__, __repr__
     @unittest.skip('Not yet implemented')
