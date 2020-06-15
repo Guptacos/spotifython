@@ -124,9 +124,12 @@ class TestArtist(unittest.TestCase):
         self.assertEqual(tracks, expected_tracks)
 
     # Test related_artists()
-    @unittest.skip('Not yet implemented')
     def test_related_artists(self):
-        self.assertTrue(False)
+        self.request_mock.return_value = ({'artists': get_dummy_data(const.ARTISTS, limit=20)}, 200)
+        expected_artists = get_dummy_data(const.ARTISTS, limit=20, to_obj=True)
+        artist = get_dummy_data(const.ARTISTS, limit=1, to_obj=True)[0]
+        related_artists = artist.related_artists()
+        self.assertEqual(related_artists, expected_artists)
 
 # This allows the tests to be executed
 if __name__ == '__main__':

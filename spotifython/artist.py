@@ -350,11 +350,18 @@ class Artist:
             return self._related_artists
 
         # Update stored params for lazy loading
-        self._related_artists = utils.paginate_get(session=self._session,
-                                                   limit=search_limit,
-                                                   return_class=Artist,
-                                                   endpoint=endpoint
-                                                   )
+        response_json, status_code  = utils.request(session=self._session,
+                                      request_type=const.REQUEST_GET,
+                                      endpoint=endpoint
+                                      )
+
+        if status_code != 200:
+            raise utils.SpotifyError(status_code, response_json)
+        if 'artists' not in response_json:
+            raise utils.SpotifyError("Malformed response: missing key 'artists'")
+
+        result = [Artist(self._session, x) for x in response_json.get('artists')]
+        self._related_artists = result
         self._related_artists_query_params = search_query
 
         return self._related_artists
