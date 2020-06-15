@@ -96,10 +96,19 @@ class TestArtist(unittest.TestCase):
         )
 
     # Test _update_fields()
-    # TODO: how to mock this?
-    @unittest.skip('Not yet implemented')
     def test_update_fields(self):
-        self.assertTrue(False)
+        self.request_mock.return_value = (get_dummy_data(const.ARTISTS, limit=1)[0], 200)
+        expected_artist = get_dummy_data(const.ARTISTS, limit=1, to_obj=True)[0]
+        artist = Artist(session=self.session, info={'id': expected_artist.spotify_id()})
+
+        # Check state before updating the fields
+        self.assertTrue(artist == expected_artist)
+        self.assertEqual(artist._raw.__len__(), 1)
+
+        # Check state after updating the fields
+        artist._update_fields()
+        self.assertTrue(artist == expected_artist)
+        self.assertEqual(artist._raw.__len__(), expected_artist._raw.__len__())
 
     # Test albums()
     @unittest.skip('Not yet implemented')
