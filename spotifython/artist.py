@@ -296,12 +296,18 @@ class Artist:
             return self._top_tracks
 
         # Update stored params for lazy loading
-        self._top_tracks = utils.paginate_get(session=self._session,
-                                              limit=search_limit,
-                                              return_class=Track,
-                                              endpoint=endpoint,
-                                              uri_params=uri_params
-                                              )
+        response_json, status_code = utils.request(session=self._session,
+                                                   request_type=const.REQUEST_GET,
+                                                   endpoint=endpoint,
+                                                   uri_params=uri_params
+                                                   )
+        if status_code != 200:
+            raise utils.SpotifyError(status_code, response_json)
+        if 'tracks' not in response_json:
+            raise utils.SpotifyError("Malformed response: missing key 'tracks'")
+
+        result = [Track(self._session, x) for x in response_json.get('tracks')]
+        self._top_tracks = result
         self._top_tracks_query_params = search_query
 
         return self._top_tracks
@@ -353,7 +359,6 @@ class Artist:
 
         return self._related_artists
 
-
 #pylint: disable=wrong-import-position
-from spotifython.album import Album
+#pylint: disable=wrong-import-order
 from spotifython.track import Track

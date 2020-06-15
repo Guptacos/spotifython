@@ -116,9 +116,12 @@ class TestArtist(unittest.TestCase):
         self.assertTrue(False)
 
     # Test top_tracks()
-    @unittest.skip('Not yet implemented')
     def test_top_tracks(self):
-        self.assertTrue(False)
+        self.request_mock.return_value = ({'tracks': get_dummy_data(const.TRACKS, limit=10)}, 200)
+        expected_tracks = get_dummy_data(const.TRACKS, limit=10, to_obj=True)
+        artist = get_dummy_data(const.ARTISTS, limit=1, to_obj=True)[0]
+        tracks = artist.top_tracks()
+        self.assertEqual(tracks, expected_tracks)
 
     # Test related_artists()
     @unittest.skip('Not yet implemented')
