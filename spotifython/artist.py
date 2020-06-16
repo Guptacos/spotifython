@@ -297,7 +297,8 @@ class Artist:
 
         # Update stored params for lazy loading
         response_json, status_code = utils.request(session=self._session,
-                                                   request_type=const.REQUEST_GET,
+                                                   request_type=\
+                                                       const.REQUEST_GET,
                                                    endpoint=endpoint,
                                                    uri_params=uri_params
                                                    )
@@ -350,17 +351,20 @@ class Artist:
             return self._related_artists
 
         # Update stored params for lazy loading
-        response_json, status_code  = utils.request(session=self._session,
-                                      request_type=const.REQUEST_GET,
-                                      endpoint=endpoint
-                                      )
+        response_json, status_code = utils.request(session=self._session,
+                                                   request_type=\
+                                                       const.REQUEST_GET,
+                                                   endpoint=endpoint
+                                                   )
 
         if status_code != 200:
             raise utils.SpotifyError(status_code, response_json)
         if 'artists' not in response_json:
-            raise utils.SpotifyError("Malformed response: missing key 'artists'")
+            raise utils.SpotifyError('Malformed response, missing key artists')
 
-        result = [Artist(self._session, x) for x in response_json.get('artists')]
+        result = [
+            Artist(self._session, x) for x in response_json.get('artists')
+        ]
         self._related_artists = result
         self._related_artists_query_params = search_query
 
@@ -369,3 +373,4 @@ class Artist:
 #pylint: disable=wrong-import-position
 #pylint: disable=wrong-import-order
 from spotifython.track import Track
+from spotifython.album import Album

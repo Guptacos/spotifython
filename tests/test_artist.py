@@ -16,9 +16,6 @@ Last updated: May 25, 2020
 #pylint: disable=import-error
 #pylint: disable=redundant-unittest-assert
 
-#TODO: remove this pylint ignore when the tests are written
-#pylint: disable=unused-import
-
 # Standard library imports
 import unittest
 from unittest.mock import patch
@@ -76,42 +73,51 @@ class TestArtist(unittest.TestCase):
         artists = get_dummy_data(const.ARTISTS, limit=2, to_obj=True)
         artist_0, artist_1 = artists[0], artists[1]
 
+        self.assertTrue(all((isinstance(genre, str) for genre in x.genres()) \
+                        for x in [artist_0, artist_1])
+                        )
         self.assertTrue(all(
-            (isinstance(genre, str) for genre in x.genres()) for x in [artist_0, artist_1])
-        )
-        self.assertTrue(all(
-            isinstance(x.href(), str) for x in [artist_0, artist_1])
-        )
-        self.assertTrue(all(
-            isinstance(x.spotify_id(), str) for x in [artist_0, artist_1])
-        )
-        self.assertTrue(all(
-            isinstance(x.name(), str) for x in [artist_0, artist_1])
-        )
-        self.assertTrue(all(
-            isinstance(x.popularity(), int) for x in [artist_0, artist_1])
-        )
-        self.assertTrue(all(
-            isinstance(x.uri(), str) for x in [artist_0, artist_1])
-        )
+                        isinstance(x.href(), str) for x in [artist_0, artist_1])
+                        )
+        self.assertTrue(all(isinstance(x.spotify_id(), str) \
+                        for x in [artist_0, artist_1]))
+        self.assertTrue(all(isinstance(x.name(), str) \
+                        for x in [artist_0, artist_1]))
+        self.assertTrue(all(isinstance(x.popularity(), int) \
+            for x in [artist_0, artist_1]))
+        self.assertTrue(all(isinstance(x.uri(), str) \
+                        for x in [artist_0, artist_1]))
 
     # Test _update_fields()
     def test_update_fields(self):
-        self.request_mock.return_value = (get_dummy_data(const.ARTISTS, limit=1)[0], 200)
-        expected_artist = get_dummy_data(const.ARTISTS, limit=1, to_obj=True)[0]
-        artist = Artist(session=self.session, info={'id': expected_artist.spotify_id()})
+        self.request_mock.return_value = (
+            get_dummy_data(const.ARTISTS, limit=1)[0],
+            200
+        )
+        expected_artist = get_dummy_data(
+            const.ARTISTS,
+            limit=1,
+            to_obj=True
+        )[0]
+        artist = Artist(
+            session=self.session,
+            info={
+                'id': expected_artist.spotify_id()
+            }
+        )
 
         # Check state before updating the fields
         self.assertTrue(artist == expected_artist)
+        # pylint: disable=protected-access
         self.assertEqual(artist._raw.__len__(), 1)
 
         # Check state after updating the fields
         artist._update_fields()
         self.assertTrue(artist == expected_artist)
+        # pylint: disable=protected-access
         self.assertEqual(artist._raw.__len__(), expected_artist._raw.__len__())
 
     # Test albums()
-    @unittest.skip('Not yet implemented')
     def test_albums(self):
         expected_albums = get_dummy_data(const.ALBUMS, limit=100)
         self.request_mock.side_effect = [
@@ -119,7 +125,7 @@ class TestArtist(unittest.TestCase):
                 'href': 'href_uri',
                 'items': expected_albums[:50],
                 'limit': 50,
-                'next': null,
+                'next': 'next_here',
                 'offset': 100,
                 'previous': 'previous_uri',
                 'total': 100,
@@ -128,7 +134,7 @@ class TestArtist(unittest.TestCase):
                 'href': 'href_uri',
                 'items': expected_albums[50:100],
                 'limit': 50,
-                'next': null,
+                'next': 'next_here',
                 'offset': 100,
                 'previous': 'previous_uri',
                 'total': 100,
@@ -137,7 +143,7 @@ class TestArtist(unittest.TestCase):
                 'href': 'href_uri',
                 'items': [],
                 'limit': 50,
-                'next': null,
+                'next': None,
                 'offset': 100,
                 'previous': 'previous_uri',
                 'total': 100,
@@ -149,7 +155,12 @@ class TestArtist(unittest.TestCase):
 
     # Test top_tracks()
     def test_top_tracks(self):
-        self.request_mock.return_value = ({'tracks': get_dummy_data(const.TRACKS, limit=10)}, 200)
+        self.request_mock.return_value = (
+            {
+                'tracks': get_dummy_data(const.TRACKS, limit=10)
+            },
+            200
+        )
         expected_tracks = get_dummy_data(const.TRACKS, limit=10, to_obj=True)
         artist = get_dummy_data(const.ARTISTS, limit=1, to_obj=True)[0]
         tracks = artist.top_tracks()
@@ -157,7 +168,12 @@ class TestArtist(unittest.TestCase):
 
     # Test related_artists()
     def test_related_artists(self):
-        self.request_mock.return_value = ({'artists': get_dummy_data(const.ARTISTS, limit=20)}, 200)
+        self.request_mock.return_value = (
+            {
+                'artists': get_dummy_data(const.ARTISTS, limit=20)
+            },
+            200
+        )
         expected_artists = get_dummy_data(const.ARTISTS, limit=20, to_obj=True)
         artist = get_dummy_data(const.ARTISTS, limit=1, to_obj=True)[0]
         related_artists = artist.related_artists()
@@ -169,10 +185,5 @@ if __name__ == '__main__':
 
 #pylint: disable=wrong-import-position
 #pylint: disable=wrong-import-order
-from spotifython.album import Album
 from spotifython.artist import Artist
-from spotifython.player import Player
-from spotifython.playlist import Playlist
-from spotifython.track import Track
-from spotifython.user import User
 from spotifython.session import Session
