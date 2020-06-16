@@ -191,7 +191,8 @@ def paginate_get(session,
                  return_class,
                  endpoint,
                  uri_params=None,
-                 body=None):
+                 body=None,
+                 page_size=const.SPOTIFY_PAGE_SIZE):
     #pylint: disable=too-many-arguments
     """ Used to get a large number of objects from Spotify.
 
@@ -222,16 +223,14 @@ def paginate_get(session,
     # Execute requests
     results = []
 
-    # TODO: if any spotify page sizes are are a different value, make a param
-    uri_params['limit'] = const.SPOTIFY_PAGE_SIZE
+    uri_params['limit'] = page_size
 
     # Loop until we get 'limit' many items or run out
     next_multiple = lambda num, mult: math.ceil(num / mult) * mult
-    num_to_request = next_multiple(limit, const.SPOTIFY_PAGE_SIZE)
+    num_to_request = next_multiple(limit, page_size)
 
-    for offset in range(0, num_to_request, const.SPOTIFY_PAGE_SIZE):
+    for offset in range(0, num_to_request, page_size):
         uri_params['offset'] = offset
-
         response_json, status_code = request(
             session,
             request_type=const.REQUEST_GET,
