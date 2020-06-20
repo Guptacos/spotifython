@@ -22,10 +22,6 @@ Last updated: May 30, 2020
 # Standard library imports
 import unittest
 from unittest.mock import patch
-import sys, logging
-
-logger = logging.getLogger()
-logger.level = logging.DEBUG
 
 # Local imports
 from tests.help_lib import get_dummy_data
@@ -34,6 +30,7 @@ import spotifython.utils as utils
 
 USER_ID = 'deadbeef'
 TOKEN = 'feebdaed'
+TOKEN1 = TOKEN + TOKEN
 
 class TestArtist(unittest.TestCase):
 
@@ -61,7 +58,7 @@ class TestArtist(unittest.TestCase):
         # Note: since we're mocking Spotify and never actually using the token,
         # we can put any string here for the token.
         session = Session(TOKEN)
-        session_1 = Session(TOKEN + TOKEN)
+        session_1 = Session(TOKEN1)
         self.assertEqual(str(session), str(session))
         self.assertFalse(str(session) == str(session_1))
         self.assertEqual(repr(session), repr(session))
@@ -70,7 +67,7 @@ class TestArtist(unittest.TestCase):
     # Test __eq__, __ne__, __hash__
     def test_equality_overloads(self):
         session = Session(TOKEN)
-        session_1 = Session(TOKEN + TOKEN)
+        session_1 = Session(TOKEN1)
         self.assertEqual(session, session)
         self.assertFalse(session == session_1)
         self.assertEqual(hash(session), hash(session))
@@ -78,15 +75,13 @@ class TestArtist(unittest.TestCase):
 
     # Test reauthenticate
     def test_reauthenticate(self):
-        TOKEN_1 = TOKEN + TOKEN
         session = Session(TOKEN)
-        session.reauthenticate(TOKEN)
+        session.reauthenticate(TOKEN1)
         session_1 = Session(TOKEN_1)
         self.assertFalse(session == session_1)
 
     # Test token, timeout
     def test_getters(self):
-        TOKEN_1 = TOKEN + TOKEN
         session = Session(TOKEN)
         session_1 = Session(TOKEN1)
         self.assertEqual(token(session), token(session))
