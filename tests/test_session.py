@@ -372,9 +372,12 @@ class TestArtist(unittest.TestCase):
         self.assertEqual(users, expected_users)
 
     # Test current_user
-    @unittest.skip('Not yet implemented')
     def test_current_user(self):
-        pass
+        session = Session(TOKEN)
+        self.request_mock.return_value = (expected_users_json[0], 200)
+        expected_user = User(session, info=expected_users_json[0])
+        user = session.current_user()
+        self.assertEqual(user, expected_user)
 
     # Test get_playlists
     def test_get_playlists(self):
