@@ -32,47 +32,49 @@ USER_ID = 'deadbeef'
 TOKEN = 'feebdaed'
 TOKEN1 = TOKEN + TOKEN
 
-SEARCH_LIMIT_1 = 100
-SEARCH_LIMIT_2 = 49
+SEARCH_LIMIT_ALBUMS = 100
+SEARCH_LIMIT_ARTISTS = 100
+SEARCH_LIMIT_PLAYLISTS = 23
+SEARCH_LIMIT_TRACKS = 59
 SEARCH_LIMIT_USERS = 5
 
 expected_albums_json = get_dummy_data(
     const.ALBUMS,
-    limit=SEARCH_LIMIT_1,
+    limit=SEARCH_LIMIT_ALBUMS,
 )
 expected_albums = get_dummy_data(
     const.ALBUMS,
-    limit=SEARCH_LIMIT_1,
+    limit=SEARCH_LIMIT_ALBUMS,
     to_obj=True
 )
 
 expected_artists_json = get_dummy_data(
     const.ARTISTS,
-    limit=SEARCH_LIMIT_1,
+    limit=SEARCH_LIMIT_ARTISTS,
 )
 expected_artists = get_dummy_data(
     const.ARTISTS,
-    limit=SEARCH_LIMIT_1,
+    limit=SEARCH_LIMIT_ARTISTS,
     to_obj=True
 )
 
 expected_playlists_json = get_dummy_data(
     const.PLAYLISTS,
-    limit=SEARCH_LIMIT_2,
+    limit=SEARCH_LIMIT_PLAYLISTS,
 )
 expected_playlists = get_dummy_data(
     const.PLAYLISTS,
-    limit=SEARCH_LIMIT_2,
+    limit=SEARCH_LIMIT_PLAYLISTS,
     to_obj=True
 )
 
 expected_tracks_json = get_dummy_data(
     const.TRACKS,
-    limit=SEARCH_LIMIT_2,
+    limit=SEARCH_LIMIT_PLAYLISTS,
 )
 expected_tracks = get_dummy_data(
     const.TRACKS,
-    limit=SEARCH_LIMIT_2,
+    limit=SEARCH_LIMIT_PLAYLISTS,
     to_obj=True
 )
 
@@ -157,7 +159,7 @@ class TestArtist(unittest.TestCase):
                         'next': 'next_here',
                         'offset': 0,
                         'previous': 'previous_uri',
-                        'total': SEARCH_LIMIT_1,
+                        'total': SEARCH_LIMIT_ALBUMS,
                     },
                     'artists': {
                         'href': 'href_uri',
@@ -166,7 +168,7 @@ class TestArtist(unittest.TestCase):
                         'next': 'next_here',
                         'offset': 0,
                         'previous': 'previous_uri',
-                        'total': SEARCH_LIMIT_1,
+                        'total': SEARCH_LIMIT_ARTISTS,
                     },
                     'playlists': {
                         'href': 'href_uri',
@@ -175,7 +177,7 @@ class TestArtist(unittest.TestCase):
                         'next': 'next_here',
                         'offset': 0,
                         'previous': 'previous_uri',
-                        'total': SEARCH_LIMIT_2,
+                        'total': SEARCH_LIMIT_PLAYLISTS,
                     },
                     'tracks': {
                         'href': 'href_uri',
@@ -184,7 +186,7 @@ class TestArtist(unittest.TestCase):
                         'next': 'next_here',
                         'offset': 0,
                         'previous': 'previous_uri',
-                        'total': SEARCH_LIMIT_2,
+                        'total': SEARCH_LIMIT_TRACKS,
                     }
                 },
                 200
@@ -198,7 +200,7 @@ class TestArtist(unittest.TestCase):
                         'next': 'next_here',
                         'offset': 50,
                         'previous': 'previous_uri',
-                        'total': SEARCH_LIMIT_1,
+                        'total': SEARCH_LIMIT_ALBUMS,
                     },
                     'artists': {
                         'href': 'href_uri',
@@ -207,7 +209,7 @@ class TestArtist(unittest.TestCase):
                         'next': 'next_here',
                         'offset': 50,
                         'previous': 'previous_uri',
-                        'total': SEARCH_LIMIT_1,
+                        'total': SEARCH_LIMIT_ARTISTS,
                     },
                     'playlists': {
                         'href': 'href_uri',
@@ -216,7 +218,7 @@ class TestArtist(unittest.TestCase):
                         'next': None,
                         'offset': 50,
                         'previous': 'previous_uri',
-                        'total': SEARCH_LIMIT_2,
+                        'total': SEARCH_LIMIT_PLAYLISTS,
                     },
                     'tracks': {
                         'href': 'href_uri',
@@ -225,7 +227,7 @@ class TestArtist(unittest.TestCase):
                         'next': None,
                         'offset': 50,
                         'previous': 'previous_uri',
-                        'total': SEARCH_LIMIT_2,
+                        'total': SEARCH_LIMIT_TRACKS,
                     }
                 },
                 200
@@ -239,7 +241,7 @@ class TestArtist(unittest.TestCase):
                         'next': None,
                         'offset': 100,
                         'previous': 'previous_uri',
-                        'total': SEARCH_LIMIT_1,
+                        'total': SEARCH_LIMIT_ALBUMS,
                     },
                     'artists': {
                         'href': 'href_uri',
@@ -248,7 +250,7 @@ class TestArtist(unittest.TestCase):
                         'next': None,
                         'offset': 100,
                         'previous': 'previous_uri',
-                        'total': SEARCH_LIMIT_1,
+                        'total': SEARCH_LIMIT_ARTISTS,
                     }
                 },
                 200
@@ -375,9 +377,21 @@ class TestArtist(unittest.TestCase):
         pass
 
     # Test get_playlists
-    @unittest.skip('Not yet implemented')
     def test_get_playlists(self):
-        self.assertTrue(False)
+        session = Session(TOKEN)
+        self.request_mock.side_effect = [
+            (
+                expected_playlists_json[i],
+                200
+            ) for i in range(SEARCH_LIMIT_PLAYLISTS)
+        ]
+
+        playlists = session.get_playlists(
+            list(
+                map(lambda x: x['id'], expected_playlists_json)
+            )
+        )
+        self.assertEqual(playlists, expected_playlists)
 
 # This allows the tests to be executed
 if __name__ == '__main__':
