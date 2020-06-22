@@ -37,6 +37,7 @@ class Album:
         """
         # Validate inputs
         if 'id' not in info:
+            print(type(info), type(info[0]))
             raise ValueError('Album id not in info')
 
         # TODO: need to make sure name is here.

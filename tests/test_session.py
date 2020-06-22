@@ -253,9 +253,46 @@ class TestArtist(unittest.TestCase):
         self.assertEqual(search_result.tracks(), expected_tracks)
 
     # Test get_albums
-    @unittest.skip('Not yet implemented')
     def test_get_albums(self):
-        self.assertTrue(False)
+        session = Session(TOKEN)
+        self.request_mock.side_effect = [
+            (
+                {
+                    "albums" : expected_albums_json[0:20]
+                },
+                200
+            ),
+            (
+                {
+                    "albums" : expected_albums_json[20:40]
+                },
+                200
+            ),
+            (
+                {
+                    "albums" : expected_albums_json[40:60]
+                },
+                200
+            ),
+            (
+                {
+                    "albums" : expected_albums_json[60:80]
+                },
+                200
+            ),
+            (
+                {
+                    "albums" : expected_albums_json[80:100]
+                },
+                200
+            )
+        ]
+        albums = session.get_albums(
+            list(
+                map(lambda x: x['id'], expected_albums_json)
+            )
+        )
+        self.assertEqual(albums, expected_albums)
 
     # Test get_artists
     @unittest.skip('Not yet implemented')
