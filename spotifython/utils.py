@@ -204,14 +204,16 @@ def paginate_get(session,
          These return objects are turned into 'return_class' objects.
 
     Keyword arguments:
-        limit: (int) the maximum number of items to return
+        limit: (int) the maximum number of items to return. None if all items
+            should be returned.
         return_class: the class to construct for the list contents.
-            Constructor must have signature: func(self, session_obj, known_vals)
+            Constructor must have signature:
+                func(self, session_obj, known_vals).
         endpoint: (str) the endpoint to call.
-            The Spotify endpoint must accept 'limit' and 'offset' in uri_params
-            Return json must contain key 'items'
-        uri_params: (dict) the uri parameters for the request
-        body: (dict) the body of the call
+            The Spotify endpoint must accept 'limit' and 'offset' in uri_params.
+            Return json must contain key 'items'.
+        uri_params: (dict) the uri parameters for the request.
+        body: (dict) the body of the call.
 
     Returns:
         A list of objects of type return_class
@@ -225,11 +227,14 @@ def paginate_get(session,
 
     uri_params['limit'] = page_size
 
-    # Loop until we get 'limit' many items or run out
+    # Loop until we get 'limit' many items or run out. If there is no limit,
+    # keep going until we run out of items.
     next_multiple = lambda num, mult: math.ceil(num / mult) * mult
-    num_to_request = next_multiple(limit, page_size)
+    num_to_request = next_multiple(limit, page_size) if limit is not None \
+        else float('inf')
+    offset = 0
 
-    for offset in range(0, num_to_request, page_size):
+    while num_to_request > 0:
         uri_params['offset'] = offset
         response_json, status_code = request(
             session,
@@ -248,6 +253,9 @@ def paginate_get(session,
 
         for elem in response_json['items']:
             results.append(return_class(session, elem))
+
+        num_to_request -= 1
+        offset += page_size
 
     return results[:limit]
 

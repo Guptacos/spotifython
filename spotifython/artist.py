@@ -189,8 +189,6 @@ class Artist:
 
         Args:
             search_limit (int): the maximum number of results to return.
-                This value must between greater than 0, and the default value
-                is 50.
             include_groups (List[]): a list of keywords that will be used to
                 filter the response. If not supplied, all album types will be
                 returned. Valid values are:
