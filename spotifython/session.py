@@ -1,7 +1,7 @@
 """ Session class. """
 
 # Standard library imports
-import math, copy
+import math
 
 # Local imports
 import spotifython.constants as const
@@ -159,12 +159,11 @@ class Session:
     ##################################
 
     # pylint: disable=too-many-arguments, too-many-locals, too-many-branches
+    # pylint: disable=too-many-statements
     # TODO: unfortunately this function has to be kind of long to accomodate the
     # logic required. Refactor this in the future.
-
     # TODO: 'optional field filters and operators' What are these? Provide
     #       a link and / or example.
-    # TODO: why are the enums search_type_x instead of just sp.ARTISTS etc.?
     def search(self,
                query,
                types,
@@ -358,7 +357,7 @@ class Session:
             new_remaining_types = list()
             for curr_type in remaining_types:
                 api_result_type = map_args_to_api_result[curr_type]
-                if response_json[api_result_type]['next'] != None:
+                if response_json[api_result_type]['next'] is not None:
                     new_remaining_types.append(curr_type)
             remaining_types = new_remaining_types
 
