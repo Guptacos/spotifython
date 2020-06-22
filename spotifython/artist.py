@@ -182,13 +182,14 @@ class Artist:
     ##################################
 
     def albums(self,
-               search_limit=50,
+               search_limit=None,
                include_groups=None,
                market=const.TOKEN_REGION):
         """ Get the albums associated with the artist.
 
         Args:
-            search_limit (int): the maximum number of results to return.
+            search_limit (int): the maximum number of results to return. If
+                None, return all items.
             include_groups (List[]): a list of keywords that will be used to
                 filter the response. If not supplied, all album types will be
                 returned. Valid values are:
@@ -214,8 +215,9 @@ class Artist:
         """
 
         # Validation
-        if not isinstance(search_limit, int) or search_limit < 1:
-            raise TypeError('search_limit should be an int > 0')
+        if (search_limit is not None and not isinstance(search_limit, int)) or \
+            (isinstance(search_limit, int) and search_limit < 1):
+            raise TypeError('search_limit should be None or an int > 0')
         if include_groups is not None and \
             not all(isinstance(x, str) for x in include_groups):
             raise TypeError('include_groups should be None or str')

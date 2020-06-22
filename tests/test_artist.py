@@ -118,7 +118,7 @@ class TestArtist(unittest.TestCase):
         self.assertEqual(artist._raw.__len__(), expected_artist._raw.__len__())
 
     # Test albums()
-    def test_albums(self):
+    def test_albums_with_limit(self):
         search_limit = 100
         expected_albums_json = get_dummy_data(
             const.ALBUMS,
@@ -169,6 +169,59 @@ class TestArtist(unittest.TestCase):
         ]
         artist = get_dummy_data(const.ARTISTS, limit=1, to_obj=True)[0]
         albums = artist.albums(search_limit=search_limit)
+        self.assertEqual(albums, expected_albums)
+
+    def test_albums_with_no_limit(self):
+        search_limit = 100
+        expected_albums_json = get_dummy_data(
+            const.ALBUMS,
+            limit=search_limit,
+        )
+        expected_albums = get_dummy_data(
+            const.ALBUMS,
+            limit=search_limit,
+            to_obj=True
+        )
+        self.request_mock.side_effect = [
+            (
+                {
+                    'href': 'href_uri',
+                    'items': expected_albums_json[:50],
+                    'limit': 50,
+                    'next': 'next_here',
+                    'offset': 0,
+                    'previous': 'previous_uri',
+                    'total': 100,
+                },
+                200
+            ),
+            (
+                {
+                    'href': 'href_uri',
+                    'items': expected_albums_json[50:100],
+                    'limit': 50,
+                    'next': 'next_here',
+                    'offset': 50,
+                    'previous': 'previous_uri',
+                    'total': 100,
+                },
+                200
+            ),
+            (
+                {
+                    'href': 'href_uri',
+                    'items': [],
+                    'limit': 50,
+                    'next': None,
+                    'offset': 100,
+                    'previous': 'previous_uri',
+                    'total': 100,
+                },
+                200
+            )
+        ]
+        artist = get_dummy_data(const.ARTISTS, limit=1, to_obj=True)[0]
+        albums = artist.albums()
         self.assertEqual(albums, expected_albums)
 
     # Test top_tracks()
