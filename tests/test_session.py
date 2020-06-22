@@ -34,6 +34,7 @@ TOKEN1 = TOKEN + TOKEN
 
 SEARCH_LIMIT_1 = 100
 SEARCH_LIMIT_2 = 49
+SEARCH_LIMIT_USERS = 5
 
 expected_albums_json = get_dummy_data(
     const.ALBUMS,
@@ -72,6 +73,16 @@ expected_tracks_json = get_dummy_data(
 expected_tracks = get_dummy_data(
     const.TRACKS,
     limit=SEARCH_LIMIT_2,
+    to_obj=True
+)
+
+expected_users_json = get_dummy_data(
+    const.USERS,
+    limit=SEARCH_LIMIT_USERS,
+)
+expected_users = get_dummy_data(
+    const.USERS,
+    limit=SEARCH_LIMIT_USERS,
     to_obj=True
 )
 
@@ -342,10 +353,26 @@ class TestArtist(unittest.TestCase):
         )
         self.assertEqual(tracks, expected_tracks)
 
-    # Test get_users, current_user
-    @unittest.skip('Not yet implemented')
+    # Test get_users
     def test_get_users(self):
-        self.assertTrue(False)
+        session = Session(TOKEN)
+        self.request_mock.side_effect = [
+            (
+                expected_users_json[i],
+                200
+            ) for i in range(SEARCH_LIMIT_USERS)
+        ]
+        users = session.get_users(
+            list(
+                map(lambda x: x['id'], expected_users_json)
+            )
+        )
+        self.assertEqual(users, expected_users)
+
+    # Test current_user
+    @unittest.skip('Not yet implemented')
+    def test_current_user(self):
+        pass
 
     # Test get_playlists
     @unittest.skip('Not yet implemented')
