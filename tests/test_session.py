@@ -32,6 +32,49 @@ USER_ID = 'deadbeef'
 TOKEN = 'feebdaed'
 TOKEN1 = TOKEN + TOKEN
 
+SEARCH_LIMIT_1 = 100
+SEARCH_LIMIT_2 = 49
+
+expected_albums_json = get_dummy_data(
+    const.ALBUMS,
+    limit=SEARCH_LIMIT_1,
+)
+expected_albums = get_dummy_data(
+    const.ALBUMS,
+    limit=SEARCH_LIMIT_1,
+    to_obj=True
+)
+
+expected_artists_json = get_dummy_data(
+    const.ARTISTS,
+    limit=SEARCH_LIMIT_1,
+)
+expected_artists = get_dummy_data(
+    const.ARTISTS,
+    limit=SEARCH_LIMIT_1,
+    to_obj=True
+)
+
+expected_playlists_json = get_dummy_data(
+    const.PLAYLISTS,
+    limit=SEARCH_LIMIT_2,
+)
+expected_playlists = get_dummy_data(
+    const.PLAYLISTS,
+    limit=SEARCH_LIMIT_2,
+    to_obj=True
+)
+
+expected_tracks_json = get_dummy_data(
+    const.TRACKS,
+    limit=SEARCH_LIMIT_2,
+)
+expected_tracks = get_dummy_data(
+    const.TRACKS,
+    limit=SEARCH_LIMIT_2,
+    to_obj=True
+)
+
 class TestArtist(unittest.TestCase):
 
     # This function is called before every test_* function. Anything that is
@@ -77,23 +120,137 @@ class TestArtist(unittest.TestCase):
     def test_reauthenticate(self):
         session = Session(TOKEN)
         session.reauthenticate(TOKEN1)
-        session_1 = Session(TOKEN_1)
+        session_1 = Session(TOKEN1)
         self.assertFalse(session == session_1)
 
     # Test token, timeout
     def test_getters(self):
         session = Session(TOKEN)
         session_1 = Session(TOKEN1)
-        self.assertEqual(token(session), token(session))
-        self.assertFalse(token(session) == token(session_1))
+        self.assertEqual(session.token(), session.token())
+        self.assertFalse(session.token() == session_1.token())
         # Using default timeout
-        self.assertEqual(timeout(session), timeout(session))
-        self.assertEqual(timeout(session) == timeout(session_1))
+        self.assertEqual(session.timeout(), session.timeout())
+        self.assertEqual(session.timeout(), session_1.timeout())
 
     # Test search
-    @unittest.skip('Not yet implemented')
     def test_search(self):
-        self.assertTrue(False)
+        session = Session(TOKEN)
+        self.request_mock.side_effect = [
+            (
+                {
+                    'albums': {
+                        'href': 'href_uri',
+                        'items': expected_albums_json[:50],
+                        'limit': 50,
+                        'next': 'next_here',
+                        'offset': 0,
+                        'previous': 'previous_uri',
+                        'total': SEARCH_LIMIT_1,
+                    },
+                    'artists': {
+                        'href': 'href_uri',
+                        'items': expected_artists_json[:50],
+                        'limit': 50,
+                        'next': 'next_here',
+                        'offset': 0,
+                        'previous': 'previous_uri',
+                        'total': SEARCH_LIMIT_1,
+                    },
+                    'playlists': {
+                        'href': 'href_uri',
+                        'items': expected_playlists_json[:50],
+                        'limit': 50,
+                        'next': 'next_here',
+                        'offset': 0,
+                        'previous': 'previous_uri',
+                        'total': SEARCH_LIMIT_2,
+                    },
+                    'tracks': {
+                        'href': 'href_uri',
+                        'items': expected_tracks_json[:50],
+                        'limit': 50,
+                        'next': 'next_here',
+                        'offset': 0,
+                        'previous': 'previous_uri',
+                        'total': SEARCH_LIMIT_2,
+                    }
+                },
+                200
+            ),
+            (
+                {
+                    'albums': {
+                        'href': 'href_uri',
+                        'items': expected_albums_json[50:100],
+                        'limit': 50,
+                        'next': 'next_here',
+                        'offset': 50,
+                        'previous': 'previous_uri',
+                        'total': SEARCH_LIMIT_1,
+                    },
+                    'artists': {
+                        'href': 'href_uri',
+                        'items': expected_artists_json[50:100],
+                        'limit': 50,
+                        'next': 'next_here',
+                        'offset': 50,
+                        'previous': 'previous_uri',
+                        'total': SEARCH_LIMIT_1,
+                    },
+                    'playlists': {
+                        'href': 'href_uri',
+                        'items': [],
+                        'limit': 50,
+                        'next': None,
+                        'offset': 50,
+                        'previous': 'previous_uri',
+                        'total': SEARCH_LIMIT_2,
+                    },
+                    'tracks': {
+                        'href': 'href_uri',
+                        'items': [],
+                        'limit': 50,
+                        'next': None,
+                        'offset': 50,
+                        'previous': 'previous_uri',
+                        'total': SEARCH_LIMIT_2,
+                    }
+                },
+                200
+            ),
+            (
+                {
+                    'albums': {
+                        'href': 'href_uri',
+                        'items': [],
+                        'limit': 50,
+                        'next': None,
+                        'offset': 100,
+                        'previous': 'previous_uri',
+                        'total': SEARCH_LIMIT_1,
+                    },
+                    'artists': {
+                        'href': 'href_uri',
+                        'items': [],
+                        'limit': 50,
+                        'next': None,
+                        'offset': 100,
+                        'previous': 'previous_uri',
+                        'total': SEARCH_LIMIT_1,
+                    }
+                },
+                200
+            )
+        ]
+        search_result = session.search(query="dummy_query",
+                                      types=[const.ARTISTS, const.ALBUMS, const.PLAYLISTS, const.TRACKS],
+                                      limit=None
+                                      )
+        self.assertEqual(search_result.albums(), expected_albums)
+        self.assertEqual(search_result.artists(), expected_artists)
+        self.assertEqual(search_result.playlists(), expected_playlists)
+        self.assertEqual(search_result.tracks(), expected_tracks)
 
     # Test get_albums
     @unittest.skip('Not yet implemented')

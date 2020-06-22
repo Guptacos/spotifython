@@ -1,7 +1,7 @@
 """ Session class. """
 
 # Standard library imports
-import math
+import math, copy
 
 # Local imports
 import spotifython.constants as const
@@ -179,13 +179,21 @@ class Session:
 
             types: type(s) of results to search for. One of:
 
-                - sp.SEARCH_TYPE_ALBUM,
-                - sp.SEARCH_TYPE_ARTIST
-                - sp.SEARCH_TYPE_PLAYLIST
-                - sp.SEARCH_TYPE_TRACK
+                - sp.ALBUMS
+                - sp.ARTISTS
+                - sp.PLAYLISTS
+                - sp.TRACKS
                 - List: can contain multiple of the above.
 
-            limit (int): the maximum number of results to return.
+            limit (int): the maximum number of results to return. If the limit
+                is None, will return up to the API-supported limit of 2000
+                results. Use this with caution as it will result in a very long
+                chain of queries!
+
+                Note: The limit is applied within each type, not on the total
+                response. For example, if the limit value is 3 and the search
+                is for both artists & albums, the response contains 3 artists
+                and 3 albums.
 
             market (str): a :term:`market code <Market>` or sp.TOKEN_REGION,
                 used for :term:`track relinking <Track Relinking>`. If None, no
@@ -231,8 +239,9 @@ class Session:
         if not isinstance(types, str) and \
             not all(isinstance(x, str) for x in types):
             raise TypeError('types should be str or a list of str')
-        if not isinstance(limit, int):
-            raise TypeError('limit should be int')
+        if (limit is not None and not isinstance(limit, int)) or \
+            (isinstance(limit, int) and limit < 1):
+            raise TypeError('limit should be None or int > 0')
         if market is not None and not isinstance(market, str):
             raise TypeError('market should be None or str')
         if include_external_audio is not None and \
@@ -251,6 +260,8 @@ class Session:
         for search_type_filter in types:
             if search_type_filter not in valid_types:
                 raise ValueError(f'search type {search_type_filter} invalid')
+        if limit is None:
+            limit = 2000
         if limit > 2000:
             raise ValueError('Spotify only supports up to 2000 search results.')
 
@@ -269,10 +280,10 @@ class Session:
         next_multiple = lambda num, mult: math.ceil(num / mult) * mult
         num_to_request = next_multiple(limit, const.SPOTIFY_PAGE_SIZE)
 
-
         # We want the singular search types, while our constants are plural
-        # search types in the argument for uniformity.
-        type_mapping = {
+        # search types in the argument for uniformity. The pagination objects
+        # use the plural types again, so a two way mapping is required.
+        map_args_to_api_call = {
             const.ALBUMS: 'album',
             const.ARTISTS: 'artist',
             const.PLAYLISTS: 'playlist',
@@ -280,19 +291,33 @@ class Session:
             const.SHOWS: 'show',
             const.EPISODES: 'episode',
         }
-        remaining_types = [type_mapping.get(s) for s in types]
+        map_args_to_api_result = {
+            'album': const.ALBUMS,
+            'artist': const.ARTISTS,
+            'playlist': const.PLAYLISTS,
+            'track': const.TRACKS,
+            'show': const.SHOWS,
+            'episode': const.EPISODES,
+        }
+        remaining_types = [map_args_to_api_call.get(s) for s in types]
 
         # Initialize SearchResult object
         result = {
-            type_mapping[const.ALBUMS]: list(),
-            type_mapping[const.ARTISTS]: list(),
-            type_mapping[const.PLAYLISTS]: list(),
-            type_mapping[const.TRACKS]: list(),
+            map_args_to_api_call[const.ALBUMS]: list(),
+            map_args_to_api_call[const.ARTISTS]: list(),
+            map_args_to_api_call[const.PLAYLISTS]: list(),
+            map_args_to_api_call[const.TRACKS]: list(),
         }
 
         # Unfortunately because each type can have a different amount of return
         # values, utils.paginate_get() is not suited for this call.
         for offset in range(0, num_to_request, const.SPOTIFY_PAGE_SIZE):
+            # This line simplifies the logic for cases where an extra request
+            # would otherwise be needed to hit the empty list check in the
+            # search responses.
+            if len(remaining_types) == 0:
+                break
+
             uri_params['type'] = ','.join(remaining_types)
             uri_params['limit'] = limit
             uri_params['offset'] = offset
@@ -312,17 +337,18 @@ class Session:
             # TODO: test what happens if unnecessary types are specified for
             # the given offsets against live api
             for curr_type in remaining_types:
-                items = response_json[curr_type]['items']
+                api_result_type = map_args_to_api_result[curr_type]
+                items = response_json[api_result_type]['items']
 
                 # Add items to accumulator
                 for item in items:
-                    if curr_type is type_mapping[const.ALBUMS]:
+                    if curr_type is map_args_to_api_call[const.ALBUMS]:
                         result.get(curr_type).append(Album(self, item))
-                    elif curr_type is type_mapping[const.ARTISTS]:
+                    elif curr_type is map_args_to_api_call[const.ARTISTS]:
                         result.get(curr_type).append(Artist(self, item))
-                    elif curr_type is type_mapping[const.PLAYLISTS]:
+                    elif curr_type is map_args_to_api_call[const.PLAYLISTS]:
                         result.get(curr_type).append(Playlist(self, item))
-                    elif curr_type is type_mapping[const.TRACKS]:
+                    elif curr_type is map_args_to_api_call[const.TRACKS]:
                         result.get(curr_type).append(Track(self, item))
                     else:
                         # Should never reach here, but here for safety!
@@ -331,7 +357,8 @@ class Session:
             # Only make necessary search queries
             new_remaining_types = list()
             for curr_type in remaining_types:
-                if response_json[curr_type]['next'] != 'null':
+                api_result_type = map_args_to_api_result[curr_type]
+                if response_json[api_result_type]['next'] != None:
                     new_remaining_types.append(curr_type)
             remaining_types = new_remaining_types
 
