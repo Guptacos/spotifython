@@ -91,7 +91,7 @@ expected_users = get_dummy_data(
 class TestArtist(unittest.TestCase):
 
     # This function is called before every test_* function. Anything that is
-    # needed by every test_* function should be stored in "self" here.
+    # needed by every test_* function should be stored in 'self' here.
     def setUp(self):
         # Mock the sp._request method so that we never actually reach Spotify
         self.patcher = patch.object(utils, 'request', autospec=True)
@@ -256,10 +256,15 @@ class TestArtist(unittest.TestCase):
                 200
             )
         ]
-        search_result = session.search(query="dummy_query",
-                                      types=[const.ARTISTS, const.ALBUMS, const.PLAYLISTS, const.TRACKS],
-                                      limit=None
-                                      )
+        search_result = session.search(query='dummy_query',
+                                       types=[
+                                           const.ARTISTS,
+                                           const.ALBUMS,
+                                           const.PLAYLISTS,
+                                           const.TRACKS
+                                       ],
+                                       limit=None
+                                       )
         self.assertEqual(search_result.albums(), expected_albums)
         self.assertEqual(search_result.artists(), expected_artists)
         self.assertEqual(search_result.playlists(), expected_playlists)
@@ -271,31 +276,31 @@ class TestArtist(unittest.TestCase):
         self.request_mock.side_effect = [
             (
                 {
-                    "albums" : expected_albums_json[0:20]
+                    'albums' : expected_albums_json[0:20]
                 },
                 200
             ),
             (
                 {
-                    "albums" : expected_albums_json[20:40]
+                    'albums' : expected_albums_json[20:40]
                 },
                 200
             ),
             (
                 {
-                    "albums" : expected_albums_json[40:60]
+                    'albums' : expected_albums_json[40:60]
                 },
                 200
             ),
             (
                 {
-                    "albums" : expected_albums_json[60:80]
+                    'albums' : expected_albums_json[60:80]
                 },
                 200
             ),
             (
                 {
-                    "albums" : expected_albums_json[80:100]
+                    'albums' : expected_albums_json[80:100]
                 },
                 200
             )
@@ -313,13 +318,13 @@ class TestArtist(unittest.TestCase):
         self.request_mock.side_effect = [
             (
                 {
-                    "artists" : expected_artists_json[0:50]
+                    'artists' : expected_artists_json[0:50]
                 },
                 200
             ),
             (
                 {
-                    "artists" : expected_artists_json[50:100]
+                    'artists' : expected_artists_json[50:100]
                 },
                 200
             )
@@ -337,13 +342,13 @@ class TestArtist(unittest.TestCase):
         self.request_mock.side_effect = [
             (
                 {
-                    "tracks" : expected_tracks_json[0:50]
+                    'tracks' : expected_tracks_json[0:50]
                 },
                 200
             ),
             (
                 {
-                    "tracks" : expected_tracks_json[50:100]
+                    'tracks' : expected_tracks_json[50:100]
                 },
                 200
             )
