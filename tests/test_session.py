@@ -319,9 +319,28 @@ class TestArtist(unittest.TestCase):
         self.assertEqual(artists, expected_artists)
 
     # Test get_tracks
-    @unittest.skip('Not yet implemented')
     def test_get_tracks(self):
-        self.assertTrue(False)
+        session = Session(TOKEN)
+        self.request_mock.side_effect = [
+            (
+                {
+                    "tracks" : expected_tracks_json[0:50]
+                },
+                200
+            ),
+            (
+                {
+                    "tracks" : expected_tracks_json[50:100]
+                },
+                200
+            )
+        ]
+        tracks = session.get_tracks(
+            list(
+                map(lambda x: x['id'], expected_tracks_json)
+            )
+        )
+        self.assertEqual(tracks, expected_tracks)
 
     # Test get_users, current_user
     @unittest.skip('Not yet implemented')
