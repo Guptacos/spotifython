@@ -7,6 +7,7 @@ This class represents a playlist as defined by Spotify.
 from copy import deepcopy
 import base64
 import sys
+import mimetypes
 
 # local imports
 from spotifython.endpoints import Endpoints
@@ -539,8 +540,9 @@ class Playlist:
         """
         endpoint = Endpoints.BASE_URI
         endpoint += Endpoints.PLAYLIST_IMAGES % self.spotify_id()
-        if not (path.endswith('.jpg') or path.endswith('.jpeg')):
-            raise ValueError('The image must be a JPEG')
+        mime_type, encoding = mimetypes.guess_type(path)
+        if not mime_type == 'image/jpeg':
+            raise ValueError('The image must be an image/jpeg')
 
         body = []
         with open(path, 'rb') as fp:
