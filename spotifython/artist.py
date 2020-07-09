@@ -188,7 +188,8 @@ class Artist:
         """ Get the albums associated with the artist.
 
         Args:
-            search_limit (int): the maximum number of results to return.
+            search_limit (int): the maximum number of results to return. If
+                None, return all items.
             include_groups (List[]): a list of keywords that will be used to
                 filter the response. If not supplied, all album types will be
                 returned. Valid values are:
@@ -213,11 +214,10 @@ class Artist:
             - GET	/v1/artists/{id}/albums
         """
 
-        # TODO: limit can't be None, see paginate_get. These params need
-        # validation
-        # Type validation
-        if search_limit is not None and not isinstance(search_limit, int):
-            raise TypeError('search_limit should be None or int')
+        # Validation
+        if (search_limit is not None and not isinstance(search_limit, int)) or \
+            (isinstance(search_limit, int) and search_limit < 1):
+            raise TypeError('search_limit should be None or an int > 0')
         if include_groups is not None and \
             not all(isinstance(x, str) for x in include_groups):
             raise TypeError('include_groups should be None or str')
@@ -296,12 +296,19 @@ class Artist:
             return self._top_tracks
 
         # Update stored params for lazy loading
-        self._top_tracks = utils.paginate_get(session=self._session,
-                                              limit=search_limit,
-                                              return_class=Track,
-                                              endpoint=endpoint,
-                                              uri_params=uri_params
-                                              )
+        response_json, status_code = utils.request(session=self._session,
+                                                   request_type=\
+                                                       const.REQUEST_GET,
+                                                   endpoint=endpoint,
+                                                   uri_params=uri_params
+                                                   )
+        if status_code != 200:
+            raise utils.SpotifyError(status_code, response_json)
+        if 'tracks' not in response_json:
+            raise utils.SpotifyError("Malformed response: missing key 'tracks'")
+
+        result = [Track(self._session, x) for x in response_json.get('tracks')]
+        self._top_tracks = result
         self._top_tracks_query_params = search_query
 
         return self._top_tracks
@@ -344,16 +351,26 @@ class Artist:
             return self._related_artists
 
         # Update stored params for lazy loading
-        self._related_artists = utils.paginate_get(session=self._session,
-                                                   limit=search_limit,
-                                                   return_class=Artist,
+        response_json, status_code = utils.request(session=self._session,
+                                                   request_type=\
+                                                       const.REQUEST_GET,
                                                    endpoint=endpoint
                                                    )
+
+        if status_code != 200:
+            raise utils.SpotifyError(status_code, response_json)
+        if 'artists' not in response_json:
+            raise utils.SpotifyError('Malformed response, missing key artists')
+
+        result = [
+            Artist(self._session, x) for x in response_json.get('artists')
+        ]
+        self._related_artists = result
         self._related_artists_query_params = search_query
 
         return self._related_artists
 
-
 #pylint: disable=wrong-import-position
-from spotifython.album import Album
+#pylint: disable=wrong-import-order
 from spotifython.track import Track
+from spotifython.album import Album
