@@ -205,7 +205,12 @@ class Session:
 
         Note:
             - Shows and Episodes will be supported in a future release.
-            - Playlist seasrch results are not affected by the market parameter.
+            - Playlist search results are not affected by the market parameter.
+                Playlists queried from session.search() can't have
+                :term:`track relinking <Track Relinking>` applied,
+                while getting an individual playlist with
+                session.get_playlist() can. This is a limitation of the
+                Spotify API.
             - If market is not None, only content playable in the specified
               is returned.
 
