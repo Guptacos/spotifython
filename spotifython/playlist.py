@@ -50,11 +50,10 @@ class Playlist:
         self._owner = User(session, info['owner'])
         self._tracks = []
         tracks = info.get('tracks', {})
-        if len(tracks) == 0:
-            for item in tracks.get('items', []):
-                if 'track' not in item:
-                    raise ValueError('Track information missing')
-                self._tracks.append(Track(session, item.get('track', {})))
+        for item in tracks.get('items', []):
+            if 'track' not in item:
+                raise ValueError('Track information missing')
+            self._tracks.append(Track(session, item.get('track', {})))
 
 
     def __str__(self):
@@ -139,6 +138,13 @@ class Playlist:
             raise utils.SpotifyError(status_code, response_json)
 
         self._raw = response_json
+        self._owner = User(self._session, response_json['owner'])
+        self._tracks = []
+        tracks = response_json.get('tracks', {})
+        for item in tracks.get('items', []):
+            if 'track' not in item:
+                raise ValueError('Track information missing')
+            self._tracks.append(Track(self._session, item.get('track', {})))
 
 
     def raw(self):
