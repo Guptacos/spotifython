@@ -96,7 +96,7 @@ class Track:
         response_json, status_code = utils.request(
             session=self._session,
             request_type=const.REQUEST_GET,
-            endpoint=Endpoints.TRACK_GET_DATA % self.spotify_id()
+            endpoint=Endpoints.TRACK_DATA % self.spotify_id()
         )
 
         if status_code != 200:

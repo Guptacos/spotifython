@@ -106,7 +106,7 @@ class User:
         response_json, status_code = utils.request(
             session=self._session,
             request_type=const.REQUEST_GET,
-            endpoint=Endpoints.USER_GET_DATA % self.spotify_id()
+            endpoint=Endpoints.USER_DATA % self.spotify_id()
         )
 
         if status_code != 200:
@@ -430,7 +430,7 @@ class User:
         if limit <= 0 or limit > const.MAX_PLAYLISTS:
             raise ValueError(limit)
 
-        endpoint = Endpoints.USER_GET_PLAYLISTS % self.spotify_id()
+        endpoint = Endpoints.USER_PLAYLISTS % self.spotify_id()
 
         return utils.paginate_get(
                         self._session,
@@ -660,7 +660,7 @@ class User:
             response_json, status_code = utils.request(
                 self._session,
                 request_type=const.REQUEST_GET,
-                endpoint=Endpoints.USER_GET_ARTISTS,
+                endpoint=Endpoints.USER_ARTISTS,
                 body=None,
                 uri_params=uri_params
             )
@@ -914,7 +914,7 @@ class User:
                         self._session,
                         limit=limit,
                         return_class=return_class,
-                        endpoint=Endpoints.USER_GET_SAVED % endpoint_type,
+                        endpoint=Endpoints.USER_SAVED % endpoint_type,
                         uri_params=uri_params,
                         body=None)
 

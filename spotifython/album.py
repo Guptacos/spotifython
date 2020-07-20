@@ -136,7 +136,7 @@ class Album:
         response_json, status_code = utils.request(
             session=self._session,
             request_type=const.REQUEST_GET,
-            endpoint=Endpoints.ALBUM_GET_DATA % self.spotify_id()
+            endpoint=Endpoints.ALBUM_DATA % self.spotify_id()
         )
 
         if status_code != 200:
@@ -165,7 +165,7 @@ class Album:
             session=self._session,
             limit=sys.maxsize,
             return_class=Track,
-            endpoint=Endpoints.ALBUM_GET_DATA % self.spotify_id()
+            endpoint=Endpoints.ALBUM_DATA % self.spotify_id()
         )
 
 

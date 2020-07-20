@@ -409,7 +409,7 @@ class Session:
             album_ids = list(album_ids)
 
         # Construct params for API call
-        endpoint = Endpoints.SEARCH_GET_ALBUMS
+        endpoint = Endpoints.SEARCH_ALBUMS
         uri_params = dict()
         if market is not None:
             uri_params['market'] = market
@@ -468,7 +468,7 @@ class Session:
             artist_ids = list(artist_ids)
 
         # Construct params for API call
-        endpoint = Endpoints.SEARCH_GET_ALBUMS
+        endpoint = Endpoints.SEARCH_ALBUMS
         uri_params = dict()
 
         # A maximum of 50 artists can be returned per API call
@@ -535,7 +535,7 @@ class Session:
             track_ids = list(track_ids)
 
         # Construct params for API call
-        endpoint = Endpoints.SEARCH_GET_TRACKS
+        endpoint = Endpoints.SEARCH_TRACKS
         uri_params = dict()
         if market is not None:
             uri_params['market'] = market
@@ -623,7 +623,7 @@ class Session:
         # need to batch this query.
         result = list()
         for playlist_id in playlist_ids:
-            endpoint = Endpoints.SEARCH_GET_PLAYLIST % playlist_id
+            endpoint = Endpoints.SEARCH_PLAYLIST % playlist_id
 
             # Execute requests
             response_json, status_code = utils.request(
@@ -679,7 +679,7 @@ class Session:
             response_json, status_code = utils.request(
                 session=self,
                 request_type=const.REQUEST_GET,
-                endpoint=Endpoints.SEARCH_GET_USER % user_id,
+                endpoint=Endpoints.SEARCH_USER % user_id,
                 uri_params=uri_params
             )
 

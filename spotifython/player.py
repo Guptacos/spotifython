@@ -133,7 +133,7 @@ class Player:
         response_json, status_code = utils.request(
             self._session,
             request_type=const.REQUEST_GET,
-            endpoint=Endpoints.PLAYER_GET_DATA,
+            endpoint=Endpoints.PLAYER_DATA,
             body=None,
             uri_params={'market': market}
         )
