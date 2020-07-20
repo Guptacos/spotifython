@@ -160,7 +160,7 @@ class Artist:
         Calls endpoints:
             - GET     /v1/artists/{id}
         """
-        endpoint = Endpoints.ARTIST_GET_BY_ID % self.spotify_id()
+        endpoint = Endpoints.ARTIST_DATA % self.spotify_id()
         response_json, status_code = utils.request(
             session=self._session,
             request_type=const.REQUEST_GET,
@@ -230,7 +230,7 @@ class Artist:
             return self._albums
 
         # Construct params for API call
-        endpoint = Endpoints.ARTIST_GET_ALBUMS % self.spotify_id()
+        endpoint = Endpoints.ARTIST_ALBUMS % self.spotify_id()
         uri_params = dict()
         if include_groups is not None and len(include_groups) > 0:
             uri_params['include_groups'] = ','.join(include_groups)

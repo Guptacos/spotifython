@@ -128,7 +128,7 @@ class Playlist:
         Calls:
             GET /v1/playlists/{playlist_id}
         """
-        endpoint = Endpoints.SEARCH_GET_PLAYLIST % self.spotify_id()
+        endpoint = Endpoints.SEARCH_PLAYLIST % self.spotify_id()
         response_json, status_code = utils.request(
             self._session,
             request_type='GET',
