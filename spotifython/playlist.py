@@ -624,8 +624,8 @@ class Playlist:
         """
         endpoint = Endpoints.BASE_URI
         endpoint += Endpoints.PLAYLIST_IMAGES % self.spotify_id()
-        mime_type, encoding = mimetypes.guess_type(path)
-        if not mime_type == 'image/jpeg':
+        mime_type, _ = mimetypes.guess_type(path)
+        if mime_type != 'image/jpeg':
             raise ValueError('The image must be an image/jpeg')
 
         body = []
@@ -646,3 +646,4 @@ class Playlist:
 # pylint: disable=wrong-import-position
 from spotifython.user import User
 from spotifython.track import Track
+from spotifython.image import Image
