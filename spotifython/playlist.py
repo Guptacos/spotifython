@@ -373,7 +373,6 @@ class Playlist:
 
         return None if len(response_json) == 0 else Image(response_json[0])
 
-
     def tracks(self, start=0, num_tracks=None, market=const.TOKEN_REGION):
         """ Returns one or more tracks in the playlist.
 
