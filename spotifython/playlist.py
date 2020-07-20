@@ -4,6 +4,7 @@
 from copy import deepcopy
 import base64
 import sys
+import mimetypes
 
 # local imports
 from spotifython.endpoints import Endpoints
@@ -349,10 +350,11 @@ class Playlist:
     # TODO test the response from this endpoint and clarify usage
     # TODO: can the image be none?
     def image(self):
-        """ Get the playlist's cover image.
+        """ Get the the playlist cover image.
 
         Returns:
-            str: The string URL of the cover image.
+            Image: an image object if the Playlist has a cover image.
+            None: if the Playlist has no cover image.
 
         Calls endpoints:
             - PUT /v1/playlists/{playlist_id}
@@ -366,8 +368,10 @@ class Playlist:
         if status_code != 200:
             raise utils.SpotifyError(status_code, response_json)
 
-        return response_json[0]['url']
+        if len(response_json) > 1:
+            raise utils.SpotifyError('Playlist has more than one cover image!')
 
+        return None if len(response_json) == 0 else Image(response_json[0])
 
     def tracks(self, start=0, num_tracks=None, market=const.TOKEN_REGION):
         """ Returns one or more tracks in the playlist.
@@ -599,14 +603,14 @@ class Playlist:
 
 
     # TODO test this, no example in web api reference
-    def replace_image(self, image):
+    def replace_image(self, path):
         """ Replace the playlist cover image.
 
         Note:
             The image must be a JPEG and can be at most 256 KB in size.
 
         Args:
-            image: A string containing the filename of the image to use as the
+            path: A string containing the path to the image to use as the
                 playlist cover image. The image must be a JPEG up to 256 KB.
 
         Required token scopes:
@@ -618,18 +622,23 @@ class Playlist:
         Calls endpoints:
             - PUT /v1/playlists/{playlist_id}/images
         """
-        endpoint = Endpoints.PLAYLIST_IMAGES % self.spotify_id()
-        if not any(ext in image for ext in ['.jpg', '.jpeg']):
-            raise ValueError('The image must be a JPEG')
+        endpoint = Endpoints.BASE_URI
+        endpoint += Endpoints.PLAYLIST_IMAGES % self.spotify_id()
+        mime_type, _ = mimetypes.guess_type(path)
+        if mime_type != 'image/jpeg':
+            raise ValueError('The image must be an image/jpeg')
+
         body = []
-        with open(image, 'rb') as image_file:
-            body.append(base64.b64encode(image_file.read()))
+        with open(path, 'rb') as fp:
+            body.append(base64.b64encode(fp.read()))
+
         response_json, status_code = utils.request(
             self._session,
             request_type='PUT',
             endpoint=endpoint,
             body=body
         )
+
         if status_code != 202:
             raise utils.SpotifyError(status_code, response_json)
 
@@ -637,3 +646,4 @@ class Playlist:
 # pylint: disable=wrong-import-position
 from spotifython.user import User
 from spotifython.track import Track
+from spotifython.image import Image
