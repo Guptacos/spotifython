@@ -13,20 +13,25 @@ import spotifython.constants as const
 import spotifython.utils as utils
 from spotifython.session import Session
 
+ARTIST_ID = 'deadbeef'
 TOKEN = 'feebdaed'
-
 
 class TestAlbum(unittest.TestCase):
 
 
     def setUp(self):
+        # Note: since we're mocking Spotify and never actually using the token,
+        # we can put any string here for the token.
         self.session = Session(TOKEN)
 
         # Mock the sp._request method so that we never actually reach Spotify
         self.patcher = patch.object(utils, 'request', autospec=True)
 
-        # Add cleanup to unmock sp._request. Cleanup always called at end.
+        # Add cleanup to unmock sp._request. Cleanup always called after trying
+        # to execute a test, even if the test or setUp errors out / fails.
         self.addCleanup(self.patcher.stop)
+
+        # Create the actual mock object
         self.request_mock = self.patcher.start()
 
 
@@ -98,9 +103,18 @@ class TestAlbum(unittest.TestCase):
             counter -= 1
 
 
-    @unittest.skip('Not yet implemented')
     def test__update_fields(self):
-        pass
+        # Get dummy data with all fields
+        album_ref = get_dummy_data(const.ALBUMS, limit=1, to_obj=True)[0]
+        # Get dummy data with only id
+        album_temp = Album(self.session, {'id': album_ref._raw['id']})
+        # The raw fields should be different at first
+        self.assertNotEqual(album_ref._raw, album_temp._raw)
+        # Update the fields to be the same as when initialized from dummy data
+        self.request_mock.return_value = (album_ref._raw, 200)
+        album_temp._update_fields()
+        # The raw fields should be the same now
+        self.assertEqual(album_ref._raw, album_temp._raw)
 
 
     @unittest.skip('Not yet implemented')
@@ -185,3 +199,4 @@ if __name__ == '__main__':
 #pylint: disable=wrong-import-position
 #pylint: disable=wrong-import-order
 from spotifython.track import Track
+from spotifython.album import Album
