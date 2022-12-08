@@ -6,7 +6,7 @@ Sphinx==3.0.4
 alabaster==0.7.12
 astroid==2.4.1
 bleach==3.1.5
-certifi==2020.4.5.1
+certifi==2022.12.7
 chardet==3.0.4
 docutils==0.16
 idna==2.9
